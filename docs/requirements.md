@@ -1,6 +1,6 @@
-# GPS LAP TIMER システム 要件定義書
+# GPS World Lap Time Counter システム 要件定義書
 
-**プロジェクト名**: GPS LAP TIMER (T-EVOLUTION)
+**プロジェクト名**: GPS World Lap Time Counter (T-EVOLUTION)
 **バージョン**: 2.0 (プラットフォーム化対応)
 **作成日**: 2026-07-08
 **ステータス**: 要件定義フェーズ

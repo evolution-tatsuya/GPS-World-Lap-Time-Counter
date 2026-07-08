@@ -1,4 +1,4 @@
-# GPS LAP TIMER
+# GPS World Lap Time Counter
 
 **世界中で育つ、モータースポーツタイム計測プラットフォーム**
 
@@ -9,7 +9,7 @@
 
 ## 📖 プロジェクト概要
 
-GPS LAP TIMER は、サーキット・ジムカーナ・ラリーなどのモータースポーツイベントで、**スマートフォンの内蔵GPSを使って参加者全員のラップタイムを自動計測・集約・ランキング化**するWebアプリケーションです。
+GPS World Lap Time Counter は、サーキット・ジムカーナ・ラリーなどのモータースポーツイベントで、**スマートフォンの内蔵GPSを使って参加者全員のラップタイムを自動計測・集約・ランキング化**するWebアプリケーションです。
 
 ### 🎯 コンセプト
 
@@ -84,7 +84,7 @@ GPS LAP TIMER は、サーキット・ジムカーナ・ラリーなどのモー
 ## 📁 プロジェクト構成
 
 ```
-Lap-Time-Counter/
+GPS-World-Lap-Time-Counter/
 ├── docs/
 │   ├── requirements.md         # 要件定義書 v2.0
 │   ├── technical_design.md     # 技術設計書 v2.0

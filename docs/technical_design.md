@@ -1,4 +1,4 @@
-# GPS LAP TIMER - 技術設計書
+# GPS World Lap Time Counter - 技術設計書
 
 **バージョン**: 2.0
 **作成日**: 2026-07-08
@@ -892,8 +892,8 @@ export function ControlLineSwap({ lineA, lineB, onSwap }: ControlLineSwapProps) 
 ### 5.1 フロントエンド（Vercel）
 
 ```yaml
-プロジェクト: GPS LAP TIMER Frontend
-リポジトリ: github.com/username/gps-lap-timer (frontend/)
+プロジェクト: GPS World Lap Time Counter Frontend
+リポジトリ: github.com/evolution-tatsuya/GPS-World-Lap-Time-Counter (frontend/)
 ビルドコマンド: npm run build
 出力ディレクトリ: dist
 環境変数:
@@ -903,8 +903,8 @@ export function ControlLineSwap({ lineA, lineB, onSwap }: ControlLineSwapProps) 
 ### 5.2 バックエンド（Google Cloud Run）
 
 ```yaml
-プロジェクト: GPS LAP TIMER Backend
-リポジトリ: github.com/username/gps-lap-timer (backend/)
+プロジェクト: GPS World Lap Time Counter Backend
+リポジトリ: github.com/evolution-tatsuya/GPS-World-Lap-Time-Counter (backend/)
 Dockerfile:
   FROM node:18-alpine
   WORKDIR /app
@@ -931,7 +931,7 @@ Cloud Run設定:
 ### 5.3 データベース（Neon）
 
 ```yaml
-プロジェクト: GPS LAP TIMER DB
+プロジェクト: GPS World Lap Time Counter DB
 リージョン: ap-southeast-1（シンガポール、日本最寄り）
 接続方式: Pooled（最大10,000接続）
 無料枠制限:

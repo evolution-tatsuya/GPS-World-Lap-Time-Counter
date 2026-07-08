@@ -1,4 +1,4 @@
-# T-EVOLUTION GPS LAP TIMER 導入手順
+# GPS World Lap Time Counter 導入手順
 
 構成: HTML1枚（参加者のスマホで開く）＋ GAS ＋ スプレッドシート
 

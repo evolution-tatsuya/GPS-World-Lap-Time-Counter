@@ -1,8 +1,8 @@
-# GPS LAP TIMER 開発進捗状況
+# GPS World Lap Time Counter 開発進捗状況
 
 ## 1. 基本情報
 
-- **プロジェクト名**: GPS LAP TIMER (T-EVOLUTION)
+- **プロジェクト名**: GPS World Lap Time Counter (T-EVOLUTION)
 - **ステータス**: Phase 1 完了 → Phase 2 要件定義完了
 - **完了タスク数**: 3/12
 - **進捗率**: 25%
