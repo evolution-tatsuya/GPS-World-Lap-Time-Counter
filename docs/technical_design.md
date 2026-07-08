@@ -1089,4 +1089,432 @@ Week 7-8: ランキング・管理機能
 
 ---
 
-**以上、技術設計書 v2.0**
+## 10. 環境分離とマルチアプリケーション統合設計
+
+### 10.1 開発環境と本番環境の分離
+
+#### 10.1.1 データベース環境構成
+
+```yaml
+必須要件:
+  - 開発環境（Backend）と本番環境（Frontend）でデータベースを完全分離
+  - 各環境で独立したNeonプロジェクトを使用
+
+環境一覧:
+  development (DEV):
+    Neon Project: GPS-World-Lap-Time-Counter-DEV
+    Database: gps_lap_timer_dev
+    Region: ap-southeast-1 (Singapore)
+    用途: バックエンドAPI開発、テストデータ
+    接続文字列: 環境変数 DATABASE_URL_DEV
+
+  production (PROD):
+    Neon Project: GPS-World-Lap-Time-Counter-PROD
+    Database: gps_lap_timer_prod
+    Region: ap-southeast-1 (Singapore)
+    用途: 本番フロントエンド稼働、実データ
+    接続文字列: 環境変数 DATABASE_URL_PROD
+
+  staging (STG) - 将来:
+    Neon Project: GPS-World-Lap-Time-Counter-STG
+    Database: gps_lap_timer_stg
+    用途: デプロイ前検証
+```
+
+#### 10.1.2 環境変数管理
+
+```bash
+# backend/.env.development
+DATABASE_URL="postgresql://dev_user:***@dev-ep-xxx.c-2.ap-southeast-1.aws.neon.tech/gps_lap_timer_dev"
+NODE_ENV=development
+PORT=8432
+FRONTEND_URL="http://localhost:3247"
+SESSION_SECRET="dev-secret-key-change-in-production"
+
+# backend/.env.production
+DATABASE_URL="postgresql://prod_user:***@prod-ep-xxx.c-2.ap-southeast-1.aws.neon.tech/gps_lap_timer_prod"
+NODE_ENV=production
+PORT=8432
+FRONTEND_URL="https://gps-lap-timer.vercel.app"
+SESSION_SECRET="<本番用の安全な秘密鍵>"
+
+# backend/.env.staging (将来)
+DATABASE_URL="postgresql://stg_user:***@stg-ep-xxx.c-2.ap-southeast-1.aws.neon.tech/gps_lap_timer_stg"
+NODE_ENV=staging
+PORT=8432
+FRONTEND_URL="https://gps-lap-timer-staging.vercel.app"
+SESSION_SECRET="<staging用の秘密鍵>"
+```
+
+#### 10.1.3 環境切り替えフロー
+
+```bash
+# 開発環境でのマイグレーション
+npm run migrate:dev
+# 内部: NODE_ENV=development npx prisma migrate dev
+
+# 本番環境へのデプロイ時
+npm run migrate:prod
+# 内部: NODE_ENV=production npx prisma migrate deploy
+
+# Prisma Client生成（環境ごと）
+npm run generate:dev
+npm run generate:prod
+```
+
+**package.jsonスクリプト例**:
+```json
+{
+  "scripts": {
+    "migrate:dev": "dotenv -e .env.development -- npx prisma migrate dev",
+    "migrate:prod": "dotenv -e .env.production -- npx prisma migrate deploy",
+    "generate:dev": "dotenv -e .env.development -- npx prisma generate",
+    "generate:prod": "dotenv -e .env.production -- npx prisma generate",
+    "dev": "dotenv -e .env.development -- ts-node src/index.ts",
+    "start": "dotenv -e .env.production -- node dist/index.js"
+  }
+}
+```
+
+---
+
+### 10.2 総合ECサイトとの統合設計（Phase 3以降）
+
+#### 10.2.1 SSO（シングルサインオン）アーキテクチャ
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│  統合認証サービス (t-evolution-auth)                         │
+│  - Auth0 / Keycloak / Firebase Auth                         │
+│  - JWT発行・検証                                            │
+│  - セッション管理 (Redis)                                    │
+└─────────────┬───────────────────────────┬───────────────────┘
+              │                           │
+    ┌─────────▼──────────┐      ┌────────▼─────────────┐
+    │ ECサイト           │      │ GPS Lap Timer        │
+    │ (ec.t-evolution.jp)│      │ (lap.t-evolution.jp) │
+    │                    │      │                      │
+    │ - 商品管理         │      │ - イベント管理       │
+    │ - 注文処理         │      │ - ラップ計測         │
+    │ - ポイント管理     │      │ - ランキング         │
+    └────────────────────┘      └──────────────────────┘
+              │                           │
+              └───────────┬───────────────┘
+                          │
+              ┌───────────▼──────────────┐
+              │ 統合管理ダッシュボード    │
+              │ (admin.t-evolution.jp)   │
+              │ - 全アプリ統括管理       │
+              └──────────────────────────┘
+```
+
+#### 10.2.2 JWT認証フロー
+
+```yaml
+ログイン手順:
+  1. ユーザーがECサイトでログイン（email + password）
+  2. 認証サービスがユーザー検証
+  3. JWT発行（有効期限24時間）
+     payload:
+       - user_id: UUID
+       - email: string
+       - role: string[]
+       - apps: ['ec', 'lap-timer', 'inventory']
+       - iat: timestamp
+       - exp: timestamp
+  4. JWTをhttpOnly Cookieに保存
+  5. フロントエンドに認証成功を返却
+
+GPS Lap Timerアクセス時:
+  1. ブラウザが自動的にJWT付きリクエスト送信
+  2. GPS Lap Timer APIがJWTを検証
+     - 署名検証（公開鍵）
+     - 有効期限チェック
+     - apps配列に'lap-timer'が含まれるか確認
+  3. 検証成功 → ログイン済み状態でアプリ使用可能
+  4. 検証失敗 → 認証サービスにリダイレクト
+```
+
+#### 10.2.3 API設計（統合認証対応）
+
+**Phase 2（現在）の認証API**:
+```typescript
+POST /api/auth/login
+  Request: { email, password }
+  Response: { user, sessionId }
+  セッション: express-session (Cookie)
+```
+
+**Phase 3（SSO統合後）の認証API**:
+```typescript
+GET /api/auth/verify-token
+  Headers: Cookie: jwt=<token>
+  Response:
+    200: { valid: true, user: { id, email, name, role } }
+    401: { valid: false, error: 'Invalid or expired token' }
+
+POST /api/auth/sync-user
+  Headers: Authorization: Bearer <jwt>
+  Request: { ecUserId, email, name }
+  Response: { success: true, userId: UUID }
+  動作:
+    1. ECサイトからのユーザー情報をGPS Lap Timer DBに同期
+    2. ec_user_id カラムに紐付け
+    3. 既存ユーザーの場合はマージ
+
+POST /api/auth/link-ec-account
+  Headers: Cookie: jwt=<lap-timer-session>
+  Request: { ecAuthCode }
+  Response: { success: true, linkedEcUserId: UUID }
+  動作:
+    1. 既存のGPS Lap Timerユーザーが
+    2. ECアカウントと連携する際に使用
+```
+
+#### 10.2.4 データベース統合戦略
+
+**マイクロサービス型（推奨）**:
+```yaml
+各アプリ独立DB + 統合認証DB:
+  t-evolution-auth (Neon Project):
+    tables:
+      - users (統合ユーザーマスタ)
+      - oauth_providers
+      - sessions
+      - refresh_tokens
+
+  t-evolution-ec (Neon Project):
+    tables:
+      - products
+      - orders
+      - payments
+      - ec_user_profiles (EC固有情報)
+
+  t-evolution-lap-timer (Neon Project):
+    tables:
+      - users (GPS Lap Timer用、auth.usersと紐付け)
+      - circuits
+      - events
+      - laps
+
+連携方法:
+  - users.auth_user_id → t-evolution-auth.users.id (外部参照)
+  - API経由でのデータ取得
+  - Webhook / Message Queueでのイベント通知
+```
+
+**usersテーブル拡張（Phase 3）**:
+```sql
+-- Phase 2 → Phase 3 への移行用カラム追加
+ALTER TABLE users
+  ADD COLUMN auth_user_id UUID,           -- 統合認証DBのユーザーID
+  ADD COLUMN ec_user_id UUID,             -- ECサイトのユーザーID
+  ADD COLUMN oauth_provider TEXT,         -- 'ec-platform', 'google', 'apple'
+  ADD COLUMN oauth_id TEXT UNIQUE,        -- OAuth提供元のID
+  ADD COLUMN is_synced_from_ec BOOLEAN DEFAULT FALSE,
+  ADD COLUMN last_synced_at TIMESTAMP;
+
+CREATE INDEX idx_users_auth_user_id ON users(auth_user_id);
+CREATE INDEX idx_users_ec_user_id ON users(ec_user_id);
+CREATE INDEX idx_users_oauth ON users(oauth_provider, oauth_id);
+```
+
+#### 10.2.5 RBAC（ロールベースアクセス制御）設計
+
+**Phase 2（現在）**: シンプルなenum
+```prisma
+enum UserRole {
+  DRIVER
+  ORGANIZER
+  ADMIN
+}
+```
+
+**Phase 3（拡張）**: RBAC対応
+```prisma
+model Role {
+  id          String   @id @default(uuid())
+  name        String   @unique  // 'super_admin', 'ec_manager', 'event_organizer'
+  description String?
+  permissions Json     // ['lap:read', 'lap:write', 'event:create']
+  appContext  String   // 'ec-platform', 'gps-lap-timer', 'all'
+  createdAt   DateTime @default(now())
+
+  userRoles UserRole[]
+  @@map("roles")
+}
+
+model UserRole {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  roleId    String   @map("role_id")
+  grantedBy String?  @map("granted_by")
+  grantedAt DateTime @default(now()) @map("granted_at")
+
+  user      User     @relation(fields: [userId], references: [id])
+  role      Role     @relation(fields: [roleId], references: [id])
+
+  @@unique([userId, roleId])
+  @@map("user_roles")
+}
+
+model Permission {
+  id          String  @id @default(uuid())
+  code        String  @unique  // 'lap:read', 'event:create:own'
+  appContext  String
+  description String?
+
+  @@map("permissions")
+}
+```
+
+**権限チェックミドルウェア**:
+```typescript
+// Phase 2（現在）
+const requireRole = (role: UserRole) => (req, res, next) => {
+  if (req.session.user?.role === role || req.session.user?.role === 'ADMIN') {
+    next();
+  } else {
+    res.status(403).json({ error: 'Forbidden' });
+  }
+};
+
+// Phase 3（RBAC）
+const requirePermission = (permission: string) => async (req, res, next) => {
+  const hasPermission = await checkUserPermission(req.user.id, permission);
+  if (hasPermission) {
+    next();
+  } else {
+    res.status(403).json({ error: 'Forbidden', requiredPermission: permission });
+  }
+};
+
+// 使用例
+router.post('/events', requirePermission('event:create'), createEvent);
+```
+
+---
+
+### 10.3 統合管理ダッシュボード設計（Phase 4）
+
+#### 10.3.1 BFF（Backend for Frontend）パターン
+
+```yaml
+アーキテクチャ:
+  フロントエンド: 統合管理画面（React SPA）
+    ↓
+  BFF Layer: 管理画面専用API（Node.js + Express）
+    ↓ 並列リクエスト
+  ├─→ ECサイトAPI
+  ├─→ GPS Lap Timer API
+  └─→ 在庫管理API
+
+BFFエンドポイント例:
+  GET /api/admin/integrated/dashboard
+    → 全アプリの統計情報を集約
+    → { ecStats, lapTimerStats, inventoryStats, userActivity }
+
+  GET /api/admin/integrated/user/:id/overview
+    → 特定ユーザーの全アプリでの活動を集約
+    → { ecProfile, orderHistory, lapRecords, eventParticipation }
+```
+
+#### 10.3.2 データ同期戦略
+
+```yaml
+リアルタイム同期:
+  - WebSocket / Server-Sent Events
+  - ユーザーログイン状態
+  - イベント参加登録
+
+非同期同期（Webhook）:
+  ECサイト → GPS Lap Timer:
+    - イベントチケット購入時
+    - POST /api/webhooks/ec/ticket-purchased
+      → イベント参加者として自動登録
+
+  GPS Lap Timer → ECサイト:
+    - ベストラップ達成時
+    - POST https://ec-api/webhooks/lap-timer/best-lap
+      → クーポン自動発行
+
+Message Queue（将来）:
+  - RabbitMQ / AWS SQS
+  - イベント駆動アーキテクチャ
+  - トピック: user.created, lap.recorded, event.started
+```
+
+---
+
+### 10.4 実装ロードマップ（統合対応）
+
+```yaml
+Phase 2（現在・2026 Q3-Q4）:
+  週1-2: 環境分離
+    - Neon DEV/PROD プロジェクト作成 ✅
+    - 環境変数管理整備
+    - CI/CD構築（GitHub Actions）
+
+  週3-10: 単体完成
+    - バックエンドAPI実装
+    - フロントエンド実装
+    - デプロイ
+
+Phase 3（EC統合・2027 Q1-Q2）:
+  月1: SSO基盤構築
+    - Auth0 / Keycloak導入
+    - JWT発行・検証実装
+    - 統合認証DB構築
+
+  月2-3: データ同期
+    - usersテーブル拡張
+    - 同期API実装
+    - 既存データ移行
+
+  月4: RBAC移行
+    - roles/permissions テーブル作成
+    - 権限チェックロジック実装
+
+Phase 4（統合管理画面・2027 Q3-Q4）:
+  月1-2: BFF構築
+  月3: 統合ダッシュボード実装
+  月4: Webhook/Queue実装
+
+Phase 5（スケールアウト・2028〜）:
+  - Kubernetes導入
+  - マルチリージョン展開
+  - グローバルCDN
+```
+
+---
+
+### 10.5 セキュリティ考慮事項（統合環境）
+
+```yaml
+JWT管理:
+  - httpOnly Cookie（XSS対策）
+  - Secure flag（HTTPS必須）
+  - SameSite=Strict（CSRF対策）
+  - 短い有効期限（24時間）+ Refresh Token
+
+API認証:
+  - 各アプリ間API通信は内部トークン使用
+  - 公開鍵暗号方式（RS256）
+  - トークンローテーション
+
+データアクセス制限:
+  - 各アプリは自DBのみアクセス可能
+  - クロスDB参照は禁止
+  - API経由のみでデータ取得
+
+監査ログ:
+  - ユーザー操作ログ（全アプリ統合）
+  - API呼び出しログ
+  - データ変更履歴
+```
+
+---
+
+**以上、技術設計書 v2.1（環境分離・統合対応版）**
+**最終更新**: 2026-07-08
+**次回更新**: Phase 3開始時

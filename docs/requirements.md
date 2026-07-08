@@ -752,4 +752,412 @@ MyLaps (業務用計測システム):
 
 ---
 
-**以上、要件定義書 v2.0**
+## 付録C: 環境分離とマルチアプリケーション統合戦略
+
+### C.1 開発環境と本番環境の分離 【重要】
+
+#### C.1.1 データベース環境分離
+```yaml
+必須要件:
+  - 開発環境（Backend開発用）と本番環境（Frontend用）でデータベースを完全分離
+  - 各環境で独立したNeonプロジェクトを使用
+  - 環境間でのデータ混在を防止
+
+環境構成:
+  development:
+    database: Neon Project "GPS-Lap-Timer-DEV"
+    region: ap-southeast-1 (Singapore)
+    用途: バックエンドAPI開発、テストデータ
+
+  production:
+    database: Neon Project "GPS-Lap-Timer-PROD"
+    region: ap-southeast-1 (Singapore)
+    用途: 本番フロントエンド稼働、実データ
+
+  staging (将来):
+    database: Neon Project "GPS-Lap-Timer-STAGING"
+    用途: デプロイ前の検証環境
+
+環境変数管理:
+  backend/.env.development:
+    DATABASE_URL="postgresql://dev_user:***@dev-host/gps_lap_timer_dev"
+
+  backend/.env.production:
+    DATABASE_URL="postgresql://prod_user:***@prod-host/gps_lap_timer_prod"
+```
+
+#### C.1.2 環境切り替えフロー
+```bash
+# 開発環境でのマイグレーション
+NODE_ENV=development npx prisma migrate dev
+
+# 本番環境へのデプロイ
+NODE_ENV=production npx prisma migrate deploy
+```
+
+---
+
+### C.2 総合ECサイトとの統合設計
+
+#### C.2.1 将来的な統合ビジョン
+本プロジェクトは、**総合ECサイトを中心とした統合プラットフォーム**の一部として機能する想定です。
+
+```yaml
+統合プラットフォーム構成（将来像）:
+  中核システム: 総合ECサイト (T-EVOLUTION EC Platform)
+  連携アプリ:
+    - GPS World Lap Time Counter (本プロジェクト)
+    - 在庫管理システム
+    - イベント管理システム
+    - その他の外部アプリ
+
+統合方針:
+  - ECサイト登録ユーザーは、全連携アプリにシームレスにログイン可能
+  - 管理者は単一の管理画面から全アプリを統括管理
+  - ユーザーデータ、認証情報は中央で一元管理
+```
+
+#### C.2.2 SSO（シングルサインオン）設計
+
+**Phase 3以降での実装想定**
+
+```yaml
+認証フロー（統合後）:
+  1. ユーザーがECサイトでログイン
+  2. JWT（JSON Web Token）発行
+  3. GPS Lap Time Counterアクセス時、JWTを自動検証
+  4. ログイン済み状態で管理画面に入れる
+
+技術構成:
+  認証基盤: Auth0 / Firebase Auth / Keycloak
+  トークン形式: JWT（有効期限24時間）
+  セッション管理: Redis（複数アプリで共有）
+
+連携API:
+  GET /api/auth/verify-token
+    - ECサイト発行のJWTを検証
+    - ユーザー情報を返却
+
+  POST /api/auth/sync-user
+    - ECサイトのユーザー情報をGPS Lap Timer DBに同期
+```
+
+#### C.2.3 ユーザー管理の統合
+
+**現在のusersテーブル設計**（Phase 2）:
+```sql
+CREATE TABLE users (
+  id UUID PRIMARY KEY,           -- GPS Lap Timer独自のID
+  email TEXT UNIQUE,
+  password_hash TEXT,
+  name TEXT,
+  role UserRole,
+  -- 将来的に追加する統合用カラム
+  -- ec_user_id UUID,             -- ECサイトのユーザーID（外部キー）
+  -- oauth_provider TEXT,         -- 'ec-platform' / 'google' / 'apple'
+  -- oauth_id TEXT,               -- OAuth提供元のユーザーID
+  created_at TIMESTAMP,
+  updated_at TIMESTAMP
+);
+```
+
+**Phase 3での拡張（ECサイト統合時）**:
+```sql
+ALTER TABLE users
+  ADD COLUMN ec_user_id UUID REFERENCES ec_platform.users(id),
+  ADD COLUMN oauth_provider TEXT,
+  ADD COLUMN oauth_id TEXT UNIQUE,
+  ADD COLUMN is_synced_from_ec BOOLEAN DEFAULT FALSE;
+
+CREATE INDEX idx_users_ec_user_id ON users(ec_user_id);
+CREATE INDEX idx_users_oauth ON users(oauth_provider, oauth_id);
+```
+
+#### C.2.4 管理階層の柔軟性確保
+
+**設計方針**:
+- 現在のUserRoleは単純な3階層（DRIVER, ORGANIZER, ADMIN）
+- 将来的に階層構造の大幅変更が想定される
+- RBAC（Role-Based Access Control）への移行を見据えた設計
+
+**Phase 2の実装**（現在）:
+```typescript
+enum UserRole {
+  DRIVER     // 一般参加者
+  ORGANIZER  // イベント運営者
+  ADMIN      // システム管理者
+}
+```
+
+**Phase 3での拡張（RBAC）**:
+```sql
+-- 新規テーブル: roles（役割定義）
+CREATE TABLE roles (
+  id UUID PRIMARY KEY,
+  name TEXT UNIQUE NOT NULL,        -- 'super_admin', 'ec_manager', 'event_organizer', 'driver'
+  description TEXT,
+  permissions JSONB,                -- 権限リスト（JSON形式）
+  app_context TEXT,                 -- 'ec-platform', 'gps-lap-timer', 'all'
+  created_at TIMESTAMP
+);
+
+-- 新規テーブル: user_roles（ユーザーと役割の紐付け）
+CREATE TABLE user_roles (
+  id UUID PRIMARY KEY,
+  user_id UUID REFERENCES users(id),
+  role_id UUID REFERENCES roles(id),
+  granted_by UUID REFERENCES users(id),
+  granted_at TIMESTAMP,
+  UNIQUE(user_id, role_id)
+);
+
+-- 新規テーブル: permissions（権限定義）
+CREATE TABLE permissions (
+  id UUID PRIMARY KEY,
+  code TEXT UNIQUE NOT NULL,        -- 'lap:read', 'lap:write', 'event:create'
+  app_context TEXT,
+  description TEXT
+);
+```
+
+**権限チェック例**:
+```typescript
+// 現在（Phase 2）
+if (user.role === 'ORGANIZER' || user.role === 'ADMIN') {
+  // イベント作成可能
+}
+
+// 将来（Phase 3 RBAC）
+if (await hasPermission(user, 'event:create')) {
+  // イベント作成可能
+}
+```
+
+---
+
+### C.3 マルチアプリケーション管理画面
+
+#### C.3.1 統合管理ダッシュボード（Phase 4）
+
+**構成**:
+```yaml
+統合管理画面（admin.t-evolution.jp）:
+  機能:
+    - 全アプリの稼働状況監視
+    - ユーザー管理（ECサイト + GPS Lap Timer + その他）
+    - イベント管理（GPS Lap Timer）
+    - 在庫管理（ECサイト）
+    - 売上分析（ECサイト）
+
+  技術:
+    - フロントエンド: React + MUI（共通UIライブラリ）
+    - API統合: BFF（Backend for Frontend）パターン
+    - 認証: SSO（全アプリ共通セッション）
+```
+
+#### C.3.2 アプリ間データ連携
+
+**ユースケース例**:
+1. **ECサイトでイベント参加チケット販売**
+   - ECサイトで「TYPE R Convention 2026」参加券を購入
+   - 購入者に自動でイベントコード発行
+   - GPS Lap Timerに自動参加登録
+
+2. **イベント参加者への商品レコメンド**
+   - GPS Lap Timerでベストラップ達成
+   - ECサイトで「ベストラップ記念グッズ」を自動レコメンド
+
+3. **統合ポイントシステム**
+   - イベント参加でポイント付与
+   - ECサイトでの購入に利用可能
+
+**データ連携API設計**:
+```yaml
+API Gateway（統合API層）:
+  endpoint: https://api.t-evolution.jp
+
+  routes:
+    /ec/*           -> ECサイトAPI
+    /lap-timer/*    -> GPS Lap Timer API
+    /inventory/*    -> 在庫管理API
+    /analytics/*    -> 統合分析API
+
+  認証: JWT（全アプリ共通）
+  レート制限: 1000req/min（アプリごと）
+```
+
+---
+
+### C.4 データベース統合戦略
+
+#### C.4.1 論理分離と物理分離
+
+**Phase 2（現在）**: 完全分離
+```yaml
+gps-lap-timer-dev:  Neon Project（独立）
+gps-lap-timer-prod: Neon Project（独立）
+```
+
+**Phase 3（EC統合時）**: スキーマ分離
+```yaml
+統合データベース構成（選択肢A）:
+  t-evolution-platform:
+    - schema: public（共通テーブル: users, oauth_tokens, sessions）
+    - schema: ec_platform（ECサイト専用テーブル）
+    - schema: gps_lap_timer（GPS Lap Timer専用テーブル）
+    - schema: inventory（在庫管理専用テーブル）
+
+利点:
+  - ユーザー情報を中央管理
+  - JOIN可能（データ分析に有利）
+
+欠点:
+  - アプリ間の依存度が高い
+  - スケーリングが難しい
+
+---
+
+統合データベース構成（選択肢B・推奨）:
+  マイクロサービス型（各アプリ独立DB + 連携API）
+    t-evolution-ec:        Neon Project（ECサイト専用）
+    t-evolution-lap-timer: Neon Project（GPS Lap Timer専用）
+    t-evolution-inventory: Neon Project（在庫管理専用）
+
+  共通認証DB:
+    t-evolution-auth:      Neon Project（認証専用）
+      - users（統合ユーザー）
+      - oauth_tokens
+      - sessions
+
+利点:
+  - アプリ間疎結合
+  - 独立スケーリング可能
+  - 障害の影響範囲が限定的
+
+連携方法:
+  - API経由でデータ取得
+  - イベント駆動（Pub/Sub）でデータ同期
+```
+
+#### C.4.2 マイグレーション計画
+
+**Phase 2 → Phase 3 移行時**:
+```sql
+-- Step 1: 統合認証DBの作成
+CREATE DATABASE t_evolution_auth;
+
+-- Step 2: GPS Lap TimerのusersをEC統合usersに移行
+INSERT INTO t_evolution_auth.users (id, email, name, ...)
+SELECT id, email, name, ... FROM gps_lap_timer.users;
+
+-- Step 3: GPS Lap TimerのusersテーブルにEC連携カラム追加
+ALTER TABLE gps_lap_timer.users
+  ADD COLUMN auth_user_id UUID REFERENCES t_evolution_auth.users(id);
+
+-- Step 4: 既存データに紐付け
+UPDATE gps_lap_timer.users
+SET auth_user_id = (
+  SELECT id FROM t_evolution_auth.users
+  WHERE t_evolution_auth.users.email = gps_lap_timer.users.email
+);
+```
+
+---
+
+### C.5 実装ロードマップ（統合対応）
+
+```yaml
+Phase 2（現在・2026 Q3-Q4）:
+  - GPS Lap Timer単体で完成
+  - 開発環境/本番環境のDB分離
+  - 独自の認証システム（イベントコード + メール/パスワード）
+
+Phase 3（ECサイト統合・2027 Q1-Q2）:
+  - ECサイトとのSSO連携
+  - 統合認証DB構築
+  - ユーザーデータ同期API実装
+  - RBAC移行準備
+
+Phase 4（統合管理画面・2027 Q3-Q4）:
+  - 統合管理ダッシュボード構築
+  - マルチアプリケーション監視
+  - 横断データ分析機能
+  - 統合ポイントシステム
+
+Phase 5（スケールアウト・2028〜）:
+  - マイクロサービス完全移行
+  - Kubernetes導入
+  - グローバル展開（多リージョン対応）
+```
+
+---
+
+### C.6 技術的考慮事項
+
+#### C.6.1 データ同期戦略
+```yaml
+リアルタイム同期が必要なデータ:
+  - ユーザー認証状態（Session / JWT）
+  - イベント参加登録状態
+
+非同期同期で十分なデータ:
+  - ユーザープロフィール更新
+  - イベント履歴
+  - 購入履歴
+
+同期方式:
+  - Webhook（ECサイト → GPS Lap Timer）
+  - Message Queue（RabbitMQ / AWS SQS）
+  - Change Data Capture（PostgreSQL → Kafka）
+```
+
+#### C.6.2 API設計パターン
+```yaml
+BFF（Backend for Frontend）:
+  統合管理画面専用のAPIレイヤー
+
+  endpoint: /api/admin/integrated/*
+
+  例:
+    GET /api/admin/integrated/user/{id}/overview
+      → ECサイトAPI + GPS Lap Timer API を並列取得してマージ
+      → { ecProfile, lapTimerStats, eventHistory }
+```
+
+---
+
+## 付録D: 移行時の後方互換性
+
+### D.1 既存ユーザーの保護
+```yaml
+Phase 3移行時の原則:
+  - 既存のGPS Lap Timerユーザーは引き続き利用可能
+  - ECサイト登録なしでも単体利用可能
+  - 任意でECアカウントと紐付け
+
+移行フロー:
+  1. ECサイトでアカウント作成
+  2. GPS Lap Timerにログイン
+  3. 「ECアカウントと連携」ボタンをクリック
+  4. OAuth認証フロー
+  5. 既存データを統合
+```
+
+### D.2 データ保全
+```yaml
+マイグレーション前の必須作業:
+  - 全データのバックアップ（pg_dump）
+  - ロールバック手順の準備
+  - 段階的移行（まずstaging環境で実施）
+
+データ整合性チェック:
+  - 移行前後のレコード数照合
+  - ユーザーIDの重複チェック
+  - 外部キー制約の整合性確認
+```
+
+---
+
+**以上、要件定義書 v2.1（統合対応版）**
+**最終更新**: 2026-07-08
+**次回レビュー**: Phase 3開始時（ECサイト統合着手前）
