@@ -39,6 +39,8 @@ export default function Measurement() {
 
   // シミュレーションモード切替（計測中は変更不可）
   const [simulationMode, setSimulationMode] = useState(DEFAULT_SIMULATION);
+  // 片道モード切替（ON=片道／同一方向の通過のみ、OFF=往復・周回）
+  const [oneWay, setOneWay] = useState(false);
 
   // 認証チェック
   useEffect(() => {
@@ -51,6 +53,21 @@ export default function Measurement() {
 
   // v2.2対応: event.courseを使用（後方互換のためevent.circuitも利用可能）
   const course = event.course || event.circuit;
+
+  // コントロールライン座標が欠けている場合は計測できないため、安全に案内を表示
+  if (!course || !course.controlLineA || !course.controlLineB) {
+    return (
+      <Container maxWidth="md" sx={{ mt: 4 }}>
+        <Alert severity="error" sx={{ mb: 2 }}>
+          コース情報（コントロールライン座標）が取得できませんでした。
+          お手数ですが、一度ログインし直してください。
+        </Alert>
+        <Button variant="outlined" onClick={() => navigate('/event-login')}>
+          イベントログインへ
+        </Button>
+      </Container>
+    );
+  }
 
   const {
     running,
@@ -74,6 +91,7 @@ export default function Measurement() {
     ],
     minLapTime: (course.referenceTime || course.referenceLapTime || 30000) / 1000, // ミリ秒→秒に変換
     simulationMode, // 実GPS計測 or シミュレーション（画面上のトグルで切替）
+    oneWay, // 片道モード（同一方向の通過のみカウント）
     onLap: async (lap: LapData) => {
       // ラップ記録をサーバーに送信
       try {
@@ -124,8 +142,31 @@ export default function Measurement() {
         {gpsStatus}
       </Alert>
 
-      {/* 計測モード切替（実GPS / シミュレーション） */}
-      <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
+      {/* 計測モード切替 */}
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          flexWrap: 'wrap',
+          mb: 2,
+        }}
+      >
+        <FormControlLabel
+          control={
+            <Switch
+              checked={oneWay}
+              onChange={(e) => setOneWay(e.target.checked)}
+              disabled={running}
+              size="small"
+            />
+          }
+          label={
+            <Typography variant="caption" color="text.secondary">
+              {oneWay ? '片道モード（同一方向のみ）' : '周回・往復モード'}
+            </Typography>
+          }
+        />
         <FormControlLabel
           control={
             <Switch

@@ -237,6 +237,28 @@ router.get('/session', async (req: Request, res: Response) => {
         return;
       }
 
+      // コントロールラインをネスト形式に整形（event-loginと同じ形にする）。
+      // フロントの計測画面は controlLineA.lat 等を参照するため、生のPrisma形
+      // （controlLineALat）のままだと落ちる。
+      const shapedCourse = {
+        id: event.course.id,
+        name: event.course.name,
+        country: event.course.country,
+        state: event.course.state,
+        courseType: event.course.courseType,
+        sportCategories: event.course.sportCategories,
+        controlLineA: {
+          lat: Number(event.course.controlLineALat),
+          lng: Number(event.course.controlLineALng),
+        },
+        controlLineB: {
+          lat: Number(event.course.controlLineBLat),
+          lng: Number(event.course.controlLineBLng),
+        },
+        referenceTime: event.course.referenceTime,
+        referenceLapTime: event.course.referenceTime,
+      };
+
       res.json({
         type: 'participant',
         event: {
@@ -245,8 +267,8 @@ router.get('/session', async (req: Request, res: Response) => {
           courseId: event.courseId,
           circuitId: event.courseId, // 後方互換（フロントのcircuitIdエイリアス）
           circuitName: event.course.name,
-          course: event.course,
-          circuit: event.course, // 後方互換（フロントのcircuitエイリアス）
+          course: shapedCourse,
+          circuit: shapedCourse, // 後方互換（フロントのcircuitエイリアス）
         },
         driverName: req.session.driverName,
         vehicle: req.session.vehicle

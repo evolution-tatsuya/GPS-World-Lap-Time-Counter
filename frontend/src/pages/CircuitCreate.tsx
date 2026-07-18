@@ -20,9 +20,10 @@ import {
   OutlinedInput,
   Chip,
 } from '@mui/material';
-import { ArrowBack, AddLocationAlt } from '@mui/icons-material';
+import { ArrowBack, AddLocationAlt, MyLocation } from '@mui/icons-material';
 import { useAuthStore } from '../stores/authStore';
 import { apiClient } from '../api/client';
+import { getCurrentPositionOnce, makeControlLineFromPoint } from '../utils/gpsUtils';
 
 const SPORT_CATEGORIES = ['CAR', 'MOTORCYCLE', 'RUNNING', 'BICYCLE'] as const;
 const COURSE_TYPES = ['CLOSED_CIRCUIT', 'PUBLIC_ROAD', 'OFF_ROAD'] as const;
@@ -47,11 +48,59 @@ export default function CircuitCreate() {
   const [isPublic, setIsPublic] = useState(true);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [gpsBusy, setGpsBusy] = useState<null | 'A' | 'B' | 'LINE'>(null);
+  const [gpsInfo, setGpsInfo] = useState('');
 
   if (!user) {
     navigate('/login');
     return null;
   }
+
+  // 現在地でA点またはB点を取得
+  const capturePoint = async (point: 'A' | 'B') => {
+    setError('');
+    setGpsInfo('');
+    setGpsBusy(point);
+    try {
+      const pos = await getCurrentPositionOnce();
+      const lat = pos.lat.toFixed(6);
+      const lng = pos.lng.toFixed(6);
+      if (point === 'A') {
+        setControlLineALat(lat);
+        setControlLineALng(lng);
+      } else {
+        setControlLineBLat(lat);
+        setControlLineBLng(lng);
+      }
+      setGpsInfo(`地点${point}を取得しました（精度±${Math.round(pos.accuracy)}m）`);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '位置情報の取得に失敗しました');
+    } finally {
+      setGpsBusy(null);
+    }
+  };
+
+  // 現在地1点からコントロールラインを自動生成（公道テスト向け）
+  const captureLineFromHere = async () => {
+    setError('');
+    setGpsInfo('');
+    setGpsBusy('LINE');
+    try {
+      const pos = await getCurrentPositionOnce();
+      const line = makeControlLineFromPoint(pos.lat, pos.lng, 8);
+      setControlLineALat(line.a.lat.toFixed(6));
+      setControlLineALng(line.a.lng.toFixed(6));
+      setControlLineBLat(line.b.lat.toFixed(6));
+      setControlLineBLng(line.b.lng.toFixed(6));
+      setGpsInfo(
+        `現在地を中心に幅約16mのラインを生成しました（精度±${Math.round(pos.accuracy)}m）`
+      );
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '位置情報の取得に失敗しました');
+    } finally {
+      setGpsBusy(null);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -65,10 +114,15 @@ export default function CircuitCreate() {
         state: state || null,
         courseType,
         sportCategories,
-        controlLineALat: parseFloat(controlLineALat),
-        controlLineALng: parseFloat(controlLineALng),
-        controlLineBLat: parseFloat(controlLineBLat),
-        controlLineBLng: parseFloat(controlLineBLng),
+        // バックエンドはネストした {lat, lng} 形式を期待する
+        controlLineA: {
+          lat: parseFloat(controlLineALat),
+          lng: parseFloat(controlLineALng),
+        },
+        controlLineB: {
+          lat: parseFloat(controlLineBLat),
+          lng: parseFloat(controlLineBLng),
+        },
         referenceTime: referenceTime ? referenceTime * 1000 : null, // 秒→ミリ秒
         courseLength: courseLength || null,
         elevationGain: elevationGain || null,
@@ -180,6 +234,46 @@ export default function CircuitCreate() {
           <Typography variant="h6" gutterBottom sx={{ mt: 3 }}>
             コントロールライン座標（GPS）
           </Typography>
+
+          <Alert severity="info" sx={{ mb: 2 }}>
+            計測ライン（車が通過する地点）です。実際にその場所に立って
+            「現在地から自動生成」を押すと、道を横切る幅約16mのラインを
+            自動で作成します。公道テストはこれが簡単です。
+          </Alert>
+
+          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 2 }}>
+            <Button
+              variant="contained"
+              color="secondary"
+              startIcon={<MyLocation />}
+              onClick={captureLineFromHere}
+              disabled={gpsBusy !== null}
+            >
+              {gpsBusy === 'LINE' ? '取得中...' : '現在地からラインを自動生成'}
+            </Button>
+            <Button
+              variant="outlined"
+              startIcon={<MyLocation />}
+              onClick={() => capturePoint('A')}
+              disabled={gpsBusy !== null}
+            >
+              {gpsBusy === 'A' ? '取得中...' : '現在地でA点'}
+            </Button>
+            <Button
+              variant="outlined"
+              startIcon={<MyLocation />}
+              onClick={() => capturePoint('B')}
+              disabled={gpsBusy !== null}
+            >
+              {gpsBusy === 'B' ? '取得中...' : '現在地でB点'}
+            </Button>
+          </Box>
+
+          {gpsInfo && (
+            <Alert severity="success" sx={{ mb: 2 }}>
+              {gpsInfo}
+            </Alert>
+          )}
 
           <Grid container spacing={2} sx={{ mb: 2 }}>
             <Grid item xs={6}>

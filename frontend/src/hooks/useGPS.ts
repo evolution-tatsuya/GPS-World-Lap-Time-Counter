@@ -46,13 +46,21 @@ export function useGPS(options: UseGPSOptions): UseGPSReturn {
   const simulationIntervalRef = useRef<number | null>(null);
   const simulationStepRef = useRef<number>(0);
 
+  // watchPosition のコールバックは start 実行時の値をクロージャで握るため、
+  // 計測中に更新される lapCount / bestLapMs は ref 経由で最新値を参照する。
+  const lapCountRef = useRef(0);
+  const bestLapMsRef = useRef<number | null>(null);
+  useEffect(() => {
+    lapCountRef.current = lapCount;
+  }, [lapCount]);
+  useEffect(() => {
+    bestLapMsRef.current = bestLapMs;
+  }, [bestLapMs]);
+
   // GPS計測開始
   const start = useCallback(async () => {
-    console.log('[useGPS] start called, simulationMode:', options.simulationMode);
-
     // シミュレーションモードの場合
     if (options.simulationMode) {
-      console.log('[useGPS] Starting simulation mode');
       setRunning(true);
       setGpsStatus('シミュレーションモード（開発用） 精度±5m');
       setGpsAccuracy(5);
@@ -60,10 +68,6 @@ export function useGPS(options: UseGPSOptions): UseGPSReturn {
       // コントロールラインの中心座標を計算
       const centerLat = (options.controlLineA[0] + options.controlLineB[0]) / 2;
       const centerLng = (options.controlLineA[1] + options.controlLineB[1]) / 2;
-
-      console.log('[useGPS] Control line center:', centerLat, centerLng);
-      console.log('[useGPS] Control line A:', options.controlLineA);
-      console.log('[useGPS] Control line B:', options.controlLineB);
 
       // シンプルな往復運動シミュレーション
       // コントロールラインに対して垂直に横切る移動
@@ -84,24 +88,19 @@ export function useGPS(options: UseGPSOptions): UseGPSReturn {
       const endLat = centerLat + perpDy * moveDistance;
       const endLng = centerLng + perpDx * moveDistance;
 
-      console.log('[useGPS] Start position:', startLat, startLng);
-      console.log('[useGPS] End position:', endLat, endLng);
-      console.log('[useGPS] Perpendicular vector:', perpDy, perpDx);
-
       simulationStepRef.current = 0;
 
       // GPS位置を1秒ごとに更新
       simulationIntervalRef.current = window.setInterval(() => {
         simulationStepRef.current += 1;
 
-        // 1周を60秒（60ステップ）で完了
-        // 0〜30: A点手前からB点先へ移動（コントロールラインを通過）
-        // 31〜60: B点先からA点手前へ移動（再度コントロールラインを通過）
-        const progress = (simulationStepRef.current % 60) / 60; // 0〜1
-        const oscillation = Math.sin(progress * 2 * Math.PI); // -1〜1の往復
-        const t = (oscillation + 1) / 2; // 0〜1に正規化
-
-        console.log('[useGPS] Simulation step:', simulationStepRef.current, 'progress:', progress, 't:', t);
+        // 1周を20ステップ（20秒）で完了する三角波で往復。
+        // sinだとコントロールライン中心(t=0.5)に接するだけで通過判定が
+        // 不安定になるため、線形の三角波でt=0.5を明確に跨ぐようにする。
+        const PERIOD = 20;
+        const phase = (simulationStepRef.current % PERIOD) / PERIOD; // 0〜1
+        // 0→1→0 の三角波（0.5で折り返し）
+        const t = phase < 0.5 ? phase * 2 : 2 - phase * 2; // 0〜1〜0
 
         // 線形補間でA点手前とB点先の間を往復
         const lat = startLat + (endLat - startLat) * t;
@@ -123,10 +122,7 @@ export function useGPS(options: UseGPSOptions): UseGPSReturn {
             options.controlLineB
           );
 
-          console.log('[useGPS] Step:', simulationStepRef.current, 'CrossCheck result:', result);
-
           if (result?.crossed) {
-            console.log('[useGPS] Control line crossed! lastCrossT:', lastCrossTRef.current);
             // 片道モードの場合、進行方向をチェック
             if (options.oneWay) {
               if (firstSignRef.current === null) {
@@ -146,6 +142,7 @@ export function useGPS(options: UseGPSOptions): UseGPSReturn {
             if (lastCrossTRef.current === null) {
               // 1周目（スタート）
               lastCrossTRef.current = crossT;
+              lapCountRef.current = 1;
               setLapCount(1);
             } else {
               // 2周目以降（ラップタイム計測）
@@ -156,18 +153,22 @@ export function useGPS(options: UseGPSOptions): UseGPSReturn {
                 lastCrossTRef.current = crossT;
 
                 const lapData: LapData = {
-                  lapNumber: lapCount,
+                  // lapCount のstale closureを避けるためrefを使う。
+                  // 0だとバックエンドのバリデーションに弾かれるため必ず1以上にする。
+                  lapNumber: lapCountRef.current,
                   lapTimeMs: lapMs,
                   lapTimeStr: formatLapTime(lapMs),
                   timestamp: new Date(crossT),
                 };
 
                 setLastLapMs(lapMs);
+                lapCountRef.current += 1;
                 setLapCount((prev) => prev + 1);
                 setLaps((prev) => [...prev, lapData]);
 
                 // ベストラップ更新
-                if (bestLapMs === null || lapMs < bestLapMs) {
+                if (bestLapMsRef.current === null || lapMs < bestLapMsRef.current) {
+                  bestLapMsRef.current = lapMs;
                   setBestLapMs(lapMs);
                 }
 
@@ -231,7 +232,6 @@ export function useGPS(options: UseGPSOptions): UseGPSReturn {
           );
 
           if (result?.crossed) {
-            console.log('[useGPS] Control line crossed! lastCrossT:', lastCrossTRef.current);
             // 片道モードの場合、進行方向をチェック
             if (options.oneWay) {
               if (firstSignRef.current === null) {
@@ -251,6 +251,7 @@ export function useGPS(options: UseGPSOptions): UseGPSReturn {
             if (lastCrossTRef.current === null) {
               // 1周目（スタート）
               lastCrossTRef.current = crossT;
+              lapCountRef.current = 1;
               setLapCount(1);
             } else {
               // 2周目以降（ラップタイム計測）
@@ -261,18 +262,20 @@ export function useGPS(options: UseGPSOptions): UseGPSReturn {
                 lastCrossTRef.current = crossT;
 
                 const lapData: LapData = {
-                  lapNumber: lapCount,
+                  lapNumber: lapCountRef.current,
                   lapTimeMs: lapMs,
                   lapTimeStr: formatLapTime(lapMs),
                   timestamp: new Date(crossT),
                 };
 
                 setLastLapMs(lapMs);
+                lapCountRef.current += 1;
                 setLapCount((prev) => prev + 1);
                 setLaps((prev) => [...prev, lapData]);
 
                 // ベストラップ更新
-                if (bestLapMs === null || lapMs < bestLapMs) {
+                if (bestLapMsRef.current === null || lapMs < bestLapMsRef.current) {
+                  bestLapMsRef.current = lapMs;
                   setBestLapMs(lapMs);
                 }
 
@@ -344,6 +347,8 @@ export function useGPS(options: UseGPSOptions): UseGPSReturn {
     prevPtRef.current = null;
     lastCrossTRef.current = null;
     firstSignRef.current = null;
+    lapCountRef.current = 0;
+    bestLapMsRef.current = null;
   }, [stop]);
 
   // クリーンアップ
