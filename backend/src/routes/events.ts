@@ -16,19 +16,19 @@ const router = Router();
  */
 router.get('/', async (req: Request, res: Response) => {
   try {
-    const circuitId = typeof req.query.circuitId === 'string' ? req.query.circuitId : undefined;
+    const courseId = typeof req.query.courseId === 'string' ? req.query.courseId : undefined;
     const date = typeof req.query.date === 'string' ? req.query.date : undefined;
     const organizerId = typeof req.query.organizerId === 'string' ? req.query.organizerId : undefined;
 
     const events = await prisma.event.findMany({
       where: {
-        ...(circuitId && { circuitId }),
+        ...(courseId && { courseId }),
         ...(date && { eventDate: new Date(date) }),
         ...(organizerId && { organizerId }),
         isPublic: true
       },
       include: {
-        circuit: true,
+        course: true,
         organizer: {
           select: {
             id: true,
@@ -46,47 +46,77 @@ router.get('/', async (req: Request, res: Response) => {
   }
 });
 
-// ========== イベント詳細取得（イベントコード） ==========
+// ========== イベント詳細取得（IDまたはイベントコード） ==========
 
 /**
- * GET /api/events/:eventCode
- * イベントコードでイベント情報を取得
+ * GET /api/events/:idOrCode
+ * ID（UUID形式）またはイベントコードでイベント情報を取得
  */
-router.get('/:eventCode', async (req: Request, res: Response) => {
+router.get('/:idOrCode', async (req: Request, res: Response) => {
   try {
-    const eventCode = req.params.eventCode;
+    const idOrCode = Array.isArray(req.params.idOrCode) ? req.params.idOrCode[0] : req.params.idOrCode;
 
-    const event = await prisma.event.findUnique({
-      where: { eventCode: eventCode.toUpperCase() },
-      include: {
-        circuit: true,
-        organizer: {
-          select: {
-            id: true,
-            name: true
+    console.log('[GET /:idOrCode] Received request for:', idOrCode);
+
+    // UUIDの形式チェック（8-4-4-4-12形式）
+    const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(idOrCode);
+
+    console.log('[GET /:idOrCode] Is UUID?', isUUID);
+
+    let event;
+    if (isUUID) {
+      // UUIDの場合はIDで検索
+      console.log('[GET /:idOrCode] Searching by ID...');
+      event = await prisma.event.findUnique({
+        where: { id: idOrCode },
+        include: {
+          course: true,
+          organizer: {
+            select: {
+              id: true,
+              name: true
+            }
           }
         }
-      }
-    });
+      });
+    } else {
+      // それ以外はイベントコードで検索
+      console.log('[GET /:idOrCode] Searching by event code:', idOrCode.toUpperCase());
+      event = await prisma.event.findUnique({
+        where: { eventCode: idOrCode.toUpperCase() },
+        include: {
+          course: true,
+          organizer: {
+            select: {
+              id: true,
+              name: true
+            }
+          }
+        }
+      });
+    }
+
+    console.log('[GET /:idOrCode] Event found?', !!event);
 
     if (!event) {
       res.status(404).json({ error: 'Event not found' });
       return;
     }
 
-    // サーキット座標をnumberに変換
+    // コース座標をnumberに変換してcircuitとして返す（フロントエンド互換性）
     const formattedEvent = {
       ...event,
       circuit: {
-        ...event.circuit,
+        ...event.course,
         controlLineA: {
-          lat: Number(event.circuit.controlLineALat),
-          lng: Number(event.circuit.controlLineALng)
+          lat: Number(event.course.controlLineALat),
+          lng: Number(event.course.controlLineALng)
         },
         controlLineB: {
-          lat: Number(event.circuit.controlLineBLat),
-          lng: Number(event.circuit.controlLineBLng)
-        }
+          lat: Number(event.course.controlLineBLat),
+          lng: Number(event.course.controlLineBLng)
+        },
+        referenceLapTime: event.course.referenceTime
       }
     };
 
@@ -107,25 +137,25 @@ router.post('/', requireOrganizer, async (req: Request, res: Response) => {
   try {
     const {
       name,
-      circuitId,
+      courseId,
       eventDate,
       maxParticipants,
       isPublic
-    } = req.body as EventCreateInput;
+    } = req.body as { name: string; courseId: string; eventDate: string; maxParticipants?: number; isPublic?: boolean };
 
     // バリデーション
-    if (!name || !circuitId || !eventDate) {
+    if (!name || !courseId || !eventDate) {
       res.status(400).json({ error: 'Required fields are missing' });
       return;
     }
 
-    // サーキット存在チェック
-    const circuit = await prisma.circuit.findUnique({
-      where: { id: circuitId }
+    // コース存在チェック
+    const course = await prisma.course.findUnique({
+      where: { id: courseId }
     });
 
-    if (!circuit) {
-      res.status(404).json({ error: 'Circuit not found' });
+    if (!course) {
+      res.status(404).json({ error: 'Course not found' });
       return;
     }
 
@@ -136,7 +166,8 @@ router.post('/', requireOrganizer, async (req: Request, res: Response) => {
     const event = await prisma.event.create({
       data: {
         name,
-        circuitId,
+        courseId,
+        sportCategory: 'CAR', // デフォルトは車
         eventDate: new Date(eventDate),
         eventCode,
         maxParticipants: maxParticipants || null,
@@ -144,22 +175,23 @@ router.post('/', requireOrganizer, async (req: Request, res: Response) => {
         organizerId: req.session.userId!
       },
       include: {
-        circuit: true
+        course: true
       }
     });
 
     res.status(201).json({
       ...event,
       circuit: {
-        ...event.circuit,
+        ...event.course,
         controlLineA: {
-          lat: Number(event.circuit.controlLineALat),
-          lng: Number(event.circuit.controlLineALng)
+          lat: Number(event.course.controlLineALat),
+          lng: Number(event.course.controlLineALng)
         },
         controlLineB: {
-          lat: Number(event.circuit.controlLineBLat),
-          lng: Number(event.circuit.controlLineBLng)
-        }
+          lat: Number(event.course.controlLineBLat),
+          lng: Number(event.course.controlLineBLng)
+        },
+        referenceLapTime: event.course.referenceTime
       }
     });
   } catch (error) {
@@ -176,7 +208,7 @@ router.post('/', requireOrganizer, async (req: Request, res: Response) => {
  */
 router.put('/:id', requireOrganizer, async (req: Request, res: Response) => {
   try {
-    const id = req.params.id;
+    const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
     const updates = req.body;
 
     // 既存イベント取得
@@ -207,7 +239,7 @@ router.put('/:id', requireOrganizer, async (req: Request, res: Response) => {
       where: { id },
       data: updateData,
       include: {
-        circuit: true
+        course: true
       }
     });
 
@@ -226,7 +258,7 @@ router.put('/:id', requireOrganizer, async (req: Request, res: Response) => {
  */
 router.delete('/:id', requireOrganizer, async (req: Request, res: Response) => {
   try {
-    const id = req.params.id;
+    const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
 
     // 既存イベント取得
     const existing = await prisma.event.findUnique({
@@ -264,7 +296,7 @@ router.delete('/:id', requireOrganizer, async (req: Request, res: Response) => {
  */
 router.get('/:id/stats', async (req: Request, res: Response) => {
   try {
-    const id = req.params.id;
+    const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
 
     // イベント存在チェック
     const event = await prisma.event.findUnique({
@@ -282,7 +314,7 @@ router.get('/:id/stats', async (req: Request, res: Response) => {
     });
 
     const uniqueDrivers = await prisma.lap.groupBy({
-      by: ['driverName'],
+      by: ['participantName'],
       where: { eventId: id }
     });
 
@@ -295,8 +327,8 @@ router.get('/:id/stats', async (req: Request, res: Response) => {
       totalLaps,
       totalDrivers: uniqueDrivers.length,
       fastestLap: fastestLap ? {
-        driverName: fastestLap.driverName,
-        vehicle: fastestLap.vehicle,
+        driverName: fastestLap.participantName,
+        vehicle: fastestLap.vehicleOrGear,
         lapTimeStr: fastestLap.lapTimeStr,
         lapTimeMs: fastestLap.lapTimeMs
       } : null

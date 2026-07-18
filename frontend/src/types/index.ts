@@ -1,13 +1,9 @@
 // GPS World Lap Time Counter - Frontend Type Definitions
-// Version: 2.0
+// Version: 2.2 (Multi-Sport Support)
 
 // ========== ユーザー関連 ==========
 
-export enum UserRole {
-  DRIVER = 'DRIVER',
-  ORGANIZER = 'ORGANIZER',
-  ADMIN = 'ADMIN'
-}
+export type UserRole = 'DRIVER' | 'ORGANIZER' | 'ADMIN';
 
 export interface User {
   id: string;
@@ -18,21 +14,39 @@ export interface User {
   updatedAt: Date;
 }
 
-// ========== サーキット関連 ==========
+// ========== コース関連（マルチスポーツ対応） ==========
 
-export enum CircuitType {
-  CIRCUIT = 'CIRCUIT',
-  GYMKHANA = 'GYMKHANA',
-  RALLY = 'RALLY',
-  OTHER = 'OTHER'
-}
+export type CourseType =
+  | 'CLOSED_CIRCUIT' // クローズドサーキット（専用コース）
+  | 'PUBLIC_ROAD'    // 一般道・公道
+  | 'FARM_ROAD'      // 農道・林道
+  | 'TRAIL'          // トレイル・山道
+  | 'WATER'          // 水上（海・湖・川）
+  | 'OTHER';         // その他
 
-export interface Circuit {
+export type SportCategory =
+  | 'CAR'                // 車（四輪）
+  | 'MOTORCYCLE'         // バイク（二輪）
+  | 'KART'               // カート
+  | 'BICYCLE_ROAD'       // ロードバイク
+  | 'BICYCLE_MTB'        // MTB
+  | 'BICYCLE_CYCLOCROSS' // シクロクロス
+  | 'RUNNING'            // ランニング
+  | 'RUNNING_MARATHON'   // マラソン
+  | 'RUNNING_TRAIL'      // トレイルランニング
+  | 'SKIING'             // スキー
+  | 'SNOWBOARDING'       // スノーボード
+  | 'BOAT'               // ボート
+  | 'CANOE'              // カヌー
+  | 'OTHER';             // その他
+
+export interface Course {
   id: string;
   country: string;
   state: string | null;
   name: string;
-  type: CircuitType;
+  courseType: CourseType;
+  sportCategories: SportCategory[];
   controlLineA: {
     lat: number;
     lng: number;
@@ -41,18 +55,22 @@ export interface Circuit {
     lat: number;
     lng: number;
   };
-  referenceLapTime: number | null;
+  referenceTime: number | null;
+  referenceLapTime: number | null; // 後方互換性のため（referenceTimeのエイリアス）
+  courseLength: number | null;
+  elevationGain: number | null;
   description: string | null;
   isPublic: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
 
-export interface CircuitCreateInput {
+export interface CourseCreateInput {
   country: string;
   state?: string;
   name: string;
-  type: CircuitType;
+  courseType: CourseType;
+  sportCategories: SportCategory[];
   controlLineA: {
     lat: number;
     lng: number;
@@ -61,17 +79,42 @@ export interface CircuitCreateInput {
     lat: number;
     lng: number;
   };
-  referenceLapTime?: number;
+  referenceTime?: number;
+  courseLength?: number;
+  elevationGain?: number;
   description?: string;
   isPublic?: boolean;
 }
 
-// ========== イベント関連 ==========
+export interface CourseUpdateInput {
+  country?: string;
+  state?: string;
+  name?: string;
+  courseType?: CourseType;
+  sportCategories?: SportCategory[];
+  controlLineA?: {
+    lat: number;
+    lng: number;
+  };
+  controlLineB?: {
+    lat: number;
+    lng: number;
+  };
+  referenceTime?: number;
+  courseLength?: number;
+  elevationGain?: number;
+  description?: string;
+  isPublic?: boolean;
+}
+
+// ========== イベント関連（マルチスポーツ対応） ==========
 
 export interface Event {
   id: string;
   name: string;
-  circuitId: string;
+  courseId: string;
+  circuitId: string; // 後方互換性のため（courseIdのエイリアス）
+  sportCategory: SportCategory;
   eventDate: Date;
   eventCode: string;
   maxParticipants: number | null;
@@ -81,30 +124,44 @@ export interface Event {
   updatedAt: Date;
 }
 
-export interface EventWithCircuit extends Event {
-  circuit: Circuit;
+export interface EventWithCourse extends Event {
+  course: Course;
+  circuit: Course; // 後方互換性のためcircuitも追加（courseのエイリアス）
 }
 
 export interface EventCreateInput {
   name: string;
-  circuitId: string;
+  courseId: string;
+  sportCategory: SportCategory;
   eventDate: string | Date;
   maxParticipants?: number;
   isPublic?: boolean;
 }
 
-// ========== ラップ記録関連 ==========
+export interface EventUpdateInput {
+  name?: string;
+  sportCategory?: SportCategory;
+  eventDate?: string | Date;
+  maxParticipants?: number;
+  isPublic?: boolean;
+}
+
+// ========== ラップ記録関連（マルチスポーツ対応） ==========
 
 export interface Lap {
   id: string;
   eventId: string;
   userId: string | null;
-  driverName: string;
-  vehicle: string | null;
+  participantName: string;
+  driverName: string; // 後方互換性のため（participantNameのエイリアス）
+  sportCategory: SportCategory;
+  vehicleOrGear: string | null;
+  vehicle: string | null; // 後方互換性のため（vehicleOrGearのエイリアス）
   lapNumber: number;
   lapTimeMs: number;
   lapTimeStr: string;
   recordedAt: Date;
+  createdAt: Date; // 後方互換性のため（recordedAtのエイリアス）
 }
 
 export interface LapCreateInput {
@@ -138,7 +195,7 @@ export interface EventLoginRequest {
 }
 
 export interface EventLoginResponse {
-  event: EventWithCircuit;
+  event: EventWithCourse;
   sessionId: string;
 }
 
@@ -156,4 +213,25 @@ export interface LapData {
   lapTimeMs: number;
   lapTimeStr: string;
   timestamp: Date;
+}
+
+// ========== 後方互換性のための型エイリアス ==========
+// フロントエンドの既存コードとの互換性のため、旧型名を維持
+
+export type Circuit = Course;
+export type CircuitCreateInput = CourseCreateInput;
+export type CircuitUpdateInput = CourseUpdateInput;
+export type EventWithCircuit = EventWithCourse;
+
+// ========== ユーティリティ型 ==========
+
+export interface ApiResponse<T = any> {
+  success: boolean;
+  data?: T;
+  error?: string;
+}
+
+export interface ErrorResponse {
+  error: string;
+  code?: string;
 }

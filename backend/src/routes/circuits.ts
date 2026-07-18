@@ -18,7 +18,7 @@ router.get('/', async (req: Request, res: Response) => {
     const country = typeof req.query.country === 'string' ? req.query.country : undefined;
     const state = typeof req.query.state === 'string' ? req.query.state : undefined;
 
-    const circuits = await prisma.circuit.findMany({
+    const circuits = await prisma.course.findMany({
       where: {
         ...(country && { country }),
         ...(state && { state }),
@@ -33,7 +33,7 @@ router.get('/', async (req: Request, res: Response) => {
       country: circuit.country,
       state: circuit.state,
       name: circuit.name,
-      type: circuit.type,
+      type: circuit.courseType,
       controlLineA: {
         lat: Number(circuit.controlLineALat),
         lng: Number(circuit.controlLineALng)
@@ -42,7 +42,7 @@ router.get('/', async (req: Request, res: Response) => {
         lat: Number(circuit.controlLineBLat),
         lng: Number(circuit.controlLineBLng)
       },
-      referenceLapTime: circuit.referenceLapTime,
+      referenceLapTime: circuit.referenceTime,
       description: circuit.description,
       isPublic: circuit.isPublic,
       createdAt: circuit.createdAt,
@@ -64,9 +64,9 @@ router.get('/', async (req: Request, res: Response) => {
  */
 router.get('/:id', async (req: Request, res: Response) => {
   try {
-    const id = req.params.id;
+    const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
 
-    const circuit = await prisma.circuit.findUnique({
+    const circuit = await prisma.course.findUnique({
       where: { id }
     });
 
@@ -80,7 +80,7 @@ router.get('/:id', async (req: Request, res: Response) => {
       country: circuit.country,
       state: circuit.state,
       name: circuit.name,
-      type: circuit.type,
+      type: circuit.courseType,
       controlLineA: {
         lat: Number(circuit.controlLineALat),
         lng: Number(circuit.controlLineALng)
@@ -89,7 +89,7 @@ router.get('/:id', async (req: Request, res: Response) => {
         lat: Number(circuit.controlLineBLat),
         lng: Number(circuit.controlLineBLng)
       },
-      referenceLapTime: circuit.referenceLapTime,
+      referenceLapTime: circuit.referenceTime,
       description: circuit.description,
       isPublic: circuit.isPublic,
       createdAt: circuit.createdAt,
@@ -114,12 +114,14 @@ router.post('/', requireOrganizer, async (req: Request, res: Response) => {
       state,
       name,
       type,
+      courseType,
       controlLineA,
       controlLineB,
       referenceLapTime,
+      referenceTime,
       description,
       isPublic
-    } = req.body as CircuitCreateInput;
+    } = req.body as any; // 後方互換性のため両方のフィールド名を受け入れる
 
     // バリデーション
     if (!country || !name || !controlLineA || !controlLineB) {
@@ -128,7 +130,7 @@ router.post('/', requireOrganizer, async (req: Request, res: Response) => {
     }
 
     // 重複チェック
-    const existing = await prisma.circuit.findFirst({
+    const existing = await prisma.course.findFirst({
       where: {
         country,
         state: state || null,
@@ -141,18 +143,19 @@ router.post('/', requireOrganizer, async (req: Request, res: Response) => {
       return;
     }
 
-    // サーキット作成
-    const circuit = await prisma.circuit.create({
+    // コース作成（後方互換性のため両方のフィールド名をサポート）
+    const circuit = await prisma.course.create({
       data: {
         country,
         state: state || null,
         name,
-        type: type || 'CIRCUIT',
+        courseType: courseType || type || 'CLOSED_CIRCUIT',
+        sportCategories: ['CAR'], // デフォルトで車をサポート
         controlLineALat: controlLineA.lat,
         controlLineALng: controlLineA.lng,
         controlLineBLat: controlLineB.lat,
         controlLineBLng: controlLineB.lng,
-        referenceLapTime: referenceLapTime || null,
+        referenceTime: referenceTime || referenceLapTime || null,
         description: description || null,
         isPublic: isPublic !== undefined ? isPublic : true,
         createdBy: req.session.userId
@@ -164,7 +167,7 @@ router.post('/', requireOrganizer, async (req: Request, res: Response) => {
       country: circuit.country,
       state: circuit.state,
       name: circuit.name,
-      type: circuit.type,
+      type: circuit.courseType,
       controlLineA: {
         lat: Number(circuit.controlLineALat),
         lng: Number(circuit.controlLineALng)
@@ -173,7 +176,7 @@ router.post('/', requireOrganizer, async (req: Request, res: Response) => {
         lat: Number(circuit.controlLineBLat),
         lng: Number(circuit.controlLineBLng)
       },
-      referenceLapTime: circuit.referenceLapTime,
+      referenceLapTime: circuit.referenceTime,
       description: circuit.description,
       isPublic: circuit.isPublic,
       createdAt: circuit.createdAt,
@@ -193,11 +196,11 @@ router.post('/', requireOrganizer, async (req: Request, res: Response) => {
  */
 router.put('/:id', requireOrganizer, async (req: Request, res: Response) => {
   try {
-    const id = req.params.id;
+    const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
     const updates = req.body;
 
     // 既存サーキット取得
-    const existing = await prisma.circuit.findUnique({
+    const existing = await prisma.course.findUnique({
       where: { id }
     });
 
@@ -215,7 +218,7 @@ router.put('/:id', requireOrganizer, async (req: Request, res: Response) => {
     // 更新データ準備
     const updateData: any = {};
     if (updates.description !== undefined) updateData.description = updates.description;
-    if (updates.referenceLapTime !== undefined) updateData.referenceLapTime = updates.referenceLapTime;
+    if (updates.referenceLapTime !== undefined) updateData.referenceTime = updates.referenceLapTime;
     if (updates.isPublic !== undefined) updateData.isPublic = updates.isPublic;
 
     if (updates.controlLineA) {
@@ -228,7 +231,7 @@ router.put('/:id', requireOrganizer, async (req: Request, res: Response) => {
     }
 
     // 更新実行
-    const circuit = await prisma.circuit.update({
+    const circuit = await prisma.course.update({
       where: { id },
       data: updateData
     });
@@ -238,7 +241,7 @@ router.put('/:id', requireOrganizer, async (req: Request, res: Response) => {
       country: circuit.country,
       state: circuit.state,
       name: circuit.name,
-      type: circuit.type,
+      type: circuit.courseType,
       controlLineA: {
         lat: Number(circuit.controlLineALat),
         lng: Number(circuit.controlLineALng)
@@ -247,7 +250,7 @@ router.put('/:id', requireOrganizer, async (req: Request, res: Response) => {
         lat: Number(circuit.controlLineBLat),
         lng: Number(circuit.controlLineBLng)
       },
-      referenceLapTime: circuit.referenceLapTime,
+      referenceLapTime: circuit.referenceTime,
       description: circuit.description,
       isPublic: circuit.isPublic,
       createdAt: circuit.createdAt,
@@ -267,10 +270,10 @@ router.put('/:id', requireOrganizer, async (req: Request, res: Response) => {
  */
 router.delete('/:id', requireOrganizer, async (req: Request, res: Response) => {
   try {
-    const id = req.params.id;
+    const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
 
     // 既存サーキット取得
-    const existing = await prisma.circuit.findUnique({
+    const existing = await prisma.course.findUnique({
       where: { id }
     });
 
@@ -287,7 +290,7 @@ router.delete('/:id', requireOrganizer, async (req: Request, res: Response) => {
 
     // イベントで使用されているかチェック
     const eventsCount = await prisma.event.count({
-      where: { circuitId: id }
+      where: { courseId: id }
     });
 
     if (eventsCount > 0) {
@@ -296,7 +299,7 @@ router.delete('/:id', requireOrganizer, async (req: Request, res: Response) => {
     }
 
     // 削除実行
-    await prisma.circuit.delete({
+    await prisma.course.delete({
       where: { id }
     });
 

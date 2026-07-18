@@ -18,16 +18,16 @@ router.post('/event-login', async (req: Request, res: Response) => {
     const { eventCode, driverName, vehicle } = req.body as EventLoginRequest;
 
     // バリデーション
-    if (!eventCode || !driverName) {
-      res.status(400).json({ error: 'Event code and driver name are required' });
+    if (!eventCode || !driverName || !vehicle) {
+      res.status(400).json({ error: 'Event code, driver name, and vehicle are required' });
       return;
     }
 
-    // イベント検索（サーキット情報も含む）
+    // イベント検索（コース情報も含む）
     const event = await prisma.event.findUnique({
       where: { eventCode: eventCode.toUpperCase() },
       include: {
-        circuit: true
+        course: true
       }
     });
 
@@ -39,28 +39,28 @@ router.post('/event-login', async (req: Request, res: Response) => {
     // セッション作成
     req.session.eventId = event.id;
     req.session.driverName = driverName;
-    req.session.vehicle = vehicle || undefined;
+    req.session.vehicle = vehicle;
 
-    // レスポンス（サーキット情報を整形）
+    // レスポンス（コース情報を整形して circuit として返す - フロントエンドとの互換性維持）
     res.json({
       event: {
         id: event.id,
         name: event.name,
         eventDate: event.eventDate,
         circuit: {
-          id: event.circuit.id,
-          name: event.circuit.name,
-          country: event.circuit.country,
-          state: event.circuit.state,
+          id: event.course.id,
+          name: event.course.name,
+          country: event.course.country,
+          state: event.course.state,
           controlLineA: {
-            lat: Number(event.circuit.controlLineALat),
-            lng: Number(event.circuit.controlLineALng)
+            lat: Number(event.course.controlLineALat),
+            lng: Number(event.course.controlLineALng)
           },
           controlLineB: {
-            lat: Number(event.circuit.controlLineBLat),
-            lng: Number(event.circuit.controlLineBLng)
+            lat: Number(event.course.controlLineBLat),
+            lng: Number(event.course.controlLineBLng)
           },
-          referenceLapTime: event.circuit.referenceLapTime
+          referenceLapTime: event.course.referenceTime
         }
       },
       sessionId: req.sessionID
@@ -229,7 +229,7 @@ router.get('/session', async (req: Request, res: Response) => {
       // 参加者セッション
       const event = await prisma.event.findUnique({
         where: { id: req.session.eventId },
-        include: { circuit: true }
+        include: { course: true }
       });
 
       if (!event) {
@@ -242,7 +242,11 @@ router.get('/session', async (req: Request, res: Response) => {
         event: {
           id: event.id,
           name: event.name,
-          circuitName: event.circuit.name
+          courseId: event.courseId,
+          circuitId: event.courseId, // 後方互換（フロントのcircuitIdエイリアス）
+          circuitName: event.course.name,
+          course: event.course,
+          circuit: event.course, // 後方互換（フロントのcircuitエイリアス）
         },
         driverName: req.session.driverName,
         vehicle: req.session.vehicle

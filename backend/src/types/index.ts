@@ -1,7 +1,7 @@
 // GPS World Lap Time Counter - Type Definitions
-// Version: 2.0
+// Version: 2.2 (Multi-Sport Support)
 
-import { UserRole, CircuitType } from '@prisma/client';
+import { UserRole, CourseType, SportCategory } from '@prisma/client';
 
 // ========== ユーザー関連 ==========
 
@@ -21,14 +21,15 @@ export interface UserCreateInput {
   role?: UserRole;
 }
 
-// ========== サーキット関連 ==========
+// ========== コース関連（マルチスポーツ対応） ==========
 
-export interface Circuit {
+export interface Course {
   id: string;
   country: string;
   state: string | null;
   name: string;
-  type: CircuitType;
+  courseType: CourseType;
+  sportCategories: SportCategory[];
   controlLineA: {
     lat: number;
     lng: number;
@@ -37,7 +38,9 @@ export interface Circuit {
     lat: number;
     lng: number;
   };
-  referenceLapTime: number | null;
+  referenceTime: number | null;
+  courseLength: number | null;
+  elevationGain: number | null;
   description: string | null;
   isPublic: boolean;
   createdBy: string | null;
@@ -45,11 +48,12 @@ export interface Circuit {
   updatedAt: Date;
 }
 
-export interface CircuitCreateInput {
+export interface CourseCreateInput {
   country: string;
   state?: string;
   name: string;
-  type: CircuitType;
+  courseType: CourseType;
+  sportCategories: SportCategory[];
   controlLineA: {
     lat: number;
     lng: number;
@@ -58,17 +62,24 @@ export interface CircuitCreateInput {
     lat: number;
     lng: number;
   };
-  referenceLapTime?: number;
+  referenceTime?: number;
+  courseLength?: number;
+  elevationGain?: number;
   description?: string;
   isPublic?: boolean;
 }
 
-// ========== イベント関連 ==========
+// 後方互換性のための型エイリアス
+export type Circuit = Course;
+export type CircuitCreateInput = CourseCreateInput;
+
+// ========== イベント関連（マルチスポーツ対応） ==========
 
 export interface Event {
   id: string;
   name: string;
-  circuitId: string;
+  courseId: string;
+  sportCategory: SportCategory;
   eventDate: Date;
   eventCode: string;
   maxParticipants: number | null;
@@ -80,24 +91,26 @@ export interface Event {
 
 export interface EventCreateInput {
   name: string;
-  circuitId: string;
+  courseId: string;
+  sportCategory: SportCategory;
   eventDate: string | Date;
   maxParticipants?: number;
   isPublic?: boolean;
 }
 
-export interface EventWithCircuit extends Event {
-  circuit: Circuit;
+export interface EventWithCourse extends Event {
+  course: Course;
 }
 
-// ========== ラップ記録関連 ==========
+// ========== ラップ記録関連（マルチスポーツ対応） ==========
 
 export interface Lap {
   id: string;
   eventId: string;
   userId: string | null;
-  driverName: string;
-  vehicle: string | null;
+  participantName: string;
+  sportCategory: SportCategory;
+  vehicleOrGear: string | null;
   lapNumber: number;
   lapTimeMs: number;
   lapTimeStr: string;
@@ -131,7 +144,7 @@ export interface LoginRequest {
 export interface EventLoginRequest {
   eventCode: string;
   driverName: string;
-  vehicle?: string;
+  vehicle?: string; // 互換性のため残す（participantNameとして扱う）
 }
 
 export interface SessionData {

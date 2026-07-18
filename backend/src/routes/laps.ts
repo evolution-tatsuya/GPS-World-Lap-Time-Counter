@@ -38,8 +38,9 @@ router.post('/', requireSession, async (req: Request, res: Response) => {
       data: {
         eventId: req.session.eventId,
         userId: req.session.userId || undefined,
-        driverName: req.session.driverName,
-        vehicle: req.session.vehicle || undefined,
+        participantName: req.session.driverName,
+        vehicleOrGear: req.session.vehicle || undefined,
+        sportCategory: 'CAR', // デフォルトは車
         lapNumber,
         lapTimeMs,
         lapTimeStr
@@ -70,12 +71,12 @@ router.get('/', async (req: Request, res: Response) => {
       where: {
         ...(eventId && { eventId }),
         ...(userId && { userId }),
-        ...(driverName && { driverName })
+        ...(driverName && { participantName: driverName })
       },
       include: {
         event: {
           include: {
-            circuit: true
+            course: true
           }
         }
       },
@@ -108,7 +109,7 @@ router.get('/ranking', async (req: Request, res: Response) => {
     if (eventId) {
       whereClause.eventId = eventId;
     } else if (circuitId) {
-      whereClause.event = { circuitId };
+      whereClause.event = { courseId: circuitId };
     } else if (date) {
       const startOfDay = new Date(date);
       const endOfDay = new Date(date);
@@ -122,7 +123,7 @@ router.get('/ranking', async (req: Request, res: Response) => {
       include: {
         event: {
           include: {
-            circuit: true
+            course: true
           }
         }
       },
@@ -134,28 +135,28 @@ router.get('/ranking', async (req: Request, res: Response) => {
 
     for (const lap of laps) {
       // ユーザーIDがあればそれをキーに、なければドライバー名をキーに
-      const key = lap.userId || lap.driverName;
+      const key = lap.userId || lap.participantName;
 
       if (!bestByDriver.has(key)) {
         bestByDriver.set(key, {
-          driverName: lap.driverName,
-          vehicle: lap.vehicle,
+          driverName: lap.participantName,
+          vehicle: lap.vehicleOrGear,
           bestTime: lap.lapTimeStr,
           bestTimeMs: lap.lapTimeMs,
           eventName: lap.event.name,
-          circuitName: lap.event.circuit.name,
+          circuitName: lap.event.course.name,
           recordedAt: lap.recordedAt
         });
       } else {
         const current = bestByDriver.get(key);
         if (lap.lapTimeMs < current.bestTimeMs) {
           bestByDriver.set(key, {
-            driverName: lap.driverName,
-            vehicle: lap.vehicle,
+            driverName: lap.participantName,
+            vehicle: lap.vehicleOrGear,
             bestTime: lap.lapTimeStr,
             bestTimeMs: lap.lapTimeMs,
             eventName: lap.event.name,
-            circuitName: lap.event.circuit.name,
+            circuitName: lap.event.course.name,
             recordedAt: lap.recordedAt
           });
         }
@@ -173,6 +174,125 @@ router.get('/ranking', async (req: Request, res: Response) => {
     res.json(ranking);
   } catch (error) {
     console.error('Get ranking error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// ========== CSVエクスポート（運営者のみ） ==========
+
+/**
+ * GET /api/laps/export?eventId=xxx
+ * イベントの全ラップ記録をCSVで出力（運営者のみ）
+ * ドライバー別ベストタイム順に順位を付与し、全ラップを行として出力
+ */
+router.get('/export', requireOrganizer, async (req: Request, res: Response) => {
+  try {
+    const eventId = typeof req.query.eventId === 'string' ? req.query.eventId : undefined;
+
+    if (!eventId) {
+      res.status(400).json({ error: 'eventId is required' });
+      return;
+    }
+
+    // 対象イベント取得（権限チェック用）
+    const event = await prisma.event.findUnique({
+      where: { id: eventId },
+      include: { course: true },
+    });
+
+    if (!event) {
+      res.status(404).json({ error: 'Event not found' });
+      return;
+    }
+
+    // 権限チェック（イベント運営者またはADMIN）
+    if (event.organizerId !== req.session.userId && req.session.role !== 'ADMIN') {
+      res.status(403).json({ error: 'Forbidden: You can only export your own events' });
+      return;
+    }
+
+    // 全ラップ取得
+    const laps = await prisma.lap.findMany({
+      where: { eventId },
+      orderBy: { recordedAt: 'asc' },
+    });
+
+    // ドライバー別ベストタイムを算出して順位を付与
+    const bestMsByDriver = new Map<string, number>();
+    for (const lap of laps) {
+      const key = lap.userId || lap.participantName;
+      const current = bestMsByDriver.get(key);
+      if (current === undefined || lap.lapTimeMs < current) {
+        bestMsByDriver.set(key, lap.lapTimeMs);
+      }
+    }
+
+    // ベストタイム順で順位マップを作成
+    const rankByDriver = new Map<string, number>();
+    Array.from(bestMsByDriver.entries())
+      .sort((a, b) => a[1] - b[1])
+      .forEach(([key], index) => {
+        rankByDriver.set(key, index + 1);
+      });
+
+    // CSVフィールドのエスケープ（カンマ・改行・ダブルクォート対応）
+    const escapeCsv = (value: string | number | null | undefined): string => {
+      const str = value === null || value === undefined ? '' : String(value);
+      if (/[",\r\n]/.test(str)) {
+        return `"${str.replace(/"/g, '""')}"`;
+      }
+      return str;
+    };
+
+    // ヘッダー行
+    const header = [
+      '順位',
+      'ドライバー',
+      '車両/装備',
+      'ラップ番号',
+      'ラップタイム',
+      'ラップタイム(ms)',
+      'ベストラップか',
+      '記録日時',
+    ];
+
+    // データ行
+    const rows = laps.map((lap) => {
+      const key = lap.userId || lap.participantName;
+      const isBest = lap.lapTimeMs === bestMsByDriver.get(key);
+      return [
+        rankByDriver.get(key) ?? '',
+        lap.participantName,
+        lap.vehicleOrGear ?? '',
+        lap.lapNumber,
+        lap.lapTimeStr,
+        lap.lapTimeMs,
+        isBest ? '○' : '',
+        new Date(lap.recordedAt).toISOString(),
+      ];
+    });
+
+    const csvBody = [header, ...rows]
+      .map((row) => row.map(escapeCsv).join(','))
+      .join('\r\n');
+
+    // Excel(日本語環境)で文字化けしないようUTF-8 BOMを付与
+    const csv = '﻿' + csvBody;
+
+    // ファイル名（イベント名とコード。ASCII外は安全なファイル名に置換）
+    const safeName = `${event.name}_${event.eventCode}`
+      .replace(/[^\w\-]+/g, '_')
+      .slice(0, 80);
+    const filename = `laps_${safeName || eventId}.csv`;
+
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader(
+      'Content-Disposition',
+      `attachment; filename="${filename}"; filename*=UTF-8''${encodeURIComponent(filename)}`
+    );
+    res.send(csv);
+  } catch (error) {
+    console.error('Export laps error:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -196,12 +316,12 @@ router.get('/history', async (req: Request, res: Response) => {
     const laps = await prisma.lap.findMany({
       where: {
         ...(userId && { userId }),
-        ...(driverName && { driverName })
+        ...(driverName && { participantName: driverName })
       },
       include: {
         event: {
           include: {
-            circuit: true
+            course: true
           }
         }
       },
@@ -217,7 +337,7 @@ router.get('/history', async (req: Request, res: Response) => {
           eventId: lap.eventId,
           eventName: lap.event.name,
           eventDate: lap.event.eventDate,
-          circuitName: lap.event.circuit.name,
+          circuitName: lap.event.course.name,
           laps: [],
           bestLap: null
         });
@@ -258,7 +378,7 @@ router.get('/history', async (req: Request, res: Response) => {
  */
 router.delete('/:id', requireOrganizer, async (req: Request, res: Response) => {
   try {
-    const id = req.params.id;
+    const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
 
     // ラップ記録取得
     const lap = await prisma.lap.findUnique({
@@ -274,7 +394,7 @@ router.delete('/:id', requireOrganizer, async (req: Request, res: Response) => {
     }
 
     // 権限チェック（イベント運営者またはADMIN）
-    if (lap.event.organizerId !== req.session.userId && req.session.role !== 'ADMIN') {
+    if (lap.event?.organizerId !== req.session.userId && req.session.role !== 'ADMIN') {
       res.status(403).json({ error: 'Forbidden: You can only delete laps from your own events' });
       return;
     }
@@ -299,7 +419,7 @@ router.delete('/:id', requireOrganizer, async (req: Request, res: Response) => {
  */
 router.get('/best/:eventId', async (req: Request, res: Response) => {
   try {
-    const eventId = req.params.eventId;
+    const eventId = Array.isArray(req.params.eventId) ? req.params.eventId[0] : req.params.eventId;
 
     const bestLap = await prisma.lap.findFirst({
       where: { eventId },

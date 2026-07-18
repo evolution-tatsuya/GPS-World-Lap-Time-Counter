@@ -13,7 +13,7 @@ import {
 } from '@mui/material';
 import { useAuthStore } from '../stores/authStore';
 import { apiClient } from '../api/client';
-import { User } from '../types';
+import type { User } from '../types';
 
 export default function Login() {
   const navigate = useNavigate();

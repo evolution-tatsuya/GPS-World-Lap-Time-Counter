@@ -12,7 +12,7 @@ import {
 } from '@mui/material';
 import { useAuthStore } from '../stores/authStore';
 import { apiClient } from '../api/client';
-import { EventLoginResponse } from '../types';
+import type { EventLoginResponse } from '../types';
 
 export default function EventLogin() {
   const navigate = useNavigate();
@@ -61,11 +61,20 @@ export default function EventLogin() {
           fullWidth
           label="イベントコード"
           value={eventCode}
-          onChange={(e) => setEventCode(e.target.value)}
+          onChange={(e) => setEventCode(e.target.value.toUpperCase())}
           placeholder="ABC123"
           required
           sx={{ mb: 2 }}
-          inputProps={{ maxLength: 6, style: { textTransform: 'uppercase' } }}
+          inputProps={{
+            maxLength: 6,
+            autoCapitalize: 'characters',
+            autoComplete: 'off'
+          }}
+          slotProps={{
+            htmlInput: {
+              style: { textTransform: 'uppercase' }
+            }
+          }}
         />
 
         <TextField
@@ -79,10 +88,11 @@ export default function EventLogin() {
 
         <TextField
           fullWidth
-          label="車両名（任意）"
+          label="車両名"
           value={vehicle}
           onChange={(e) => setVehicle(e.target.value)}
           placeholder="例: FD2 CIVIC TYPE R"
+          required
           sx={{ mb: 3 }}
         />
 
@@ -91,7 +101,7 @@ export default function EventLogin() {
           fullWidth
           variant="contained"
           size="large"
-          disabled={loading || !eventCode || !driverName}
+          disabled={loading || !eventCode || !driverName || !vehicle}
         >
           {loading ? '接続中...' : 'イベントに参加'}
         </Button>
