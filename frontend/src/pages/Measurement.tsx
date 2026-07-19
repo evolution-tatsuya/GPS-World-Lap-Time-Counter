@@ -47,19 +47,67 @@ export default function Measurement() {
   // 片道モード切替（ON=片道／同一方向の通過のみ、OFF=往復・周回）
   const [oneWay, setOneWay] = useState(false);
 
+  // 現在地を主催者と共有するか（計測とは独立。参加者自身の意思でON/OFF）
+  const [sharing, setSharing] = useState(false);
+  const [shareStatus, setShareStatus] = useState<string>('');
+
   // 位置共有の送信スロットル用（最後に送った時刻）
   const lastPositionSentRef = useRef(0);
 
   // 位置更新のたびに呼ばれる。一定間隔に間引いて主催者へ送信する。
   // 開催時間外はサーバー側が拒否する（フロントは常に送ってよい）。
-  const handlePosition = (pos: GPSPosition) => {
+  const sendThrottledPosition = (lat: number, lng: number, accuracy?: number) => {
     const now = Date.now();
     if (now - lastPositionSentRef.current < POSITION_SEND_INTERVAL_MS) return;
     lastPositionSentRef.current = now;
-    sendPosition({ lat: pos.lat, lng: pos.lng, accuracy: pos.accuracy }).catch(() => {
-      // 送信失敗（開催時間外403や一時的な通信断）は握りつぶす。計測は続行。
+    sendPosition({ lat, lng, accuracy }).catch(() => {
+      // 送信失敗（開催時間外403や一時的な通信断）は握りつぶす。
     });
   };
+
+  // 計測フックからの位置更新（計測中のみ発火）
+  const handlePosition = (pos: GPSPosition) => {
+    // 独立した共有ボタンがONのときだけ送る（計測=常時共有ではない）
+    if (sharing) {
+      sendThrottledPosition(pos.lat, pos.lng, pos.accuracy);
+    }
+  };
+
+  // 共有トグルがONの間、計測とは独立してGPSを監視し位置を送信する。
+  // これにより「計測していない待機中」でも参加者の意思で共有できる。
+  useEffect(() => {
+    if (!sharing) {
+      setShareStatus('');
+      return;
+    }
+    if (!('geolocation' in navigator)) {
+      setShareStatus('この端末は位置情報に対応していません');
+      setSharing(false);
+      return;
+    }
+    setShareStatus('現在地を共有中…');
+    const watchId = navigator.geolocation.watchPosition(
+      (position) => {
+        sendThrottledPosition(
+          position.coords.latitude,
+          position.coords.longitude,
+          position.coords.accuracy
+        );
+        setShareStatus(`現在地を共有中（精度±${Math.round(position.coords.accuracy)}m）`);
+      },
+      (err) => {
+        setShareStatus(
+          err.code === err.PERMISSION_DENIED
+            ? '位置情報が許可されていません。共有を停止しました'
+            : '位置情報を取得できませんでした'
+        );
+        setSharing(false);
+      },
+      { enableHighAccuracy: true, maximumAge: 0, timeout: 15000 }
+    );
+    return () => navigator.geolocation.clearWatch(watchId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sharing]);
 
   // 認証チェック
   useEffect(() => {
@@ -162,12 +210,42 @@ export default function Measurement() {
         {gpsStatus}
       </Alert>
 
-      {/* 位置共有中の明示（計測中のみ・プライバシー配慮） */}
-      {running && (
-        <Alert icon={<MyLocation fontSize="inherit" />} severity="info" sx={{ mb: 2 }}>
-          計測中は主催者に現在地を共有しています（イベント開催時間内のみ）。
-        </Alert>
-      )}
+      {/* 現在地の共有（計測とは独立。参加者自身の意思でON/OFF） */}
+      <Paper variant="outlined" sx={{ p: 2, mb: 2 }}>
+        <Box
+          sx={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            gap: 1,
+            flexWrap: 'wrap',
+          }}
+        >
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <MyLocation color={sharing ? 'primary' : 'disabled'} />
+            <Box>
+              <Typography variant="body2" fontWeight="medium">
+                現在地を主催者と共有
+              </Typography>
+              <Typography variant="caption" color="text.secondary">
+                {sharing
+                  ? shareStatus || '現在地を共有中…'
+                  : 'OFFの間は主催者に位置は送られません'}
+              </Typography>
+            </Box>
+          </Box>
+          <Switch
+            checked={sharing}
+            onChange={(e) => setSharing(e.target.checked)}
+            color="primary"
+          />
+        </Box>
+        {sharing && (
+          <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1 }}>
+            ※ イベント開催時間内のみ主催者に表示されます。時間外は送られません。
+          </Typography>
+        )}
+      </Paper>
 
       {/* 計測モード切替 */}
       <Box
