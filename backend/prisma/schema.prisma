@@ -83,6 +83,10 @@ model Event {
   courseId        String        @map("course_id")
   sportCategory   SportCategory @map("sport_category") // イベント対象スポーツカテゴリ
   eventDate       DateTime      @map("event_date") @db.Date
+  // 開催時間帯。位置共有はこの時間内のみ許可される（時間外は送受信を遮断）。
+  // 未設定の場合は eventDate 当日を開催日として扱う（後方互換）。
+  startAt         DateTime?     @map("start_at")
+  endAt           DateTime?     @map("end_at")
   eventCode       String        @unique @map("event_code") // 6桁コード (例: ABC123)
   maxParticipants Int?          @map("max_participants")
   isPublic        Boolean       @default(true) @map("is_public")

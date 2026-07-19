@@ -10,6 +10,7 @@ interface UseGPSOptions {
   minLapTime: number; // 最小ラップタイム（秒）
   oneWay?: boolean; // 片道計測モード（デフォルト: false）
   onLap?: (lap: LapData) => void; // ラップ完了時のコールバック
+  onPosition?: (pos: GPSPosition) => void; // 位置更新時のコールバック（位置共有用）
   simulationMode?: boolean; // シミュレーションモード（開発用）
 }
 
@@ -112,6 +113,11 @@ export function useGPS(options: UseGPSOptions): UseGPSReturn {
           timestamp: Date.now(),
           accuracy: 5,
         };
+
+        // 位置更新コールバック（位置共有用・シミュレーションでも動作させる）
+        if (options.onPosition) {
+          options.onPosition(pt);
+        }
 
         // 前回の位置がある場合、線分交差判定
         if (prevPtRef.current) {
@@ -220,6 +226,11 @@ export function useGPS(options: UseGPSOptions): UseGPSReturn {
           setGpsStatus(`GPS OK  精度±${Math.round(position.coords.accuracy)}m`);
         } else {
           setGpsStatus(`GPS精度低下  ±${Math.round(position.coords.accuracy)}m`);
+        }
+
+        // 位置更新コールバック（位置共有用）
+        if (options.onPosition) {
+          options.onPosition(pt);
         }
 
         // 前回の位置がある場合、線分交差判定

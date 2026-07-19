@@ -1,6 +1,6 @@
 // GPS計測画面
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Container,
@@ -21,12 +21,17 @@ import {
   Stop,
   Refresh,
   Logout,
+  MyLocation,
 } from '@mui/icons-material';
 import { useAuthStore } from '../stores/authStore';
 import { useGPS } from '../hooks/useGPS';
 import { formatLapTime } from '../utils/gpsUtils';
 import { createLap } from '../api/laps';
-import type { LapData } from '../types';
+import { sendPosition } from '../api/positions';
+import type { LapData, GPSPosition } from '../types';
+
+// 位置共有の送信間隔（ミリ秒）。GPSは頻繁に更新されるため間引く。
+const POSITION_SEND_INTERVAL_MS = 5000;
 
 // シミュレーションモードの既定値。
 // 本番では実GPSを使うため false。開発時は VITE_GPS_SIMULATION=true で切替可能。
@@ -41,6 +46,20 @@ export default function Measurement() {
   const [simulationMode, setSimulationMode] = useState(DEFAULT_SIMULATION);
   // 片道モード切替（ON=片道／同一方向の通過のみ、OFF=往復・周回）
   const [oneWay, setOneWay] = useState(false);
+
+  // 位置共有の送信スロットル用（最後に送った時刻）
+  const lastPositionSentRef = useRef(0);
+
+  // 位置更新のたびに呼ばれる。一定間隔に間引いて主催者へ送信する。
+  // 開催時間外はサーバー側が拒否する（フロントは常に送ってよい）。
+  const handlePosition = (pos: GPSPosition) => {
+    const now = Date.now();
+    if (now - lastPositionSentRef.current < POSITION_SEND_INTERVAL_MS) return;
+    lastPositionSentRef.current = now;
+    sendPosition({ lat: pos.lat, lng: pos.lng, accuracy: pos.accuracy }).catch(() => {
+      // 送信失敗（開催時間外403や一時的な通信断）は握りつぶす。計測は続行。
+    });
+  };
 
   // 認証チェック
   useEffect(() => {
@@ -92,6 +111,7 @@ export default function Measurement() {
     minLapTime: (course.referenceTime || course.referenceLapTime || 30000) / 1000, // ミリ秒→秒に変換
     simulationMode, // 実GPS計測 or シミュレーション（画面上のトグルで切替）
     oneWay, // 片道モード（同一方向の通過のみカウント）
+    onPosition: handlePosition, // 位置共有（主催者へ送信）
     onLap: async (lap: LapData) => {
       // ラップ記録をサーバーに送信
       try {
@@ -141,6 +161,13 @@ export default function Measurement() {
       >
         {gpsStatus}
       </Alert>
+
+      {/* 位置共有中の明示（計測中のみ・プライバシー配慮） */}
+      {running && (
+        <Alert icon={<MyLocation fontSize="inherit" />} severity="info" sx={{ mb: 2 }}>
+          計測中は主催者に現在地を共有しています（イベント開催時間内のみ）。
+        </Alert>
+      )}
 
       {/* 計測モード切替 */}
       <Box

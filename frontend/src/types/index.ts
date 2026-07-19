@@ -116,6 +116,8 @@ export interface Event {
   circuitId: string; // 後方互換性のため（courseIdのエイリアス）
   sportCategory: SportCategory;
   eventDate: Date;
+  startAt: Date | null;
+  endAt: Date | null;
   eventCode: string;
   maxParticipants: number | null;
   isPublic: boolean;

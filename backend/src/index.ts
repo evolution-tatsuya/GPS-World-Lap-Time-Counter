@@ -15,6 +15,7 @@ import authRoutes from './routes/auth';
 import circuitRoutes from './routes/circuits';
 import eventRoutes from './routes/events';
 import lapRoutes from './routes/laps';
+import positionRoutes from './routes/positions';
 
 // 環境変数読み込み
 dotenv.config();
@@ -72,6 +73,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/circuits', circuitRoutes);
 app.use('/api/events', eventRoutes);
 app.use('/api/laps', lapRoutes);
+app.use('/api/positions', positionRoutes);
 
 // ========== エラーハンドリング ==========
 

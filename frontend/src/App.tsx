@@ -14,6 +14,7 @@ import Measurement from './pages/Measurement';
 import Ranking from './pages/Ranking';
 import Dashboard from './pages/Dashboard';
 import EventDetail from './pages/EventDetail';
+import LiveMap from './pages/LiveMap';
 import CircuitDetail from './pages/CircuitDetail';
 import EventCreate from './pages/EventCreate';
 import CircuitCreate from './pages/CircuitCreate';
@@ -82,6 +83,7 @@ function App() {
 
             {/* 詳細ページ */}
             <Route path="/events/:id" element={<EventDetail />} />
+            <Route path="/events/:id/live-map" element={<LiveMap />} />
             <Route path="/circuits/:id" element={<CircuitDetail />} />
 
             {/* 作成ページ */}

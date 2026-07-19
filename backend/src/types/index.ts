@@ -81,6 +81,8 @@ export interface Event {
   courseId: string;
   sportCategory: SportCategory;
   eventDate: Date;
+  startAt: Date | null;
+  endAt: Date | null;
   eventCode: string;
   maxParticipants: number | null;
   isPublic: boolean;

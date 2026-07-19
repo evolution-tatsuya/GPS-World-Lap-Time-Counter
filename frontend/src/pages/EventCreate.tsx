@@ -27,6 +27,8 @@ export default function EventCreate() {
   const [courseId, setCourseId] = useState('');
   const [sportCategory, setSportCategory] = useState<'CAR' | 'MOTORCYCLE' | 'RUNNING' | 'BICYCLE'>('CAR');
   const [eventDate, setEventDate] = useState('');
+  const [startAt, setStartAt] = useState('');
+  const [endAt, setEndAt] = useState('');
   const [maxParticipants, setMaxParticipants] = useState<number | ''>('');
   const [isPublic, setIsPublic] = useState(true);
   const [courses, setCourses] = useState<Course[]>([]);
@@ -57,11 +59,17 @@ export default function EventCreate() {
     setLoading(true);
 
     try {
+      // 開催時間帯（任意）。ローカル時刻の datetime-local を ISO に変換して送る。
+      const startAtIso = startAt ? new Date(startAt).toISOString() : undefined;
+      const endAtIso = endAt ? new Date(endAt).toISOString() : undefined;
+
       const response = await apiClient.post('/events', {
         name,
         courseId,
         sportCategory,
         eventDate,
+        startAt: startAtIso,
+        endAt: endAtIso,
         maxParticipants: maxParticipants || null,
         isPublic,
       });
@@ -146,6 +154,32 @@ export default function EventCreate() {
             sx={{ mb: 2 }}
             InputLabelProps={{ shrink: true }}
           />
+
+          {/* 位置共有の許可時間帯。この時間内のみ主催者は参加者の現在地を見られる。 */}
+          <Alert severity="info" sx={{ mb: 2 }}>
+            開催時間帯を設定すると、その時間内のみ参加者の現在地を主催者が
+            確認できます（時間外は一切表示されません）。未設定の場合は開催日
+            当日のみ有効になります。
+          </Alert>
+
+          <Box sx={{ display: 'flex', gap: 2, mb: 2, flexWrap: 'wrap' }}>
+            <TextField
+              type="datetime-local"
+              label="開催開始（任意）"
+              value={startAt}
+              onChange={(e) => setStartAt(e.target.value)}
+              InputLabelProps={{ shrink: true }}
+              sx={{ flex: 1, minWidth: 200 }}
+            />
+            <TextField
+              type="datetime-local"
+              label="開催終了（任意）"
+              value={endAt}
+              onChange={(e) => setEndAt(e.target.value)}
+              InputLabelProps={{ shrink: true }}
+              sx={{ flex: 1, minWidth: 200 }}
+            />
+          </Box>
 
           <TextField
             fullWidth

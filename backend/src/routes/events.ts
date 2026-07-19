@@ -139,13 +139,29 @@ router.post('/', requireOrganizer, async (req: Request, res: Response) => {
       name,
       courseId,
       eventDate,
+      startAt,
+      endAt,
       maxParticipants,
       isPublic
-    } = req.body as { name: string; courseId: string; eventDate: string; maxParticipants?: number; isPublic?: boolean };
+    } = req.body as {
+      name: string;
+      courseId: string;
+      eventDate: string;
+      startAt?: string;
+      endAt?: string;
+      maxParticipants?: number;
+      isPublic?: boolean;
+    };
 
     // バリデーション
     if (!name || !courseId || !eventDate) {
       res.status(400).json({ error: 'Required fields are missing' });
+      return;
+    }
+
+    // 開催時間帯の妥当性チェック（両方指定時は開始 < 終了）
+    if (startAt && endAt && new Date(startAt).getTime() >= new Date(endAt).getTime()) {
+      res.status(400).json({ error: 'startAt must be before endAt' });
       return;
     }
 
@@ -169,6 +185,8 @@ router.post('/', requireOrganizer, async (req: Request, res: Response) => {
         courseId,
         sportCategory: 'CAR', // デフォルトは車
         eventDate: new Date(eventDate),
+        startAt: startAt ? new Date(startAt) : null,
+        endAt: endAt ? new Date(endAt) : null,
         eventCode,
         maxParticipants: maxParticipants || null,
         isPublic: isPublic !== undefined ? isPublic : true,

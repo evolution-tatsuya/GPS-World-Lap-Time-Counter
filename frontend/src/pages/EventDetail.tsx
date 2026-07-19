@@ -24,6 +24,7 @@ import {
   People,
   Download,
   EmojiEvents,
+  MyLocation,
 } from '@mui/icons-material';
 import { getEvent } from '../api/events';
 import { exportEventLapsCsv } from '../api/laps';
@@ -297,6 +298,13 @@ export default function EventDetail() {
                 disabled={exporting}
               >
                 {exporting ? '出力中...' : '結果をCSVダウンロード'}
+              </Button>
+              <Button
+                variant="outlined"
+                startIcon={<MyLocation />}
+                onClick={() => navigate(`/events/${id}/live-map`)}
+              >
+                参加者の現在地を見る
               </Button>
             </Box>
           </Paper>
