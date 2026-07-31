@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>T-EVOLUTION GPS LAP TIMER</title>
+<style>
+  :root{
+    --bg:#131313; --panel:#1d1d1d; --line:#333;
+    --red:#E10600; --white:#f5f5f5; --gray:#9a9a9a; --green:#2ecc71;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  body{background:var(--bg);color:var(--white);font-family:'Bahnschrift','Yu Gothic UI','Hiragino Kaku Gothic ProN',sans-serif;min-height:100vh}
+  header{padding:14px 16px 10px;border-bottom:2px solid var(--red);display:flex;align-items:baseline;gap:10px}
+  header h1{font-size:18px;letter-spacing:2px;font-style:italic}
+  header h1 span{color:var(--red)}
+  header small{color:var(--gray);font-size:11px}
+  nav{display:flex;border-bottom:1px solid var(--line)}
+  nav button{flex:1;padding:12px 0;background:none;border:none;color:var(--gray);font-size:14px;font-weight:bold;letter-spacing:1px}
+  nav button.active{color:var(--white);border-bottom:3px solid var(--red)}
+  .tab{display:none;padding:16px}
+  .tab.active{display:block}
+
+  /* ===== 計測タブ ===== */
+  #gpsStatus{font-size:12px;color:var(--gray);text-align:center;margin-bottom:8px}
+  #gpsStatus.ok{color:var(--green)}
+  .timerBox{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:18px 10px;text-align:center;margin-bottom:12px}
+  #curLap{font-size:15vw;font-weight:bold;font-variant-numeric:tabular-nums;line-height:1.1}
+  .timerBox .lbl{font-size:11px;color:var(--gray);letter-spacing:2px}
+  .row2{display:flex;gap:10px;margin-bottom:12px}
+  .cell{flex:1;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:10px;text-align:center}
+  .cell .lbl{font-size:10px;color:var(--gray);letter-spacing:1px}
+  .cell .val{font-size:22px;font-weight:bold;font-variant-numeric:tabular-nums}
+  #bestLap{color:var(--red)}
+  .bigBtn{width:100%;padding:16px;font-size:18px;font-weight:bold;border:none;border-radius:8px;letter-spacing:2px}
+  #startBtn{background:var(--red);color:#fff}
+  #startBtn.running{background:#444;color:#ddd}
+  #lapList{margin-top:14px;font-size:14px}
+  #lapList table{width:100%;border-collapse:collapse}
+  #lapList td{padding:6px 8px;border-bottom:1px solid var(--line);font-variant-numeric:tabular-nums}
+  #lapList td:last-child{text-align:right}
+  #lapList tr.best td{color:var(--red);font-weight:bold}
+  .note{font-size:11px;color:var(--gray);margin-top:10px;line-height:1.6}
+
+  /* ===== 設定タブ ===== */
+  .field{margin-bottom:14px}
+  .field label{display:block;font-size:12px;color:var(--gray);margin-bottom:4px;letter-spacing:1px}
+  .field input[type=text],.field input[type=number],.field input[type=url]{
+    width:100%;padding:10px;background:#0d0d0d;border:1px solid var(--line);border-radius:6px;color:var(--white);font-size:15px}
+  .lineRow{display:flex;gap:8px;align-items:center;margin-bottom:8px}
+  .lineRow input{flex:1;padding:8px;background:#0d0d0d;border:1px solid var(--line);border-radius:6px;color:var(--white);font-size:13px}
+  .miniBtn{padding:9px 12px;background:#2a2a2a;border:1px solid var(--line);border-radius:6px;color:var(--white);font-size:12px;white-space:nowrap}
+  .saveBtn{width:100%;padding:14px;background:var(--red);color:#fff;border:none;border-radius:8px;font-size:16px;font-weight:bold;letter-spacing:2px;margin-top:6px}
+  .chk{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--white);margin-bottom:14px}
+  #saveMsg{color:var(--green);font-size:13px;text-align:center;margin-top:8px;height:16px}
+
+  /* ===== ランキングタブ ===== */
+  #rankBody td{padding:9px 8px;border-bottom:1px solid var(--line);font-size:14px;font-variant-numeric:tabular-nums}
+  #rankBody tr:first-child td{color:var(--red);font-weight:bold;font-size:16px}
+  #rankTable{width:100%;border-collapse:collapse}
+  #rankTable th{font-size:11px;color:var(--gray);text-align:left;padding:6px 8px;letter-spacing:1px}
+  .refreshBtn{width:100%;padding:12px;background:#2a2a2a;border:1px solid var(--line);border-radius:8px;color:var(--white);font-size:14px;margin-bottom:12px}
+</style>
+</head>
+<body>
+<header>
+  <h1>GPS <span>LAP TIMER</span></h1>
+  <small>T.E.A.M. T-EVOLUTION</small>
+</header>
+<nav>
+  <button class="active" onclick="showTab(0,this)">計測</button>
+  <button onclick="showTab(1,this)">設定</button>
+  <button onclick="showTab(2,this)">ランキング</button>
+</nav>
+
+<!-- ===== 計測 ===== -->
+<div class="tab active" id="tab0">
+  <div id="gpsStatus">GPS 未接続</div>
+  <div class="timerBox">
+    <div class="lbl">CURRENT LAP</div>
+    <div id="curLap">--:--.-</div>
+  </div>
+  <div class="row2">
+    <div class="cell"><div class="lbl">LAST</div><div class="val" id="lastLap">--:--.---</div></div>
+    <div class="cell"><div class="lbl">BEST</div><div class="val" id="bestLap">--:--.---</div></div>
+  </div>
+  <button class="bigBtn" id="startBtn" onclick="toggleRun()">計測スタート</button>
+  <div id="lapList"><table><tbody id="lapBody"></tbody></table></div>
+  <div class="note">
+    ・画面は自動で点灯維持されます（対応端末）。走行中は画面を消さないでください<br>
+    ・コントロールライン通過で自動計測。1周目はタイム基準の取得に使われます<br>
+    ・ラップは自動でスプレッドシートに送信されます
+  </div>
+</div>
+
+<!-- ===== 設定 ===== -->
+<div class="tab" id="tab1">
+  <div class="field"><label>ドライバー名 *</label><input type="text" id="cfgName" placeholder="例：安福"></div>
+  <div class="field"><label>車両</label><input type="text" id="cfgCar" placeholder="例：FD2 CIVIC TYPE R"></div>
+  <div class="field"><label>送信先URL（GASデプロイURL）*</label><input type="url" id="cfgGas" placeholder="https://script.google.com/macros/s/…/exec"></div>
+
+  <div class="field">
+    <label>コントロールライン（コースを横切る2点）</label>
+    <div class="lineRow">
+      <input type="text" id="ptA" placeholder="A点 lat,lng" readonly>
+      <button class="miniBtn" onclick="capture('A')">A点=現在地</button>
+    </div>
+    <div class="lineRow">
+      <input type="text" id="ptB" placeholder="B点 lat,lng" readonly>
+      <button class="miniBtn" onclick="capture('B')">B点=現在地</button>
+    </div>
+    <div class="note">コントロールラインの両端（コース左端・右端の外側）にそれぞれ立って取得してください。手入力する場合は「34.123456,135.123456」形式で直接編集も可能です。</div>
+  </div>
+
+  <div class="field"><label>最小ラップタイム（秒）※これ未満は誤検知として無視</label><input type="number" id="cfgMinLap" value="30"></div>
+  <label class="chk"><input type="checkbox" id="cfgOneWay" checked>逆方向の通過を無視する</label>
+
+  <button class="saveBtn" onclick="saveCfg()">設定を保存</button>
+  <div id="saveMsg"></div>
+</div>
+
+<!-- ===== ランキング ===== -->
+<div class="tab" id="tab2">
+  <button class="refreshBtn" onclick="loadRank()">最新のランキングを取得</button>
+  <table id="rankTable">
+    <thead><tr><th>POS</th><th>ドライバー</th><th>車両</th><th>BEST</th></tr></thead>
+    <tbody id="rankBody"></tbody>
+  </table>
+</div>
+
+<script>
+/* ============================================================
+   T-EVOLUTION GPS LAP TIMER  (Phase 1 / 内蔵GPS 1Hz)
+   計測ロジック: 連続する2つのGPS点の線分と、コントロール
+   ラインAB線分の交差判定 + 時刻線形補間でライン通過時刻を算出
+============================================================ */
+let cfg = {name:'', car:'', gas:'', A:null, B:null, minLap:30, oneWay:true};
+let running=false, watchId=null, wakeLock=null;
+let prevPt=null, lastCrossT=null, lapNo=0, bestMs=null, firstSign=null;
+let rafId=null, pendingQueue=[];
+
+/* ---------- タブ ---------- */
+function showTab(i,btn){
+  document.querySelectorAll('.tab').forEach((t,k)=>t.classList.toggle('active',k===i));
+  document.querySelectorAll('nav button').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+/* ---------- 設定の保存/読込 ---------- */
+function loadCfg(){
+  try{
+    const s=localStorage.getItem('lapCfg');
+    if(s){cfg=JSON.parse(s);}
+  }catch(e){}
+  cfgName.value=cfg.name||''; cfgCar.value=cfg.car||''; cfgGas.value=cfg.gas||'';
+  ptA.value=cfg.A?cfg.A.join(','):''; ptB.value=cfg.B?cfg.B.join(','):'';
+  cfgMinLap.value=cfg.minLap||30; cfgOneWay.checked=cfg.oneWay!==false;
+  ptA.readOnly=false; ptB.readOnly=false;
+}
+function saveCfg(){
+  cfg.name=cfgName.value.trim(); cfg.car=cfgCar.value.trim(); cfg.gas=cfgGas.value.trim();
+  cfg.A=parsePt(ptA.value); cfg.B=parsePt(ptB.value);
+  cfg.minLap=parseFloat(cfgMinLap.value)||30; cfg.oneWay=cfgOneWay.checked;
+  try{localStorage.setItem('lapCfg',JSON.stringify(cfg));}catch(e){}
+  saveMsg.textContent='保存しました';
+  setTimeout(()=>saveMsg.textContent='',2000);
+}
+function parsePt(s){
+  const m=s.split(',').map(x=>parseFloat(x.trim()));
+  return (m.length===2 && !isNaN(m[0]) && !isNaN(m[1]))?m:null;
+}
+function capture(which){
+  navigator.geolocation.getCurrentPosition(p=>{
+    const v=[p.coords.latitude.toFixed(7), p.coords.longitude.toFixed(7)];
+    if(which==='A') ptA.value=v.join(','); else ptB.value=v.join(',');
+  },e=>alert('位置取得失敗: '+e.message),{enableHighAccuracy:true,timeout:10000});
+}
+
+/* ---------- 計測開始/停止 ---------- */
+async function toggleRun(){
+  if(!running){
+    if(!cfg.name||!cfg.A||!cfg.B){alert('設定タブでドライバー名とコントロールラインを設定してください');return;}
+    running=true; prevPt=null; lastCrossT=null; lapNo=0; firstSign=null;
+    startBtn.textContent='計測ストップ'; startBtn.classList.add('running');
+    watchId=navigator.geolocation.watchPosition(onPos,onErr,{enableHighAccuracy:true,maximumAge:0,timeout:15000});
+    try{wakeLock=await navigator.wakeLock.request('screen');}catch(e){}
+    tick();
+  }else{
+    running=false;
+    if(watchId!==null) navigator.geolocation.clearWatch(watchId);
+    if(wakeLock){wakeLock.release();wakeLock=null;}
+    cancelAnimationFrame(rafId);
+    startBtn.textContent='計測スタート'; startBtn.classList.remove('running');
+    gpsStatus.textContent='GPS 停止'; gpsStatus.classList.remove('ok');
+  }
+}
+function onErr(e){gpsStatus.textContent='GPSエラー: '+e.message; gpsStatus.classList.remove('ok');}
+
+/* ---------- GPS点の処理 ---------- */
+function onPos(p){
+  const pt={lat:p.coords.latitude,lng:p.coords.longitude,t:p.timestamp};
+  gpsStatus.textContent=`GPS OK  精度±${Math.round(p.coords.accuracy)}m`;
+  gpsStatus.classList.add('ok');
+  if(prevPt){
+    const hit=crossCheck(prevPt,pt,cfg.A,cfg.B);
+    if(hit){
+      // 方向フィルタ
+      if(cfg.oneWay){
+        if(firstSign===null) firstSign=hit.sign;
+        else if(hit.sign!==firstSign){prevPt=pt;return;}
+      }
+      const crossT=prevPt.t + hit.u*(pt.t-prevPt.t); // 補間した通過時刻(ms)
+      if(lastCrossT===null){
+        lastCrossT=crossT; // 1回目=計測基準
+      }else{
+        const lapMs=crossT-lastCrossT;
+        if(lapMs>=cfg.minLap*1000){
+          lastCrossT=crossT; lapNo++;
+          registerLap(lapNo,lapMs);
+        }
+      }
+    }
+  }
+  prevPt=pt;
+}
+
+/* 線分交差判定: 走行線分P1P2 × コントロールラインAB
+   戻り値: 交差なし=null / 交差あり={u:P1P2上の交点位置0-1, sign:通過方向} */
+function crossCheck(p1,p2,A,B){
+  // 緯度経度→ローカル平面(m)近似
+  const lat0=A[0]*Math.PI/180, kx=111320*Math.cos(lat0), ky=110540;
+  const x1=(p1.lng-A[1])*kx, y1=(p1.lat-A[0])*ky;
+  const x2=(p2.lng-A[1])*kx, y2=(p2.lat-A[0])*ky;
+  const x3=0, y3=0;
+  const x4=(B[1]-A[1])*kx, y4=(B[0]-A[0])*ky;
+  const d=(x2-x1)*(y4-y3)-(y2-y1)*(x4-x3);
+  if(Math.abs(d)<1e-9) return null;
+  const u=((x3-x1)*(y4-y3)-(y3-y1)*(x4-x3))/d;   // 走行線分上
+  const v=((x3-x1)*(y2-y1)-(y3-y1)*(x2-x1))/d;   // AB線分上
+  if(u<0||u>1||v<0||v>1) return null;
+  const sign=((x2-x1)*(y4-y3)-(y2-y1)*(x4-x3))>0?1:-1;
+  return {u,sign};
+}
+
+/* ---------- ラップ確定 ---------- */
+function registerLap(no,ms){
+  lastLap.textContent=fmt(ms);
+  if(bestMs===null||ms<bestMs){bestMs=ms;bestLap.textContent=fmt(ms);}
+  const tr=document.createElement('tr');
+  if(ms===bestMs) tr.className='best';
+  tr.innerHTML=`<td>LAP ${no}</td><td>${fmt(ms)}</td>`;
+  lapBody.insertBefore(tr,lapBody.firstChild);
+  // ベスト更新時、既存行のbest表示を整理
+  [...lapBody.rows].forEach(r=>{if(r!==tr)r.classList.remove('best');
+    if(r.cells[1].textContent===fmt(bestMs))r.classList.add('best');});
+  sendLap(no,ms);
+}
+
+/* ---------- スプレッドシート送信 ---------- */
+function sendLap(no,ms){
+  if(!cfg.gas) return;
+  const body=new URLSearchParams({
+    name:cfg.name, car:cfg.car, lap:no,
+    time_ms:Math.round(ms), time_str:fmt(ms)
+  });
+  fetch(cfg.gas,{method:'POST',mode:'no-cors',
+    headers:{'Content-Type':'application/x-www-form-urlencoded'},body})
+  .catch(()=>{pendingQueue.push(body); /* 電波復帰時に再送 */});
+  retryQueue();
+}
+function retryQueue(){
+  if(!pendingQueue.length||!cfg.gas) return;
+  const q=[...pendingQueue]; pendingQueue=[];
+  q.forEach(b=>fetch(cfg.gas,{method:'POST',mode:'no-cors',
+    headers:{'Content-Type':'application/x-www-form-urlencoded'},body:b})
+    .catch(()=>pendingQueue.push(b)));
+}
+
+/* ---------- 走行中タイマー表示 ---------- */
+function tick(){
+  if(!running) return;
+  if(lastCrossT!==null){
+    const ms=Date.now()-lastCrossT;
+    curLap.textContent=fmtShort(ms);
+  }else{
+    curLap.textContent='待機中';
+  }
+  rafId=requestAnimationFrame(tick);
+}
+
+/* ---------- ランキング ---------- */
+async function loadRank(){
+  if(!cfg.gas){alert('設定タブで送信先URLを設定してください');return;}
+  rankBody.innerHTML='<tr><td colspan="4">読込中…</td></tr>';
+  try{
+    const r=await fetch(cfg.gas+'?mode=ranking');
+    const list=await r.json();
+    rankBody.innerHTML='';
+    list.forEach((row,i)=>{
+      const tr=document.createElement('tr');
+      tr.innerHTML=`<td>${i+1}</td><td>${esc(row.name)}</td><td>${esc(row.car)}</td><td>${esc(row.best)}</td>`;
+      rankBody.appendChild(tr);
+    });
+    if(!list.length) rankBody.innerHTML='<tr><td colspan="4">まだ記録がありません</td></tr>';
+  }catch(e){
+    rankBody.innerHTML='<tr><td colspan="4">取得失敗。URL/デプロイ設定を確認してください</td></tr>';
+  }
+}
+
+/* ---------- ユーティリティ ---------- */
+function fmt(ms){
+  const m=Math.floor(ms/60000), s=Math.floor(ms%60000/1000), x=Math.round(ms%1000);
+  return `${m}:${String(s).padStart(2,'0')}.${String(x).padStart(3,'0')}`;
+}
+function fmtShort(ms){
+  const m=Math.floor(ms/60000), s=Math.floor(ms%60000/1000), x=Math.floor(ms%1000/100);
+  return `${m}:${String(s).padStart(2,'0')}.${x}`;
+}
+function esc(s){return String(s??'').replace(/[<>&"]/g,c=>({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[c]));}
+
+/* 画面復帰時にWakeLock再取得 */
+document.addEventListener('visibilitychange',async()=>{
+  if(running&&document.visibilityState==='visible'){
+    try{wakeLock=await navigator.wakeLock.request('screen');}catch(e){}
+  }
+});
+
+loadCfg();
+</script>
+</body>
+</html>
