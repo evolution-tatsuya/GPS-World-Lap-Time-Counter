@@ -25,19 +25,7 @@ var SHEET_NAME = 'Laps';
 function doPost(e) {
   try {
     var p = (e && e.parameter) ? e.parameter : {};
-    var sheet = getSheet_();
-
-    var row = [
-      new Date(),                 // 記録日時（サーバー時刻）
-      String(p.name || ''),       // ドライバー名
-      String(p.car || ''),        // 車両
-      Number(p.lap || 0),         // ラップ番号
-      Number(p.time_ms || 0),     // タイム(ms)
-      String(p.time_str || ''),   // タイム(表示用文字列)
-    ];
-    sheet.appendRow(row);
-
-    return json_({ ok: true });
+    return json_(appendLap_(p));
   } catch (err) {
     return json_({ ok: false, error: String(err) });
   }
@@ -55,7 +43,29 @@ function doGet(e) {
     return json_(buildRanking_());
   }
 
+  // GET経由でのラップ記録。電波が弱い環境でCORS/POSTのプリフライトを避け、
+  // 確実に到達させるための経路（スマホ側は fetch GET で送る）。
+  if (mode === 'add') {
+    return json_(appendLap_(e && e.parameter ? e.parameter : {}));
+  }
+
   return json_({ ok: true, message: 'GPS Lap Timer GAS is running.' });
+}
+
+/**
+ * ラップ1件をシートに追記する共通処理（POST/GET両方から利用）
+ */
+function appendLap_(p) {
+  var sheet = getSheet_();
+  sheet.appendRow([
+    new Date(),
+    String(p.name || ''),
+    String(p.car || ''),
+    Number(p.lap || 0),
+    Number(p.time_ms || 0),
+    String(p.time_str || ''),
+  ]);
+  return { ok: true };
 }
 
 /**
