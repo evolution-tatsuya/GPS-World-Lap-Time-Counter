@@ -60,6 +60,14 @@
   #rankTable{width:100%;border-collapse:collapse}
   #rankTable th{font-size:11px;color:var(--gray);text-align:left;padding:6px 8px;letter-spacing:1px}
   .refreshBtn{width:100%;padding:12px;background:#2a2a2a;border:1px solid var(--line);border-radius:8px;color:var(--white);font-size:14px;margin-bottom:12px}
+  /* 展開式ラップ一覧 */
+  .rankRow{cursor:pointer}
+  .rankRow .caret{color:var(--gray);font-size:10px;margin-right:6px}
+  .lapDetail td{padding:0 8px 8px}
+  .lapDetailBox{background:#0d0d0d;border:1px solid var(--line);border-radius:6px;padding:6px 10px}
+  .lapLine{display:flex;justify-content:space-between;padding:5px 0;font-size:13px;color:var(--gray);border-bottom:1px solid #222;font-variant-numeric:tabular-nums}
+  .lapLine:last-child{border-bottom:none}
+  .lapLine.best{color:var(--red);font-weight:bold}
 </style>
 </head>
 <body>
@@ -297,9 +305,38 @@ async function loadRank(){
     const list=await r.json();
     rankBody.innerHTML='';
     list.forEach((row,i)=>{
+      // メイン行（タップでラップ一覧を開閉）
       const tr=document.createElement('tr');
-      tr.innerHTML=`<td>${i+1}</td><td>${esc(row.name)}</td><td>${esc(row.car)}</td><td>${esc(row.best)}</td>`;
+      tr.className='rankRow';
+      const laps=Array.isArray(row.laps)?row.laps:[];
+      const caret=laps.length?'<span class="caret">▶</span>':'';
+      tr.innerHTML=`<td>${i+1}</td><td>${caret}${esc(row.name)}</td><td>${esc(row.car)}</td><td>${esc(row.best)}</td>`;
       rankBody.appendChild(tr);
+
+      // 展開用のラップ一覧行（初期は非表示）
+      const detail=document.createElement('tr');
+      detail.className='lapDetail';
+      detail.style.display='none';
+      let inner='<td colspan="4"><div class="lapDetailBox">';
+      if(laps.length){
+        laps.forEach(l=>{
+          const isBest=(l.time===row.best);
+          inner+=`<div class="lapLine${isBest?' best':''}"><span>LAP ${l.lap}</span><span>${esc(l.time)}</span></div>`;
+        });
+      }else{
+        inner+='<div class="lapLine">ラップ記録なし</div>';
+      }
+      inner+='</div></td>';
+      detail.innerHTML=inner;
+      rankBody.appendChild(detail);
+
+      // タップで開閉
+      tr.onclick=()=>{
+        const open=detail.style.display!=='none';
+        detail.style.display=open?'none':'';
+        const c=tr.querySelector('.caret');
+        if(c) c.textContent=open?'▶':'▼';
+      };
     });
     if(!list.length) rankBody.innerHTML='<tr><td colspan="4">まだ記録がありません</td></tr>';
   }catch(e){

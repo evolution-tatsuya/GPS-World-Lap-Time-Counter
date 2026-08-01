@@ -60,28 +60,44 @@ function doGet(e) {
 
 /**
  * ドライバー×車両ごとのベストタイムを集計して返す。
- * 戻り値: [{ name, car, best, best_ms }, ...] （best_ms昇順）
+ * 戻り値: [{ name, car, best, best_ms, laps: [{lap, time, ms}, ...] }, ...]
+ *   - best_ms 昇順（速い人が上）
+ *   - laps は記録順（ラップ番号順）。各ラップの time は表示文字列、ms は数値。
+ * 既存フィールド(best, best_ms)はそのまま残すので後方互換あり。
  */
 function buildRanking_() {
   var sheet = getSheet_();
   var values = sheet.getDataRange().getValues();
   // 1行目はヘッダー
-  var best = {}; // key = name||car
+  var map = {}; // key = name||car
 
   for (var i = 1; i < values.length; i++) {
     var name = String(values[i][1] || '');
     var car = String(values[i][2] || '');
+    var lap = Number(values[i][3] || 0);
     var ms = Number(values[i][4] || 0);
     var str = String(values[i][5] || '');
     if (!name || !ms) continue;
 
     var key = name + '||' + car;
-    if (!best[key] || ms < best[key].best_ms) {
-      best[key] = { name: name, car: car, best: str, best_ms: ms };
+    if (!map[key]) {
+      map[key] = { name: name, car: car, best: str, best_ms: ms, laps: [] };
     }
+    // ベスト更新
+    if (ms < map[key].best_ms) {
+      map[key].best = str;
+      map[key].best_ms = ms;
+    }
+    // 全ラップを蓄積
+    map[key].laps.push({ lap: lap, time: str, ms: ms });
   }
 
-  var list = Object.keys(best).map(function (k) { return best[k]; });
+  var list = Object.keys(map).map(function (k) {
+    var d = map[k];
+    // ラップはラップ番号順（0や欠番があっても安定するようmsではなくlap→記録順で）
+    d.laps.sort(function (a, b) { return a.lap - b.lap; });
+    return d;
+  });
   list.sort(function (a, b) { return a.best_ms - b.best_ms; });
   return list;
 }
