@@ -64,6 +64,7 @@ function doGet(e) {
 
 /**
  * ラップ1件をシートに追記する共通処理（POST/GET両方から利用）
+ * 列: 記録日時, ドライバー, 車両, ラップ, タイム(ms), タイム, セッションID, セッション名
  */
 function appendLap_(p) {
   var sheet = getSheet_();
@@ -74,6 +75,8 @@ function appendLap_(p) {
     Number(p.lap || 0),
     Number(p.time_ms || 0),
     String(p.time_str || ''),
+    String(p.session || ''),       // G列: セッションID
+    String(p.session_name || ''),  // H列: セッション名（任意）
   ]);
   return { ok: true };
 }
@@ -138,24 +141,32 @@ function buildSheets() {
 }
 
 /**
- * Lapsから有効なラップだけを配列で返す。
- * 除外: 空行 / テスト名 / MAX_VALID_MS以上の遅すぎるラップ
- * 戻り値: [{when, name, car, lap, ms, str}, ...]  when=記録日時(Date)
+ * Lapsから有効なラップを配列で返す。
+ * 除外: 空行 / テスト名。
+ * アウトラップ(ms=0)は残す（個別シートの周回表示に使う。ランキングでは別途除外）。
+ * タイム有りでMAX_VALID_MS以上の遅すぎる行のみ異常値として除外。
+ * 戻り値: [{when, name, car, lap, ms, str, session, sessionName, isOut}, ...]
  */
 function collectValidLaps_() {
   var values = getSheet_().getDataRange().getValues();
   var out = [];
   for (var i = 1; i < values.length; i++) {
-    var when = values[i][0];                 // A列: 記録日時
+    var when = values[i][0];
     var name = String(values[i][1] || '');
     var car = String(values[i][2] || '');
     var lap = Number(values[i][3] || 0);
     var ms = Number(values[i][4] || 0);
     var str = String(values[i][5] || '');
-    if (!name || !ms) continue;
-    if (ms >= MAX_VALID_MS) continue;
+    var session = String(values[i][6] || '');
+    var sessionName = String(values[i][7] || '');
+    if (!name) continue;
     if (EXCLUDE_NAMES.indexOf(name) !== -1) continue;
-    out.push({ when: when, name: name, car: car, lap: lap, ms: ms, str: str });
+    var isOut = (ms === 0);                 // アウトラップ（タイムなし）
+    if (!isOut && ms >= MAX_VALID_MS) continue; // タイム有りの異常値のみ除外
+    out.push({
+      when: when, name: name, car: car, lap: lap, ms: ms, str: str,
+      session: session, sessionName: sessionName, isOut: isOut
+    });
   }
   return out;
 }
@@ -167,79 +178,100 @@ function fmtWhen_(d) {
   return Utilities.formatDate(d, tz, 'MM/dd HH:mm:ss');
 }
 
+// セッションの表示名。セッション名があればそれ、無ければID、両方無ければ'(セッション無)'。
+function sessionLabel_(session, sessionName) {
+  if (sessionName) return sessionName;
+  if (session) return session;
+  return '(セッション無)';
+}
+
 /**
- * 総合ランキング（ドライバー×車両ごとのベスト、速い順）を書き出す。
- * 記録日時＝そのベストタイムを出したラップの記録日時。
+ * 総合ランキング。セッション×ドライバー×車両ごとのベストを、
+ * セッションごとにまとめて速い順で書き出す。アウトラップは対象外。
  */
 function writeRankSheet_(laps) {
-  var best = {}; // key = name||car
+  // セッション -> key(name||car) -> ベスト
+  var bySession = {};
   laps.forEach(function (l) {
+    if (l.isOut) return;                     // タイム無しは除外
+    var sKey = l.session + '||' + l.sessionName;
+    if (!bySession[sKey]) bySession[sKey] = { label: sessionLabel_(l.session, l.sessionName), best: {} };
     var key = l.name + '||' + l.car;
-    if (!best[key] || l.ms < best[key].ms) {
-      best[key] = { name: l.name, car: l.car, ms: l.ms, str: l.str, when: l.when };
+    var b = bySession[sKey].best;
+    if (!b[key] || l.ms < b[key].ms) {
+      b[key] = { name: l.name, car: l.car, ms: l.ms, str: l.str, when: l.when };
     }
   });
-  var list = Object.keys(best).map(function (k) { return best[k]; });
-  list.sort(function (a, b) { return a.ms - b.ms; });
 
-  var rows = [['順位', 'ドライバー', '車両', 'ベストタイム', '記録日時']];
-  list.forEach(function (d, i) {
-    rows.push([i + 1, d.name, d.car, d.str, fmtWhen_(d.when)]);
+  var rows = [['セッション', '順位', 'ドライバー', '車両', 'ベストタイム', '記録日時']];
+  Object.keys(bySession).forEach(function (sKey) {
+    var sess = bySession[sKey];
+    var list = Object.keys(sess.best).map(function (k) { return sess.best[k]; });
+    list.sort(function (a, b) { return a.ms - b.ms; });
+    list.forEach(function (d, i) {
+      rows.push([sess.label, i + 1, d.name, d.car, d.str, fmtWhen_(d.when)]);
+    });
+    rows.push(['', '', '', '', '', '']); // セッション間に空行
   });
 
   var sheet = getOrCreateSheet_(RANK_SHEET);
   sheet.clearContents();
-  sheet.getRange(1, 1, rows.length, 5).setValues(rows);
-  sheet.getRange(1, 1, 1, 5).setFontWeight('bold');
+  sheet.getRange(1, 1, rows.length, 6).setValues(rows);
+  sheet.getRange(1, 1, 1, 6).setFontWeight('bold');
 }
 
 /**
- * ドライバーごとに個別シートを作り、その人の全ラップ（速い順・記録日時付き）を書き出す。
- * シート名は「個別_<ドライバー名>」。再生成時は既存の個別シートを一度削除して作り直す。
+ * ドライバー×セッションごとに個別シートを作る。
+ * 並びはラップ計測順、順位はそのセッション内のタイム有りラップで速い順。
+ * シート名は「個別_<ドライバー名>_<セッション名orID>」。
  */
 function writePerDriverSheets_(laps) {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
 
-  // 既存の「個別_」シートを削除（前回分の掃除。存在しない人のシートが残らないように）
-  // 反復中の削除でスキップが起きないよう、対象を先に集めてから削除する。
+  // 既存の「個別_」シートを掃除（先に集めてから削除）
   var toDelete = ss.getSheets().filter(function (sh) {
     return sh.getName().indexOf(DRIVER_SHEET_PREFIX) === 0;
   });
   toDelete.forEach(function (sh) { ss.deleteSheet(sh); });
 
-  // ドライバー×車両ごとにまとめる
-  var byKey = {};
+  // ドライバー×車両×セッションごとにまとめる
+  var groups = {};
   laps.forEach(function (l) {
-    var key = l.name + '||' + l.car;
-    if (!byKey[key]) byKey[key] = [];
-    byKey[key].push(l);
+    var key = l.name + '||' + l.car + '||' + l.session + '||' + l.sessionName;
+    if (!groups[key]) groups[key] = [];
+    groups[key].push(l);
   });
 
-  // 各ドライバーのベスト順に並べて作成
-  var keys = Object.keys(byKey);
-  keys.sort(function (a, b) {
-    var ba = Math.min.apply(null, byKey[a].map(function (x) { return x.ms; }));
-    var bb = Math.min.apply(null, byKey[b].map(function (x) { return x.ms; }));
-    return ba - bb;
-  });
-
-  keys.forEach(function (k) {
-    var arr = byKey[k].slice().sort(function (a, b) { return a.ms - b.ms; });
-    var bestMs = arr[0].ms;
+  Object.keys(groups).forEach(function (k) {
+    var arr = groups[k];
     var name = arr[0].name, car = arr[0].car;
+    var label = sessionLabel_(arr[0].session, arr[0].sessionName);
 
-    var rows = [['ラップ', 'タイム', '記録日時']];
-    arr.forEach(function (l) {
-      var mark = (l.ms === bestMs) ? ' ★BEST' : '';
-      rows.push([l.lap, l.str + mark, fmtWhen_(l.when)]);
+    // 順位付け: タイム有りラップだけを速い順にして「ms -> 順位」を作る
+    var timed = arr.filter(function (x) { return !x.isOut; })
+                   .sort(function (a, b) { return a.ms - b.ms; });
+    var rankOf = {};
+    timed.forEach(function (x, i) { rankOf[x.ms] = (rankOf[x.ms] || i + 1); });
+    var bestMs = timed.length ? timed[0].ms : null;
+
+    // 表示はラップ計測順（ラップ番号順）
+    var ordered = arr.slice().sort(function (a, b) { return a.lap - b.lap; });
+
+    var rows = [['ラップ', 'タイム', 'セッション内順位', '記録日時']];
+    ordered.forEach(function (l) {
+      if (l.isOut) {
+        rows.push([l.lap, 'アウトラップ', '-', fmtWhen_(l.when)]);
+      } else {
+        var mark = (l.ms === bestMs) ? ' ★BEST' : '';
+        rows.push([l.lap, l.str + mark, rankOf[l.ms], fmtWhen_(l.when)]);
+      }
     });
 
-    var sheetName = makeDriverSheetName_(name, car, ss);
+    var sheetName = makeDriverSheetName_(name + '_' + label, car, ss);
     var sheet = ss.insertSheet(sheetName);
-    // 1行目にドライバー名・車両の見出し
-    sheet.getRange(1, 1).setValue(name + '（' + car + '）').setFontWeight('bold');
-    sheet.getRange(3, 1, rows.length, 3).setValues(rows);
-    sheet.getRange(3, 1, 1, 3).setFontWeight('bold');
+    sheet.getRange(1, 1).setValue(name + '（' + car + '）  セッション: ' + label).setFontWeight('bold');
+    sheet.getRange(3, 1, rows.length, 4).setValues(rows);
+    sheet.getRange(3, 1, 1, 4).setFontWeight('bold');
   });
 }
 
@@ -280,7 +312,7 @@ function getSheet_() {
   var sheet = ss.getSheetByName(SHEET_NAME);
   if (!sheet) {
     sheet = ss.insertSheet(SHEET_NAME);
-    sheet.appendRow(['記録日時', 'ドライバー', '車両', 'ラップ', 'タイム(ms)', 'タイム']);
+    sheet.appendRow(['記録日時', 'ドライバー', '車両', 'ラップ', 'タイム(ms)', 'タイム', 'セッションID', 'セッション名']);
   }
   return sheet;
 }

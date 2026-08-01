@@ -105,6 +105,7 @@
 <div class="tab" id="tab1">
   <div class="field"><label>ドライバー名 *</label><input type="text" id="cfgName" placeholder="例：安福"></div>
   <div class="field"><label>車両</label><input type="text" id="cfgCar" placeholder="例：FD2 CIVIC TYPE R"></div>
+  <div class="field"><label>セッション名（任意）※走行会・枠の名前。空なら自動で番号が付きます</label><input type="text" id="cfgSession" placeholder="例：午前フリー走行"></div>
   <div class="field"><label>送信先URL（GASデプロイURL）*</label><input type="url" id="cfgGas" placeholder="https://script.google.com/macros/s/…/exec"></div>
 
   <div class="field">
@@ -151,10 +152,11 @@
    計測ロジック: 連続する2つのGPS点の線分と、コントロール
    ラインAB線分の交差判定 + 時刻線形補間でライン通過時刻を算出
 ============================================================ */
-let cfg = {name:'', car:'', gas:'', A:null, B:null, minLap:30, oneWay:true};
+let cfg = {name:'', car:'', gas:'', session:'', A:null, B:null, minLap:30, oneWay:true};
 let running=false, watchId=null, wakeLock=null;
 let prevPt=null, lastCrossT=null, lapNo=0, bestMs=null, firstSign=null;
 let rafId=null;
+let sessionId=''; // 計測スタートごとに発行するセッションID（同日の複数走行を区別）
 
 /* ---------- タブ ---------- */
 function showTab(i,btn){
@@ -170,12 +172,14 @@ function loadCfg(){
     if(s){cfg=JSON.parse(s);}
   }catch(e){}
   cfgName.value=cfg.name||''; cfgCar.value=cfg.car||''; cfgGas.value=cfg.gas||'';
+  cfgSession.value=cfg.session||'';
   ptA.value=cfg.A?cfg.A.join(','):''; ptB.value=cfg.B?cfg.B.join(','):'';
   cfgMinLap.value=cfg.minLap||30; cfgOneWay.checked=cfg.oneWay!==false;
   ptA.readOnly=false; ptB.readOnly=false;
 }
 function saveCfg(){
   cfg.name=cfgName.value.trim(); cfg.car=cfgCar.value.trim(); cfg.gas=cfgGas.value.trim();
+  cfg.session=cfgSession.value.trim();
   cfg.A=parsePt(ptA.value); cfg.B=parsePt(ptB.value);
   cfg.minLap=parseFloat(cfgMinLap.value)||30; cfg.oneWay=cfgOneWay.checked;
   try{localStorage.setItem('lapCfg',JSON.stringify(cfg));}catch(e){}
@@ -198,6 +202,10 @@ async function toggleRun(){
   if(!running){
     if(!cfg.name||!cfg.A||!cfg.B){alert('設定タブでドライバー名とコントロールラインを設定してください');return;}
     running=true; prevPt=null; lastCrossT=null; lapNo=0; firstSign=null;
+    // セッションIDを発行（計測スタート毎に一意）。セッション名があれば併記。
+    sessionId=makeSessionId();
+    lapBody.innerHTML=''; bestMs=null; // 画面のラップ一覧・ベストをリセット
+    lastLap.textContent='--:--.---'; bestLap.textContent='--:--.---';
     startBtn.textContent='計測ストップ'; startBtn.classList.add('running');
     watchId=navigator.geolocation.watchPosition(onPos,onErr,{enableHighAccuracy:true,maximumAge:0,timeout:15000});
     try{wakeLock=await navigator.wakeLock.request('screen');}catch(e){}
@@ -228,7 +236,9 @@ function onPos(p){
       }
       const crossT=prevPt.t + hit.u*(pt.t-prevPt.t); // 補間した通過時刻(ms)
       if(lastCrossT===null){
-        lastCrossT=crossT; // 1回目=計測基準
+        // 1回目の通過＝アウトラップ。LAP1としてカウント（タイムなし）。
+        lastCrossT=crossT; lapNo=1;
+        registerOutLap(1);
       }else{
         const lapMs=crossT-lastCrossT;
         if(lapMs>=cfg.minLap*1000){
@@ -257,6 +267,23 @@ function crossCheck(p1,p2,A,B){
   if(u<0||u>1||v<0||v>1) return null;
   const sign=((x2-x1)*(y4-y3)-(y2-y1)*(x4-x3))>0?1:-1;
   return {u,sign};
+}
+
+/* ---------- セッションID ----------
+   計測スタート毎に一意なIDを作る。並び替え・グルーピングしやすいよう
+   時刻ベース（YYYYMMDD-HHMMSS）。集計側でこのIDごとにまとめる。 */
+function makeSessionId(){
+  const d=new Date(), p=n=>String(n).padStart(2,'0');
+  return `${d.getFullYear()}${p(d.getMonth()+1)}${p(d.getDate())}-${p(d.getHours())}${p(d.getMinutes())}${p(d.getSeconds())}`;
+}
+
+/* ---------- アウトラップ確定（1回目の通過・タイムなし） ---------- */
+function registerOutLap(no){
+  const tr=document.createElement('tr');
+  tr.innerHTML=`<td>LAP ${no}</td><td>アウトラップ</td>`;
+  lapBody.insertBefore(tr,lapBody.firstChild);
+  // タイムは空文字で送る（集計側でアウトラップ扱い）
+  sendLap(no,null);
 }
 
 /* ---------- ラップ確定 ---------- */
@@ -302,10 +329,18 @@ function updatePendingUI(){
   if(btn) btn.disabled = (n===0);
 }
 
-// ラップを1件、キューに積んで即時に送信を試みる
+// ラップを1件、キューに積んで即時に送信を試みる。
+// ms=null はアウトラップ（タイムなし）。
 function sendLap(no,ms){
+  var isOut = (ms===null || ms===undefined);
   var q=loadQueue();
-  q.push({ name:cfg.name, car:cfg.car, lap:no, time_ms:Math.round(ms), time_str:fmt(ms) });
+  q.push({
+    session: sessionId,
+    session_name: cfg.session||'',
+    name:cfg.name, car:cfg.car, lap:no,
+    time_ms: isOut ? 0 : Math.round(ms),
+    time_str: isOut ? 'アウトラップ' : fmt(ms)
+  });
   saveQueue(q);
   flushQueue(); // すぐ送信トライ（成功すれば消える／失敗すれば残る）
 }
@@ -316,6 +351,7 @@ function sendOne(item){
   if(!cfg.gas) return Promise.resolve(false);
   var qs=new URLSearchParams({
     mode:'add',
+    session:item.session||'', session_name:item.session_name||'',
     name:item.name||'', car:item.car||'',
     lap:item.lap, time_ms:item.time_ms, time_str:item.time_str
   }).toString();
