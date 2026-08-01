@@ -25,7 +25,8 @@ var MAX_VALID_MS = 240000; // 4分
 var EXCLUDE_NAMES = ['テスト太郎', 'テスト次郎', 'GETTEST', '送信テスト'];
 // 生成する集計シート名
 var RANK_SHEET = '総合ランキング';
-var DETAIL_SHEET = '個別ラップ一覧';
+// ドライバー個別シートの名前の接頭辞（例: 個別_TT）
+var DRIVER_SHEET_PREFIX = '個別_';
 
 /**
  * POST: ラップ1件を追記
@@ -132,19 +133,20 @@ function buildRanking_() {
 function buildSheets() {
   var laps = collectValidLaps_();          // 有効ラップのみ（テスト・異常値を除外）
   writeRankSheet_(laps);                    // 総合ランキング
-  writeDetailSheet_(laps);                  // 個別ラップ一覧
-  SpreadsheetApp.getActiveSpreadsheet().toast('集計シートを更新しました', '完了', 3);
+  writePerDriverSheets_(laps);              // ドライバーごとの個別シート
+  SpreadsheetApp.getActiveSpreadsheet().toast('集計シートを更新しました', '完了', 4);
 }
 
 /**
  * Lapsから有効なラップだけを配列で返す。
  * 除外: 空行 / テスト名 / MAX_VALID_MS以上の遅すぎるラップ
- * 戻り値: [{name, car, lap, ms, str}, ...]
+ * 戻り値: [{when, name, car, lap, ms, str}, ...]  when=記録日時(Date)
  */
 function collectValidLaps_() {
   var values = getSheet_().getDataRange().getValues();
   var out = [];
   for (var i = 1; i < values.length; i++) {
+    var when = values[i][0];                 // A列: 記録日時
     var name = String(values[i][1] || '');
     var car = String(values[i][2] || '');
     var lap = Number(values[i][3] || 0);
@@ -153,69 +155,101 @@ function collectValidLaps_() {
     if (!name || !ms) continue;
     if (ms >= MAX_VALID_MS) continue;
     if (EXCLUDE_NAMES.indexOf(name) !== -1) continue;
-    out.push({ name: name, car: car, lap: lap, ms: ms, str: str });
+    out.push({ when: when, name: name, car: car, lap: lap, ms: ms, str: str });
   }
   return out;
 }
 
+// 日時を "MM/dd HH:mm:ss" 形式の文字列に整形（空なら空文字）
+function fmtWhen_(d) {
+  if (!(d instanceof Date) || isNaN(d.getTime())) return '';
+  var tz = Session.getScriptTimeZone() || 'Asia/Tokyo';
+  return Utilities.formatDate(d, tz, 'MM/dd HH:mm:ss');
+}
+
 /**
- * 総合ランキング（ドライバー×車両ごとのベスト、速い順）を書き出す
+ * 総合ランキング（ドライバー×車両ごとのベスト、速い順）を書き出す。
+ * 記録日時＝そのベストタイムを出したラップの記録日時。
  */
 function writeRankSheet_(laps) {
   var best = {}; // key = name||car
   laps.forEach(function (l) {
     var key = l.name + '||' + l.car;
     if (!best[key] || l.ms < best[key].ms) {
-      best[key] = { name: l.name, car: l.car, ms: l.ms, str: l.str };
+      best[key] = { name: l.name, car: l.car, ms: l.ms, str: l.str, when: l.when };
     }
   });
   var list = Object.keys(best).map(function (k) { return best[k]; });
   list.sort(function (a, b) { return a.ms - b.ms; });
 
-  var rows = [['順位', 'ドライバー', '車両', 'ベストタイム']];
+  var rows = [['順位', 'ドライバー', '車両', 'ベストタイム', '記録日時']];
   list.forEach(function (d, i) {
-    rows.push([i + 1, d.name, d.car, d.str]);
+    rows.push([i + 1, d.name, d.car, d.str, fmtWhen_(d.when)]);
   });
 
   var sheet = getOrCreateSheet_(RANK_SHEET);
   sheet.clearContents();
-  sheet.getRange(1, 1, rows.length, 4).setValues(rows);
-  sheet.getRange(1, 1, 1, 4).setFontWeight('bold');
+  sheet.getRange(1, 1, rows.length, 5).setValues(rows);
+  sheet.getRange(1, 1, 1, 5).setFontWeight('bold');
 }
 
 /**
- * 個別ラップ一覧（ドライバーごとに全ラップを速い順で）を書き出す
+ * ドライバーごとに個別シートを作り、その人の全ラップ（速い順・記録日時付き）を書き出す。
+ * シート名は「個別_<ドライバー名>」。再生成時は既存の個別シートを一度削除して作り直す。
  */
-function writeDetailSheet_(laps) {
-  // ドライバーのベスト順に並べ、その中で各人のラップを速い順に
+function writePerDriverSheets_(laps) {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+
+  // 既存の「個別_」シートを削除（前回分の掃除。存在しない人のシートが残らないように）
+  // 反復中の削除でスキップが起きないよう、対象を先に集めてから削除する。
+  var toDelete = ss.getSheets().filter(function (sh) {
+    return sh.getName().indexOf(DRIVER_SHEET_PREFIX) === 0;
+  });
+  toDelete.forEach(function (sh) { ss.deleteSheet(sh); });
+
+  // ドライバー×車両ごとにまとめる
   var byKey = {};
   laps.forEach(function (l) {
     var key = l.name + '||' + l.car;
     if (!byKey[key]) byKey[key] = [];
     byKey[key].push(l);
   });
+
+  // 各ドライバーのベスト順に並べて作成
   var keys = Object.keys(byKey);
-  // 各ドライバーのベストで並べ替え
   keys.sort(function (a, b) {
     var ba = Math.min.apply(null, byKey[a].map(function (x) { return x.ms; }));
     var bb = Math.min.apply(null, byKey[b].map(function (x) { return x.ms; }));
     return ba - bb;
   });
 
-  var rows = [['ドライバー', '車両', 'ラップ', 'タイム']];
   keys.forEach(function (k) {
     var arr = byKey[k].slice().sort(function (a, b) { return a.ms - b.ms; });
     var bestMs = arr[0].ms;
+    var name = arr[0].name, car = arr[0].car;
+
+    var rows = [['ラップ', 'タイム', '記録日時']];
     arr.forEach(function (l) {
       var mark = (l.ms === bestMs) ? ' ★BEST' : '';
-      rows.push([l.name, l.car, l.lap, l.str + mark]);
+      rows.push([l.lap, l.str + mark, fmtWhen_(l.when)]);
     });
-  });
 
-  var sheet = getOrCreateSheet_(DETAIL_SHEET);
-  sheet.clearContents();
-  sheet.getRange(1, 1, rows.length, 4).setValues(rows);
-  sheet.getRange(1, 1, 1, 4).setFontWeight('bold');
+    var sheetName = makeDriverSheetName_(name, car, ss);
+    var sheet = ss.insertSheet(sheetName);
+    // 1行目にドライバー名・車両の見出し
+    sheet.getRange(1, 1).setValue(name + '（' + car + '）').setFontWeight('bold');
+    sheet.getRange(3, 1, rows.length, 3).setValues(rows);
+    sheet.getRange(3, 1, 1, 3).setFontWeight('bold');
+  });
+}
+
+// シート名として使える「個別_<名前>」を作る（禁止文字を除去・重複回避・長さ制限）
+function makeDriverSheetName_(name, car, ss) {
+  var base = DRIVER_SHEET_PREFIX + String(name).replace(/[:\\\/\?\*\[\]]/g, '_');
+  base = base.substring(0, 90);
+  var candidate = base, n = 2;
+  while (ss.getSheetByName(candidate)) { candidate = base + '_' + n; n++; }
+  return candidate;
 }
 
 /**
