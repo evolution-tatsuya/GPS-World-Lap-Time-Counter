@@ -4,6 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <title>T-EVOLUTION GPS LAP TIMER</title>
+<!-- 地図(Leaflet + OpenStreetMap)。走行ラインタブでのみ使用。CDN読み込み。 -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <style>
   :root{
     --bg:#131313; --panel:#1d1d1d; --line:#333;
@@ -62,6 +65,15 @@
   #rankTable{width:100%;border-collapse:collapse}
   #rankTable th{font-size:11px;color:var(--gray);text-align:left;padding:6px 8px;letter-spacing:1px}
   .refreshBtn{width:100%;padding:12px;background:#2a2a2a;border:1px solid var(--line);border-radius:8px;color:var(--white);font-size:14px;margin-bottom:12px}
+  /* 走行ライン(テレメトリー)タブ */
+  .tlmRow{display:flex;gap:8px;margin-bottom:10px}
+  .tlmRow select{flex:1;padding:10px;background:#0d0d0d;border:1px solid var(--line);border-radius:6px;color:var(--white);font-size:14px}
+  #map{width:100%;height:300px;border:1px solid var(--line);border-radius:8px;background:#0d0d0d}
+  .tlmInfo{display:flex;gap:10px;margin-top:12px}
+  .tlmInfo .cell{flex:1}
+  .tlmBtns{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}
+  .tlmBtns .miniBtn{flex:1}
+  .leaflet-container{background:#0d0d0d}
   /* 展開式ラップ一覧 */
   .rankRow{cursor:pointer}
   .rankRow .caret{color:var(--gray);font-size:10px;margin-right:6px}
@@ -81,6 +93,7 @@
   <button class="active" onclick="showTab(0,this)">計測</button>
   <button onclick="showTab(1,this)">設定</button>
   <button onclick="showTab(2,this)">ランキング</button>
+  <button onclick="showTab(3,this)">走行ライン</button>
 </nav>
 
 <!-- ===== 計測 ===== -->
@@ -157,6 +170,27 @@
   </table>
 </div>
 
+<!-- ===== 走行ライン（テレメトリー） ===== -->
+<div class="tab" id="tab3">
+  <div class="tlmRow">
+    <select id="tlmSession" onchange="onTlmSessionChange()"></select>
+    <select id="tlmLap" onchange="drawLap()"></select>
+  </div>
+  <div id="map"></div>
+  <div class="tlmInfo">
+    <div class="cell"><div class="lbl">経過</div><div class="val" id="tlmTime">--</div></div>
+    <div class="cell"><div class="lbl">速度 km/h</div><div class="val" id="tlmSpeed">--</div></div>
+    <div class="cell"><div class="lbl">周回タイム</div><div class="val" id="tlmLapTime">--</div></div>
+  </div>
+  <input type="range" id="tlmScrub" min="0" max="0" value="0" oninput="onScrub()" style="width:100%;margin:10px 0">
+  <div class="tlmBtns">
+    <button class="miniBtn" onclick="exportTrack('gpx')">GPXエクスポート</button>
+    <button class="miniBtn" onclick="exportTrack('json')">JSONエクスポート</button>
+    <button class="miniBtn" onclick="deleteCurrentTrack()">この走行データを削除</button>
+  </div>
+  <div class="note">走行中のGPS軌跡をスマホ内に記録します。セッションと周回を選ぶと地図に走行ラインを描画。スライダーやライン上のタップで、その地点の経過タイム・速度が見られます。※地図の背景表示にはネット接続が必要です（軌跡の記録・保存は電波不要）。</div>
+</div>
+
 <script>
 /* ============================================================
    T-EVOLUTION GPS LAP TIMER  (Phase 1 / 内蔵GPS 1Hz)
@@ -169,12 +203,15 @@ let prevPt=null, lastCrossT=null, lapNo=0, bestMs=null, firstSign=null;
 let rafId=null;
 let sessionId=''; // 計測スタートごとに発行するセッションID（同日の複数走行を区別）
 let curSpeedKmh=0, maxSpeedKmh=0; // 現在速度・セッション最高速度(km/h)
+let trackPts=[];      // 現在セッションのGPS全点 [{lat,lng,t,acc,spd,lap}]
+let trackSaveT=0;     // トラックの最終保存時刻（間引き保存用）
 
 /* ---------- タブ ---------- */
 function showTab(i,btn){
   document.querySelectorAll('.tab').forEach((t,k)=>t.classList.toggle('active',k===i));
   document.querySelectorAll('nav button').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
+  if(i===3) initTelemetryTab(); // 走行ラインタブを開いたら初期化
 }
 
 /* ---------- 設定の保存/読込 ---------- */
@@ -223,6 +260,7 @@ async function toggleRun(){
     curSpeedKmh=0; maxSpeedKmh=0; // 速度リセット
     curSpeed.textContent='--'; maxSpeed.textContent='--';
     deltaVal.textContent='--'; deltaVal.className='val';
+    trackPts=[]; trackSaveT=0; // テレメトリー記録リセット
     startBtn.textContent='計測ストップ'; startBtn.classList.add('running');
     watchId=navigator.geolocation.watchPosition(onPos,onErr,{enableHighAccuracy:true,maximumAge:0,timeout:15000});
     try{wakeLock=await navigator.wakeLock.request('screen');}catch(e){}
@@ -232,6 +270,7 @@ async function toggleRun(){
     if(watchId!==null) navigator.geolocation.clearWatch(watchId);
     if(wakeLock){wakeLock.release();wakeLock=null;}
     cancelAnimationFrame(rafId);
+    saveTrack(); // 停止時に最終保存
     startBtn.textContent='計測スタート'; startBtn.classList.remove('running');
     gpsStatus.textContent='GPS 停止'; gpsStatus.classList.remove('ok');
   }
@@ -287,6 +326,16 @@ function onPos(p){
       }
     }
   }
+
+  // テレメトリー: GPS点を記録（現在ラップ番号付き）。2秒ごとにlocalStorageへ保存。
+  trackPts.push({
+    lat:pt.lat, lng:pt.lng, t:pt.t,
+    acc:Math.round(p.coords.accuracy||0),
+    spd:(spd!==null?Math.round(spd*10)/10:null),
+    lap:lapNo
+  });
+  if(pt.t-trackSaveT>2000){ trackSaveT=pt.t; saveTrack(); }
+
   prevPt=pt;
 }
 
@@ -314,6 +363,46 @@ function crossCheck(p1,p2,A,B){
 function makeSessionId(){
   const d=new Date(), p=n=>String(n).padStart(2,'0');
   return `${d.getFullYear()}${p(d.getMonth()+1)}${p(d.getDate())}-${p(d.getHours())}${p(d.getMinutes())}${p(d.getSeconds())}`;
+}
+
+/* ---------- テレメトリー: トラック(走行軌跡)の保存/読込 ----------
+   現在セッションのGPS全点を localStorage に保存。キーは trackData_<sessionId>。
+   一覧は trackIndex（[{id, name, car, session, t}] を新しい順）で管理。 */
+var TRACK_PREFIX='trackData_', TRACK_INDEX='trackIndex';
+
+function saveTrack(){
+  if(!sessionId || !trackPts.length) return;
+  var key=TRACK_PREFIX+sessionId;
+  try{
+    localStorage.setItem(key, JSON.stringify(trackPts));
+    // インデックス更新（重複を除いて先頭に）
+    var idx=[]; try{ idx=JSON.parse(localStorage.getItem(TRACK_INDEX)||'[]'); }catch(e){}
+    idx=idx.filter(function(x){ return x.id!==sessionId; });
+    idx.unshift({ id:sessionId, name:cfg.name||'', car:cfg.car||'', session:cfg.session||'', pts:trackPts.length, t:trackPts[0]?trackPts[0].t:0 });
+    localStorage.setItem(TRACK_INDEX, JSON.stringify(idx));
+  }catch(e){
+    // 容量オーバー時は最古のトラックを削除して再試行
+    try{
+      var idx2=JSON.parse(localStorage.getItem(TRACK_INDEX)||'[]');
+      if(idx2.length){
+        var oldest=idx2[idx2.length-1];
+        localStorage.removeItem(TRACK_PREFIX+oldest.id);
+        idx2.pop(); localStorage.setItem(TRACK_INDEX, JSON.stringify(idx2));
+        localStorage.setItem(key, JSON.stringify(trackPts));
+      }
+    }catch(e2){}
+  }
+}
+function loadTrackIndex(){
+  try{ return JSON.parse(localStorage.getItem(TRACK_INDEX)||'[]'); }catch(e){ return []; }
+}
+function loadTrack(id){
+  try{ return JSON.parse(localStorage.getItem(TRACK_PREFIX+id)||'[]'); }catch(e){ return []; }
+}
+function deleteTrack(id){
+  localStorage.removeItem(TRACK_PREFIX+id);
+  var idx=loadTrackIndex().filter(function(x){ return x.id!==id; });
+  localStorage.setItem(TRACK_INDEX, JSON.stringify(idx));
 }
 
 /* ---------- アウトラップ確定（1回目の通過・タイムなし） ---------- */
@@ -545,6 +634,147 @@ document.addEventListener('visibilitychange',async()=>{
     flushQueue();
   }
 });
+
+/* ============================================================
+   テレメトリー（走行ライン表示）
+   - セッション選択→周回選択→地図に軌跡描画→スクラブで地点/タイム/速度
+============================================================ */
+var tlmMap=null, tlmLine=null, tlmMarker=null; // Leaflet
+var tlmCurPts=[];        // 現在表示中の周回のGPS点
+var tlmLapStartT=0;      // その周回の開始時刻（経過タイム基準）
+var tlmMapReady=false;
+
+// タブを開いた時：地図を初期化し、セッション一覧を用意
+function initTelemetryTab(){
+  if(typeof L==='undefined'){ return; } // Leaflet未読込（オフライン等）
+  if(!tlmMapReady){
+    tlmMap=L.map('map',{zoomControl:true});
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
+      maxZoom:19, attribution:'© OpenStreetMap'
+    }).addTo(tlmMap);
+    tlmMap.setView([35.3721,138.9271], 15); // 初期（富士付近）
+    tlmMapReady=true;
+  }
+  setTimeout(function(){ if(tlmMap) tlmMap.invalidateSize(); }, 100);
+  populateSessions();
+}
+
+// セッションのプルダウンを埋める（現在計測中のセッションも含む）
+function populateSessions(){
+  var sel=document.getElementById('tlmSession');
+  var idx=loadTrackIndex();
+  // 計測中でまだindexに無い現在セッションも先頭に足す
+  if(sessionId && trackPts.length && !idx.some(function(x){return x.id===sessionId;})){
+    idx.unshift({id:sessionId,name:cfg.name||'',car:cfg.car||'',session:cfg.session||'',pts:trackPts.length});
+  }
+  sel.innerHTML='';
+  if(!idx.length){ sel.innerHTML='<option>走行データなし</option>'; document.getElementById('tlmLap').innerHTML=''; return; }
+  idx.forEach(function(x){
+    var label=(x.session||x.id)+' / '+(x.name||'—');
+    var o=document.createElement('option'); o.value=x.id; o.textContent=label; sel.appendChild(o);
+  });
+  onTlmSessionChange();
+}
+
+// セッションが変わったら周回一覧を更新
+function onTlmSessionChange(){
+  var id=document.getElementById('tlmSession').value;
+  var pts=(id===sessionId && trackPts.length)?trackPts:loadTrack(id);
+  var lapSel=document.getElementById('tlmLap');
+  lapSel.innerHTML='';
+  // 周回番号ごとにグループ化
+  var laps={};
+  pts.forEach(function(p){ if(!laps[p.lap]) laps[p.lap]=[]; laps[p.lap].push(p); });
+  Object.keys(laps).map(Number).sort(function(a,b){return a-b;}).forEach(function(ln){
+    var arr=laps[ln];
+    var dur=arr.length>1?(arr[arr.length-1].t-arr[0].t):0;
+    var o=document.createElement('option');
+    o.value=ln;
+    o.textContent='LAP '+ln+(dur?('  '+fmt(dur)):'');
+    lapSel.appendChild(o);
+  });
+  drawLap();
+}
+
+// 選択中の周回を地図に描画
+function drawLap(){
+  if(!tlmMapReady) return;
+  var id=document.getElementById('tlmSession').value;
+  var ln=Number(document.getElementById('tlmLap').value);
+  var pts=(id===sessionId && trackPts.length)?trackPts:loadTrack(id);
+  tlmCurPts=pts.filter(function(p){ return p.lap===ln; });
+  if(tlmLine){ tlmMap.removeLayer(tlmLine); tlmLine=null; }
+  if(tlmMarker){ tlmMap.removeLayer(tlmMarker); tlmMarker=null; }
+  if(!tlmCurPts.length){ return; }
+  var latlngs=tlmCurPts.map(function(p){ return [p.lat,p.lng]; });
+  tlmLine=L.polyline(latlngs,{color:'#E10600',weight:4}).addTo(tlmMap);
+  tlmMap.fitBounds(tlmLine.getBounds(),{padding:[20,20]});
+  tlmLapStartT=tlmCurPts[0].t;
+  // ライン上のタップで最寄り点を選択
+  tlmLine.on('click',function(e){ selectNearest(e.latlng); });
+  // スクラブ初期化
+  var sc=document.getElementById('tlmScrub');
+  sc.max=tlmCurPts.length-1; sc.value=0;
+  updateScrubInfo(0);
+}
+
+// スライダー操作
+function onScrub(){ updateScrubInfo(Number(document.getElementById('tlmScrub').value)); }
+
+// i番目の点の情報を表示＋マーカー移動
+function updateScrubInfo(i){
+  if(!tlmCurPts.length) return;
+  var p=tlmCurPts[Math.max(0,Math.min(i,tlmCurPts.length-1))];
+  var elapsed=p.t-tlmLapStartT;
+  document.getElementById('tlmTime').textContent=fmt(elapsed);
+  document.getElementById('tlmSpeed').textContent=(p.spd!=null?Math.round(p.spd):'--');
+  var dur=tlmCurPts[tlmCurPts.length-1].t-tlmCurPts[0].t;
+  document.getElementById('tlmLapTime').textContent=fmt(dur);
+  if(tlmMarker){ tlmMarker.setLatLng([p.lat,p.lng]); }
+  else { tlmMarker=L.circleMarker([p.lat,p.lng],{radius:7,color:'#fff',fillColor:'#E10600',fillOpacity:1,weight:2}).addTo(tlmMap); }
+}
+
+// 地図タップ位置に最も近い点を選択
+function selectNearest(latlng){
+  if(!tlmCurPts.length) return;
+  var best=0,bestD=Infinity;
+  tlmCurPts.forEach(function(p,i){
+    var d=(p.lat-latlng.lat)*(p.lat-latlng.lat)+(p.lng-latlng.lng)*(p.lng-latlng.lng);
+    if(d<bestD){bestD=d;best=i;}
+  });
+  document.getElementById('tlmScrub').value=best;
+  updateScrubInfo(best);
+}
+
+// エクスポート（GPX / JSON）
+function exportTrack(type){
+  var id=document.getElementById('tlmSession').value;
+  var pts=(id===sessionId && trackPts.length)?trackPts:loadTrack(id);
+  if(!pts.length){ alert('データがありません'); return; }
+  var content,mime,ext;
+  if(type==='gpx'){
+    var trkpts=pts.map(function(p){
+      return '<trkpt lat="'+p.lat+'" lon="'+p.lng+'"><time>'+new Date(p.t).toISOString()+'</time></trkpt>';
+    }).join('\n');
+    content='<?xml version="1.0"?>\n<gpx version="1.1" creator="GPS Lap Timer"><trk><name>'+id+'</name><trkseg>\n'+trkpts+'\n</trkseg></trk></gpx>';
+    mime='application/gpx+xml'; ext='gpx';
+  }else{
+    content=JSON.stringify(pts); mime='application/json'; ext='json';
+  }
+  var blob=new Blob([content],{type:mime});
+  var a=document.createElement('a');
+  a.href=URL.createObjectURL(blob); a.download='track_'+id+'.'+ext;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+}
+
+// 表示中の走行データを削除
+function deleteCurrentTrack(){
+  var id=document.getElementById('tlmSession').value;
+  if(!id){ return; }
+  if(!confirm('このセッションの走行ラインデータを削除しますか？（スプレッドシートのラップ記録は消えません）')) return;
+  deleteTrack(id);
+  populateSessions();
+}
 
 loadCfg();
 updatePendingUI();
