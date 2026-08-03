@@ -174,7 +174,7 @@ export default function Dashboard() {
         <>
           {/* 統計カード */}
           <Grid container spacing={3} sx={{ mb: 4 }}>
-            <Grid item xs={12} sm={6} md={3}>
+            <Grid size={12} sm={6} md={3}>
               <Card>
                 <CardContent>
                   <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
@@ -190,7 +190,7 @@ export default function Dashboard() {
               </Card>
             </Grid>
 
-            <Grid item xs={12} sm={6} md={3}>
+            <Grid size={12} sm={6} md={3}>
               <Card>
                 <CardContent>
                   <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
@@ -206,7 +206,7 @@ export default function Dashboard() {
               </Card>
             </Grid>
 
-            <Grid item xs={12} sm={6} md={3}>
+            <Grid size={12} sm={6} md={3}>
               <Card>
                 <CardContent>
                   <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
@@ -222,7 +222,7 @@ export default function Dashboard() {
               </Card>
             </Grid>
 
-            <Grid item xs={12} sm={6} md={3}>
+            <Grid size={12} sm={6} md={3}>
               <Card>
                 <CardContent>
                   <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
@@ -280,7 +280,7 @@ export default function Dashboard() {
                   {events.map((event) => {
                     const status = getEventStatus(event);
                     return (
-                      <Grid item xs={12} md={6} key={event.id}>
+                      <Grid size={{ xs: 12, md: 6 }} key={event.id}>
                         <Card
                           sx={{
                             cursor: 'pointer',
@@ -343,7 +343,7 @@ export default function Dashboard() {
               ) : (
                 <Grid container spacing={2}>
                   {circuits.map((circuit) => (
-                    <Grid item xs={12} md={6} key={circuit.id}>
+                    <Grid size={{ xs: 12, md: 6 }} key={circuit.id}>
                       <Card
                         sx={{
                           cursor: 'pointer',

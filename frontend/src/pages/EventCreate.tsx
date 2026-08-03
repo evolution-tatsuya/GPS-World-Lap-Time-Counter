@@ -63,7 +63,7 @@ export default function EventCreate() {
       const startAtIso = startAt ? new Date(startAt).toISOString() : undefined;
       const endAtIso = endAt ? new Date(endAt).toISOString() : undefined;
 
-      const response = await apiClient.post('/events', {
+      const response = await apiClient.post<{ id: string }>('/events', {
         name,
         courseId,
         sportCategory,

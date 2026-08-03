@@ -105,7 +105,7 @@ export default function CircuitDetail() {
 
       <Grid container spacing={3}>
         {/* 基本情報 */}
-        <Grid item xs={12} md={6}>
+        <Grid size={{ xs: 12, md: 6 }}>
           <Paper sx={{ p: 3 }}>
             <Typography variant="h6" gutterBottom>
               基本情報
@@ -163,7 +163,7 @@ export default function CircuitDetail() {
         </Grid>
 
         {/* コース仕様 */}
-        <Grid item xs={12} md={6}>
+        <Grid size={{ xs: 12, md: 6 }}>
           <Paper sx={{ p: 3 }}>
             <Typography variant="h6" gutterBottom>
               コース仕様
@@ -221,7 +221,7 @@ export default function CircuitDetail() {
         </Grid>
 
         {/* コントロールライン座標 */}
-        <Grid item xs={12} md={6}>
+        <Grid size={{ xs: 12, md: 6 }}>
           <Paper sx={{ p: 3 }}>
             <Typography variant="h6" gutterBottom>
               コントロールライン座標
@@ -256,7 +256,7 @@ export default function CircuitDetail() {
 
         {/* 説明 */}
         {circuit.description && (
-          <Grid item xs={12} md={6}>
+          <Grid size={{ xs: 12, md: 6 }}>
             <Paper sx={{ p: 3 }}>
               <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
                 <Info sx={{ mr: 1 }} />
@@ -273,7 +273,7 @@ export default function CircuitDetail() {
         )}
 
         {/* 操作ボタン */}
-        <Grid item xs={12}>
+        <Grid size={12}>
           <Paper sx={{ p: 2, textAlign: 'center' }}>
             <Typography variant="body2" color="text.secondary" gutterBottom>
               編集・削除機能は準備中です

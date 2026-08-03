@@ -127,7 +127,7 @@ export default function EventDetail() {
 
       <Grid container spacing={3}>
         {/* イベント基本情報 */}
-        <Grid item xs={12} md={6}>
+        <Grid size={{ xs: 12, md: 6 }}>
           <Paper sx={{ p: 3 }}>
             <Typography variant="h6" gutterBottom>
               イベント情報
@@ -202,7 +202,7 @@ export default function EventDetail() {
         </Grid>
 
         {/* コース情報 */}
-        <Grid item xs={12} md={6}>
+        <Grid size={{ xs: 12, md: 6 }}>
           <Paper sx={{ p: 3 }}>
             <Typography variant="h6" gutterBottom>
               コース情報
@@ -273,7 +273,7 @@ export default function EventDetail() {
         </Grid>
 
         {/* 結果・集計 */}
-        <Grid item xs={12}>
+        <Grid size={12}>
           <Paper sx={{ p: 2 }}>
             <Typography variant="h6" gutterBottom>
               結果・集計
@@ -311,7 +311,7 @@ export default function EventDetail() {
         </Grid>
 
         {/* 操作ボタン */}
-        <Grid item xs={12}>
+        <Grid size={12}>
           <Paper sx={{ p: 2, textAlign: 'center' }}>
             <Typography variant="body2" color="text.secondary" gutterBottom>
               編集・削除機能は準備中です

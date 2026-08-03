@@ -18,7 +18,6 @@ import LiveMap from './pages/LiveMap';
 import CircuitDetail from './pages/CircuitDetail';
 import EventCreate from './pages/EventCreate';
 import CircuitCreate from './pages/CircuitCreate';
-import ComingSoon from './pages/ComingSoon';
 
 // React Query Client
 const queryClient = new QueryClient({

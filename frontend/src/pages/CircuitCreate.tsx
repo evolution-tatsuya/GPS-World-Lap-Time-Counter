@@ -25,7 +25,6 @@ import { useAuthStore } from '../stores/authStore';
 import { apiClient } from '../api/client';
 import { getCurrentPositionOnce, makeControlLineFromPoint } from '../utils/gpsUtils';
 
-const SPORT_CATEGORIES = ['CAR', 'MOTORCYCLE', 'RUNNING', 'BICYCLE'] as const;
 const COURSE_TYPES = ['CLOSED_CIRCUIT', 'PUBLIC_ROAD', 'OFF_ROAD'] as const;
 
 export default function CircuitCreate() {
@@ -108,7 +107,7 @@ export default function CircuitCreate() {
     setLoading(true);
 
     try {
-      const response = await apiClient.post('/circuits', {
+      const response = await apiClient.post<{ id: string }>('/circuits', {
         name,
         country,
         state: state || null,
@@ -174,7 +173,7 @@ export default function CircuitCreate() {
           />
 
           <Grid container spacing={2} sx={{ mb: 2 }}>
-            <Grid item xs={6}>
+            <Grid size={6}>
               <TextField
                 fullWidth
                 label="国"
@@ -184,7 +183,7 @@ export default function CircuitCreate() {
                 placeholder="例: Japan"
               />
             </Grid>
-            <Grid item xs={6}>
+            <Grid size={6}>
               <TextField
                 fullWidth
                 label="都道府県（任意）"
@@ -276,7 +275,7 @@ export default function CircuitCreate() {
           )}
 
           <Grid container spacing={2} sx={{ mb: 2 }}>
-            <Grid item xs={6}>
+            <Grid size={6}>
               <TextField
                 fullWidth
                 label="地点A 緯度"
@@ -288,7 +287,7 @@ export default function CircuitCreate() {
                 placeholder="34.8431"
               />
             </Grid>
-            <Grid item xs={6}>
+            <Grid size={6}>
               <TextField
                 fullWidth
                 label="地点A 経度"
@@ -303,7 +302,7 @@ export default function CircuitCreate() {
           </Grid>
 
           <Grid container spacing={2} sx={{ mb: 2 }}>
-            <Grid item xs={6}>
+            <Grid size={6}>
               <TextField
                 fullWidth
                 label="地点B 緯度"
@@ -315,7 +314,7 @@ export default function CircuitCreate() {
                 placeholder="34.8432"
               />
             </Grid>
-            <Grid item xs={6}>
+            <Grid size={6}>
               <TextField
                 fullWidth
                 label="地点B 経度"
