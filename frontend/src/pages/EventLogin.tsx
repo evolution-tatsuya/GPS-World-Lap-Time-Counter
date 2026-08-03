@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import {
   Container,
   Box,
@@ -12,10 +13,12 @@ import {
 } from '@mui/material';
 import { useAuthStore } from '../stores/authStore';
 import { apiClient } from '../api/client';
+import LanguageSwitcher from '../components/LanguageSwitcher';
 import type { EventLoginResponse } from '../types';
 
 export default function EventLogin() {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const setEventSession = useAuthStore((state) => state.setEventSession);
 
   const [eventCode, setEventCode] = useState('');
@@ -39,7 +42,7 @@ export default function EventLogin() {
       setEventSession(response.event, driverName, vehicle);
       navigate('/measurement');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'ログインに失敗しました');
+      setError(err instanceof Error ? err.message : t('eventLogin.failed'));
     } finally {
       setLoading(false);
     }
@@ -47,11 +50,16 @@ export default function EventLogin() {
 
   return (
     <Container maxWidth="sm" sx={{ mt: 8 }}>
+      {/* 言語選択（ログイン前に選ぶ。以降のページに反映される） */}
+      <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
+        <LanguageSwitcher />
+      </Box>
+
       <Typography variant="h4" component="h1" gutterBottom>
-        イベント参加
+        {t('eventLogin.title')}
       </Typography>
       <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-        運営者から配布されたイベントコードを入力してください
+        {t('eventLogin.description')}
       </Typography>
 
       <Box component="form" onSubmit={handleSubmit} sx={{ mt: 3 }}>
@@ -59,7 +67,7 @@ export default function EventLogin() {
 
         <TextField
           fullWidth
-          label="イベントコード"
+          label={t('eventLogin.eventCode')}
           value={eventCode}
           onChange={(e) => setEventCode(e.target.value.toUpperCase())}
           placeholder="ABC123"
@@ -77,7 +85,7 @@ export default function EventLogin() {
 
         <TextField
           fullWidth
-          label="ドライバー名"
+          label={t('eventLogin.driverName')}
           value={driverName}
           onChange={(e) => setDriverName(e.target.value)}
           required
@@ -86,7 +94,7 @@ export default function EventLogin() {
 
         <TextField
           fullWidth
-          label="車両名"
+          label={t('eventLogin.vehicle')}
           value={vehicle}
           onChange={(e) => setVehicle(e.target.value)}
           placeholder="例: FD2 CIVIC TYPE R"
@@ -101,7 +109,7 @@ export default function EventLogin() {
           size="large"
           disabled={loading || !eventCode || !driverName || !vehicle}
         >
-          {loading ? '接続中...' : 'イベントに参加'}
+          {loading ? t('eventLogin.joining') : t('eventLogin.join')}
         </Button>
 
         <Button
@@ -109,7 +117,7 @@ export default function EventLogin() {
           onClick={() => navigate('/')}
           sx={{ mt: 2 }}
         >
-          戻る
+          {t('common.back')}
         </Button>
       </Box>
     </Container>

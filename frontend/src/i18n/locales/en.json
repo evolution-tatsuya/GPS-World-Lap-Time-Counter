@@ -1,0 +1,48 @@
+{
+  "app": {
+    "name": "GPS World Lap Time Counter"
+  },
+  "common": {
+    "save": "Save",
+    "reset": "Reset",
+    "cancel": "Cancel",
+    "back": "Back",
+    "logout": "Exit",
+    "loading": "Loading…",
+    "required": "Required",
+    "optional": "Optional"
+  },
+  "language": {
+    "select": "Select language",
+    "label": "Language"
+  },
+  "eventLogin": {
+    "title": "Join Event",
+    "description": "Enter the event code provided by the organizer",
+    "eventCode": "Event Code",
+    "driverName": "Driver Name",
+    "vehicle": "Vehicle",
+    "join": "Join",
+    "joining": "Joining…",
+    "failed": "Login failed"
+  },
+  "measurement": {
+    "start": "Start",
+    "stop": "Stop",
+    "reset": "Reset",
+    "waiting": "Waiting for start",
+    "shareLocation": "Share location with organizer",
+    "sharingOn": "Sharing location…",
+    "sharingOff": "Your location is not shared while OFF",
+    "info": "Measurement info (optional)",
+    "sessionName": "Session name",
+    "zekken": "Number",
+    "class": "Class",
+    "tire": "Tire / Weather",
+    "note": "Note",
+    "pending": "{{count}} unsent (will auto-send where signal is good)",
+    "sendNow": "Send now",
+    "courseError": "Could not load course info (control line coordinates). Please log in again.",
+    "toEventLogin": "To event login"
+  }
+}

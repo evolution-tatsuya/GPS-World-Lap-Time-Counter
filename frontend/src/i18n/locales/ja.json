@@ -1,0 +1,48 @@
+{
+  "app": {
+    "name": "GPS World Lap Time Counter"
+  },
+  "common": {
+    "save": "保存",
+    "reset": "リセット",
+    "cancel": "キャンセル",
+    "back": "戻る",
+    "logout": "終了",
+    "loading": "読み込み中…",
+    "required": "必須",
+    "optional": "任意"
+  },
+  "language": {
+    "select": "言語を選択",
+    "label": "言語"
+  },
+  "eventLogin": {
+    "title": "イベント参加",
+    "description": "運営者から配布されたイベントコードを入力してください",
+    "eventCode": "イベントコード",
+    "driverName": "ドライバー名",
+    "vehicle": "車両",
+    "join": "参加する",
+    "joining": "参加中…",
+    "failed": "ログインに失敗しました"
+  },
+  "measurement": {
+    "start": "計測開始",
+    "stop": "計測ストップ",
+    "reset": "リセット",
+    "waiting": "スタート待ち",
+    "shareLocation": "現在地を主催者と共有",
+    "sharingOn": "現在地を共有中…",
+    "sharingOff": "OFFの間は主催者に位置は送られません",
+    "info": "計測情報（任意）",
+    "sessionName": "セッション名",
+    "zekken": "ゼッケン",
+    "class": "クラス",
+    "tire": "タイヤ・天候",
+    "note": "メモ",
+    "pending": "未送信 {{count}} 件（電波の良い場所で自動送信されます）",
+    "sendNow": "今すぐ送信",
+    "courseError": "コース情報（コントロールライン座標）が取得できませんでした。お手数ですが、一度ログインし直してください。",
+    "toEventLogin": "イベントログインへ"
+  }
+}

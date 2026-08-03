@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import {
   Container,
   Box,
@@ -41,6 +42,7 @@ const DEFAULT_SIMULATION =
 
 export default function Measurement() {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const { event, driverName, logout } = useAuthStore();
 
   // シミュレーションモード切替（計測中は変更不可）
@@ -155,11 +157,10 @@ export default function Measurement() {
     return (
       <Container maxWidth="md" sx={{ mt: 4 }}>
         <Alert severity="error" sx={{ mb: 2 }}>
-          コース情報（コントロールライン座標）が取得できませんでした。
-          お手数ですが、一度ログインし直してください。
+          {t('measurement.courseError')}
         </Alert>
         <Button variant="outlined" onClick={() => navigate('/event-login')}>
-          イベントログインへ
+          {t('measurement.toEventLogin')}
         </Button>
       </Container>
     );
@@ -236,7 +237,7 @@ export default function Measurement() {
           onClick={handleLogout}
           size="small"
         >
-          終了
+          {t('common.logout')}
         </Button>
       </Box>
 
@@ -261,11 +262,11 @@ export default function Measurement() {
                 if (event) setPending(await flushQueue(event.id));
               }}
             >
-              今すぐ送信
+              {t('measurement.sendNow')}
             </Button>
           }
         >
-          未送信 {pending} 件（電波の良い場所で自動送信されます）
+          {t('measurement.pending', { count: pending })}
         </Alert>
       )}
 
@@ -284,12 +285,12 @@ export default function Measurement() {
             <MyLocation color={sharing ? 'primary' : 'disabled'} />
             <Box>
               <Typography variant="body2" sx={{ fontWeight: 'medium' }}>
-                現在地を主催者と共有
+                {t('measurement.shareLocation')}
               </Typography>
               <Typography variant="caption" color="text.secondary">
                 {sharing
-                  ? shareStatus || '現在地を共有中…'
-                  : 'OFFの間は主催者に位置は送られません'}
+                  ? shareStatus || t('measurement.sharingOn')
+                  : t('measurement.sharingOff')}
               </Typography>
             </Box>
           </Box>
@@ -383,12 +384,12 @@ export default function Measurement() {
       {!running && (
         <Paper variant="outlined" sx={{ p: 2, mb: 2 }}>
           <Typography variant="body2" sx={{ mb: 1, fontWeight: 'medium' }}>
-            計測情報（任意）
+            {t('measurement.info')}
           </Typography>
           <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
             <TextField
               size="small"
-              label="セッション名"
+              label={t('measurement.sessionName')}
               placeholder="例：午前フリー走行"
               value={sessionName}
               onChange={(e) => setSessionName(e.target.value)}
@@ -396,7 +397,7 @@ export default function Measurement() {
             />
             <TextField
               size="small"
-              label="ゼッケン"
+              label={t('measurement.zekken')}
               placeholder="例：26"
               value={zekken}
               onChange={(e) => setZekken(e.target.value)}
@@ -404,7 +405,7 @@ export default function Measurement() {
             />
             <TextField
               size="small"
-              label="クラス"
+              label={t('measurement.class')}
               placeholder="例：NA1"
               value={klass}
               onChange={(e) => setKlass(e.target.value)}
@@ -412,7 +413,7 @@ export default function Measurement() {
             />
             <TextField
               size="small"
-              label="タイヤ・天候"
+              label={t('measurement.tire')}
               placeholder="例：71RS/ドライ"
               value={tire}
               onChange={(e) => setTire(e.target.value)}
@@ -420,7 +421,7 @@ export default function Measurement() {
             />
             <TextField
               size="small"
-              label="メモ"
+              label={t('measurement.note')}
               value={note}
               onChange={(e) => setNote(e.target.value)}
               sx={{ flex: '1 1 100%' }}
@@ -439,7 +440,7 @@ export default function Measurement() {
             startIcon={<PlayArrow />}
             onClick={start}
           >
-            計測開始
+            {t('measurement.start')}
           </Button>
         ) : (
           <Button
@@ -450,7 +451,7 @@ export default function Measurement() {
             startIcon={<Stop />}
             onClick={stop}
           >
-            計測停止
+            {t('measurement.stop')}
           </Button>
         )}
 
@@ -461,7 +462,7 @@ export default function Measurement() {
           onClick={reset}
           disabled={running}
         >
-          リセット
+          {t('common.reset')}
         </Button>
       </Box>
 
