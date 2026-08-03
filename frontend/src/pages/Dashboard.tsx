@@ -174,7 +174,7 @@ export default function Dashboard() {
         <>
           {/* 統計カード */}
           <Grid container spacing={3} sx={{ mb: 4 }}>
-            <Grid size={12} sm={6} md={3}>
+            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
               <Card>
                 <CardContent>
                   <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
@@ -190,7 +190,7 @@ export default function Dashboard() {
               </Card>
             </Grid>
 
-            <Grid size={12} sm={6} md={3}>
+            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
               <Card>
                 <CardContent>
                   <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
@@ -206,7 +206,7 @@ export default function Dashboard() {
               </Card>
             </Grid>
 
-            <Grid size={12} sm={6} md={3}>
+            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
               <Card>
                 <CardContent>
                   <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
@@ -222,7 +222,7 @@ export default function Dashboard() {
               </Card>
             </Grid>
 
-            <Grid size={12} sm={6} md={3}>
+            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
               <Card>
                 <CardContent>
                   <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>

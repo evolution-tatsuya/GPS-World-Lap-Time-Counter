@@ -243,7 +243,7 @@ export default function EventDetail() {
                   基準ラップタイム
                 </Typography>
                 <Typography variant="body1">
-                  {((course.referenceTime || course.referenceLapTime) / 1000).toFixed(3)}秒
+                  {((course.referenceTime || course.referenceLapTime || 0) / 1000).toFixed(3)}秒
                 </Typography>
               </Box>
             )}

@@ -259,7 +259,7 @@ export default function Ranking() {
                       </Typography>
                     </TableCell>
                     <TableCell>
-                      <Typography variant="body1" fontWeight="medium">
+                      <Typography variant="body1" sx={{ fontWeight: 'medium' }}>
                         {entry.driverName}
                       </Typography>
                     </TableCell>

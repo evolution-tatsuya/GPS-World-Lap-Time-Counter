@@ -178,7 +178,7 @@ export default function CircuitDetail() {
                     基準ラップタイム
                   </Typography>
                   <Typography variant="h6">
-                    {((circuit.referenceTime || circuit.referenceLapTime) / 1000).toFixed(3)}秒
+                    {((circuit.referenceTime || circuit.referenceLapTime || 0) / 1000).toFixed(3)}秒
                   </Typography>
                 </Box>
               </Box>

@@ -283,7 +283,7 @@ export default function Measurement() {
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             <MyLocation color={sharing ? 'primary' : 'disabled'} />
             <Box>
-              <Typography variant="body2" fontWeight="medium">
+              <Typography variant="body2" sx={{ fontWeight: 'medium' }}>
                 現在地を主催者と共有
               </Typography>
               <Typography variant="caption" color="text.secondary">

@@ -283,7 +283,7 @@ export default function CircuitCreate() {
                 value={controlLineALat}
                 onChange={(e) => setControlLineALat(e.target.value)}
                 required
-                inputProps={{ step: '0.0001' }}
+                slotProps={{ htmlInput: { step: '0.0001' } }}
                 placeholder="34.8431"
               />
             </Grid>
@@ -295,7 +295,7 @@ export default function CircuitCreate() {
                 value={controlLineALng}
                 onChange={(e) => setControlLineALng(e.target.value)}
                 required
-                inputProps={{ step: '0.0001' }}
+                slotProps={{ htmlInput: { step: '0.0001' } }}
                 placeholder="136.5407"
               />
             </Grid>
@@ -310,7 +310,7 @@ export default function CircuitCreate() {
                 value={controlLineBLat}
                 onChange={(e) => setControlLineBLat(e.target.value)}
                 required
-                inputProps={{ step: '0.0001' }}
+                slotProps={{ htmlInput: { step: '0.0001' } }}
                 placeholder="34.8432"
               />
             </Grid>
@@ -322,7 +322,7 @@ export default function CircuitCreate() {
                 value={controlLineBLng}
                 onChange={(e) => setControlLineBLng(e.target.value)}
                 required
-                inputProps={{ step: '0.0001' }}
+                slotProps={{ htmlInput: { step: '0.0001' } }}
                 placeholder="136.5408"
               />
             </Grid>
@@ -349,7 +349,7 @@ export default function CircuitCreate() {
             value={courseLength}
             onChange={(e) => setCourseLength(e.target.value)}
             sx={{ mb: 2 }}
-            inputProps={{ step: '0.01' }}
+            slotProps={{ htmlInput: { step: '0.01' } }}
             placeholder="例: 5.807"
           />
 

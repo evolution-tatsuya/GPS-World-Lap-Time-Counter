@@ -50,7 +50,7 @@ export default function EventLogin() {
       <Typography variant="h4" component="h1" gutterBottom>
         イベント参加
       </Typography>
-      <Typography variant="body2" color="text.secondary" paragraph>
+      <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
         運営者から配布されたイベントコードを入力してください
       </Typography>
 
@@ -65,13 +65,11 @@ export default function EventLogin() {
           placeholder="ABC123"
           required
           sx={{ mb: 2 }}
-          inputProps={{
-            maxLength: 6,
-            autoCapitalize: 'characters',
-            autoComplete: 'off'
-          }}
           slotProps={{
             htmlInput: {
+              maxLength: 6,
+              autoCapitalize: 'characters',
+              autoComplete: 'off',
               style: { textTransform: 'uppercase' }
             }
           }}

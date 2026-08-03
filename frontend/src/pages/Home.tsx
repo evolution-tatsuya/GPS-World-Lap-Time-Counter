@@ -11,7 +11,7 @@ export default function Home() {
       <Typography variant="h3" component="h1" gutterBottom>
         GPS World Lap Time Counter
       </Typography>
-      <Typography variant="h6" color="text.secondary" paragraph>
+      <Typography variant="h6" color="text.secondary" sx={{ mb: 2 }}>
         モータースポーツイベントのラップタイム計測プラットフォーム
       </Typography>
 

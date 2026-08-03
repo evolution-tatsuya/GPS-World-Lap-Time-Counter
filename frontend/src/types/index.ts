@@ -128,6 +128,9 @@ export interface Event {
   organizerId: string;
   createdAt: Date;
   updatedAt: Date;
+  // 一覧/詳細レスポンスに含まれるコース情報（任意）
+  course?: { id: string; name: string };
+  circuit?: { id: string; name: string }; // 後方互換エイリアス
 }
 
 export interface EventWithCourse extends Event {

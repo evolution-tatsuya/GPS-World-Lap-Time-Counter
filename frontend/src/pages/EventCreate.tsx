@@ -152,7 +152,7 @@ export default function EventCreate() {
             onChange={(e) => setEventDate(e.target.value)}
             required
             sx={{ mb: 2 }}
-            InputLabelProps={{ shrink: true }}
+            slotProps={{ inputLabel: { shrink: true } }}
           />
 
           {/* 位置共有の許可時間帯。この時間内のみ主催者は参加者の現在地を見られる。 */}
@@ -168,7 +168,7 @@ export default function EventCreate() {
               label="開催開始（任意）"
               value={startAt}
               onChange={(e) => setStartAt(e.target.value)}
-              InputLabelProps={{ shrink: true }}
+              slotProps={{ inputLabel: { shrink: true } }}
               sx={{ flex: 1, minWidth: 200 }}
             />
             <TextField
@@ -176,7 +176,7 @@ export default function EventCreate() {
               label="開催終了（任意）"
               value={endAt}
               onChange={(e) => setEndAt(e.target.value)}
-              InputLabelProps={{ shrink: true }}
+              slotProps={{ inputLabel: { shrink: true } }}
               sx={{ flex: 1, minWidth: 200 }}
             />
           </Box>

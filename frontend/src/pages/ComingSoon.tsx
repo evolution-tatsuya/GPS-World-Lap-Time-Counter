@@ -53,11 +53,11 @@ export default function ComingSoon() {
           準備中
         </Typography>
 
-        <Typography variant="body1" color="text.secondary" paragraph>
+        <Typography variant="body1" color="text.secondary" sx={{ mb: 2 }}>
           このページは現在開発中です。
         </Typography>
 
-        <Typography variant="body2" color="text.secondary" paragraph sx={{ mb: 4 }}>
+        <Typography variant="body2" color="text.secondary" sx={{ mb: 4 }}>
           将来のバージョンでご利用いただけるようになります。
         </Typography>
 
