@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import {
   Container,
   Box,
@@ -13,10 +14,12 @@ import {
 } from '@mui/material';
 import { useAuthStore } from '../stores/authStore';
 import { apiClient } from '../api/client';
+import LanguageSwitcher from '../components/LanguageSwitcher';
 import type { User } from '../types';
 
 export default function Login() {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const setUser = useAuthStore((state) => state.setUser);
 
   const [email, setEmail] = useState('');
@@ -38,7 +41,7 @@ export default function Login() {
       setUser(response.user);
       navigate('/dashboard');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'ログインに失敗しました');
+      setError(err instanceof Error ? err.message : t('login.failed'));
     } finally {
       setLoading(false);
     }
@@ -46,8 +49,12 @@ export default function Login() {
 
   return (
     <Container maxWidth="sm" sx={{ mt: 8 }}>
+      <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
+        <LanguageSwitcher />
+      </Box>
+
       <Typography variant="h4" component="h1" gutterBottom>
-        運営者ログイン
+        {t('login.title')}
       </Typography>
 
       <Box component="form" onSubmit={handleSubmit} sx={{ mt: 3 }}>
@@ -55,7 +62,7 @@ export default function Login() {
 
         <TextField
           fullWidth
-          label="メールアドレス"
+          label={t('login.email')}
           type="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
@@ -65,7 +72,7 @@ export default function Login() {
 
         <TextField
           fullWidth
-          label="パスワード"
+          label={t('login.password')}
           type="password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
@@ -80,12 +87,12 @@ export default function Login() {
           size="large"
           disabled={loading || !email || !password}
         >
-          {loading ? 'ログイン中...' : 'ログイン'}
+          {loading ? t('login.submitting') : t('login.submit')}
         </Button>
 
         <Box sx={{ mt: 2, textAlign: 'center' }}>
           <Link href="/register" underline="hover">
-            アカウント登録はこちら
+            {t('login.register')}
           </Link>
         </Box>
 
@@ -94,7 +101,7 @@ export default function Login() {
           onClick={() => navigate('/')}
           sx={{ mt: 2 }}
         >
-          戻る
+          {t('common.back')}
         </Button>
       </Box>
     </Container>

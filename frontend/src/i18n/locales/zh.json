@@ -12,9 +12,23 @@
     "required": "必填",
     "optional": "可选"
   },
+  "home": {
+    "tagline": "赛车运动活动的圈速测量平台",
+    "participant": "活动参加者",
+    "organizer": "主办方登录"
+  },
   "language": {
     "select": "选择语言",
     "label": "语言"
+  },
+  "login": {
+    "title": "主办方登录",
+    "email": "邮箱",
+    "password": "密码",
+    "submit": "登录",
+    "submitting": "登录中…",
+    "register": "注册账号",
+    "failed": "登录失败"
   },
   "eventLogin": {
     "title": "加入活动",

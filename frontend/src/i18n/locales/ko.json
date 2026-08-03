@@ -12,9 +12,23 @@
     "required": "필수",
     "optional": "선택"
   },
+  "home": {
+    "tagline": "모터스포츠 이벤트 랩타임 측정 플랫폼",
+    "participant": "이벤트 참가자",
+    "organizer": "주최자 로그인"
+  },
   "language": {
     "select": "언어 선택",
     "label": "언어"
+  },
+  "login": {
+    "title": "주최자 로그인",
+    "email": "이메일",
+    "password": "비밀번호",
+    "submit": "로그인",
+    "submitting": "로그인 중…",
+    "register": "계정 등록하기",
+    "failed": "로그인에 실패했습니다"
   },
   "eventLogin": {
     "title": "이벤트 참가",

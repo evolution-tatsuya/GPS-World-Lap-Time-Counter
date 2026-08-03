@@ -12,9 +12,23 @@
     "required": "Required",
     "optional": "Optional"
   },
+  "home": {
+    "tagline": "Lap time measurement platform for motorsport events",
+    "participant": "Event Participant",
+    "organizer": "Organizer Login"
+  },
   "language": {
     "select": "Select language",
     "label": "Language"
+  },
+  "login": {
+    "title": "Organizer Login",
+    "email": "Email",
+    "password": "Password",
+    "submit": "Log in",
+    "submitting": "Logging in…",
+    "register": "Create an account",
+    "failed": "Login failed"
   },
   "eventLogin": {
     "title": "Join Event",

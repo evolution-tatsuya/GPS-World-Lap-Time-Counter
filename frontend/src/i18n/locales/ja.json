@@ -12,9 +12,23 @@
     "required": "必須",
     "optional": "任意"
   },
+  "home": {
+    "tagline": "モータースポーツイベントのラップタイム計測プラットフォーム",
+    "participant": "イベント参加者",
+    "organizer": "運営者ログイン"
+  },
   "language": {
     "select": "言語を選択",
     "label": "言語"
+  },
+  "login": {
+    "title": "運営者ログイン",
+    "email": "メールアドレス",
+    "password": "パスワード",
+    "submit": "ログイン",
+    "submitting": "ログイン中…",
+    "register": "アカウント登録はこちら",
+    "failed": "ログインに失敗しました"
   },
   "eventLogin": {
     "title": "イベント参加",
