@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import {
   Container,
   Box,
@@ -33,6 +34,7 @@ import type { EventWithCourse } from '../types';
 export default function EventDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [event, setEvent] = useState<EventWithCourse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -47,7 +49,7 @@ export default function EventDetail() {
       await exportEventLapsCsv(id);
     } catch (err) {
       console.error('Failed to export CSV:', err);
-      setExportError(err instanceof Error ? err.message : 'CSVエクスポートに失敗しました');
+      setExportError(err instanceof Error ? err.message : t('eventDetail.csvExportFailed'));
     } finally {
       setExporting(false);
     }
@@ -64,7 +66,7 @@ export default function EventDetail() {
         setError(null);
       } catch (err) {
         console.error('Failed to fetch event:', err);
-        setError('イベント情報の取得に失敗しました');
+        setError(t('eventDetail.fetchFailed'));
       } finally {
         setLoading(false);
       }
@@ -78,7 +80,7 @@ export default function EventDetail() {
       <Container maxWidth="md" sx={{ mt: 8, textAlign: 'center' }}>
         <CircularProgress />
         <Typography variant="body1" sx={{ mt: 2 }}>
-          読み込み中...
+          {t('eventDetail.loading')}
         </Typography>
       </Container>
     );
@@ -88,13 +90,13 @@ export default function EventDetail() {
     return (
       <Container maxWidth="md" sx={{ mt: 4 }}>
         <Alert severity="error" sx={{ mb: 2 }}>
-          {error || 'イベントが見つかりません'}
+          {error || t('eventDetail.notFound')}
         </Alert>
         <Button
           startIcon={<ArrowBack />}
           onClick={() => navigate('/dashboard')}
         >
-          ダッシュボードに戻る
+          {t('eventDetail.backToDashboard')}
         </Button>
       </Container>
     );
@@ -111,7 +113,7 @@ export default function EventDetail() {
           onClick={() => navigate('/dashboard')}
           sx={{ mb: 2 }}
         >
-          ダッシュボードに戻る
+          {t('eventDetail.backToDashboard')}
         </Button>
 
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
@@ -119,7 +121,7 @@ export default function EventDetail() {
             {event.name}
           </Typography>
           <Chip
-            label={event.isPublic ? '公開' : '非公開'}
+            label={event.isPublic ? t('eventDetail.public') : t('eventDetail.private')}
             color={event.isPublic ? 'success' : 'default'}
           />
         </Box>
@@ -130,7 +132,7 @@ export default function EventDetail() {
         <Grid size={{ xs: 12, md: 6 }}>
           <Paper sx={{ p: 3 }}>
             <Typography variant="h6" gutterBottom>
-              イベント情報
+              {t('eventDetail.eventInfo')}
             </Typography>
             <Divider sx={{ mb: 2 }} />
 
@@ -138,7 +140,7 @@ export default function EventDetail() {
               <Code sx={{ mr: 1, color: 'text.secondary' }} />
               <Box>
                 <Typography variant="body2" color="text.secondary">
-                  イベントコード
+                  {t('eventDetail.eventCode')}
                 </Typography>
                 <Typography variant="h6">
                   {event.eventCode}
@@ -150,7 +152,7 @@ export default function EventDetail() {
               <CalendarToday sx={{ mr: 1, color: 'text.secondary' }} />
               <Box>
                 <Typography variant="body2" color="text.secondary">
-                  開催日時
+                  {t('eventDetail.eventDateTime')}
                 </Typography>
                 <Typography variant="body1">
                   {new Date(event.eventDate).toLocaleDateString('ja-JP', {
@@ -167,7 +169,7 @@ export default function EventDetail() {
               <Category sx={{ mr: 1, color: 'text.secondary' }} />
               <Box>
                 <Typography variant="body2" color="text.secondary">
-                  スポーツカテゴリ
+                  {t('eventDetail.sportCategory')}
                 </Typography>
                 <Chip label={event.sportCategory} color="primary" size="small" />
               </Box>
@@ -178,10 +180,10 @@ export default function EventDetail() {
                 <People sx={{ mr: 1, color: 'text.secondary' }} />
                 <Box>
                   <Typography variant="body2" color="text.secondary">
-                    最大参加者数
+                    {t('eventDetail.maxParticipants')}
                   </Typography>
                   <Typography variant="body1">
-                    {event.maxParticipants}名
+                    {t('eventDetail.participantsSuffix', { count: event.maxParticipants })}
                   </Typography>
                 </Box>
               </Box>
@@ -191,10 +193,10 @@ export default function EventDetail() {
               <Public sx={{ mr: 1, color: 'text.secondary' }} />
               <Box>
                 <Typography variant="body2" color="text.secondary">
-                  公開設定
+                  {t('eventDetail.publicSetting')}
                 </Typography>
                 <Typography variant="body1">
-                  {event.isPublic ? '公開イベント' : '非公開イベント'}
+                  {event.isPublic ? t('eventDetail.publicEvent') : t('eventDetail.privateEvent')}
                 </Typography>
               </Box>
             </Box>
@@ -205,13 +207,13 @@ export default function EventDetail() {
         <Grid size={{ xs: 12, md: 6 }}>
           <Paper sx={{ p: 3 }}>
             <Typography variant="h6" gutterBottom>
-              コース情報
+              {t('eventDetail.courseInfo')}
             </Typography>
             <Divider sx={{ mb: 2 }} />
 
             <Box sx={{ mb: 2 }}>
               <Typography variant="body2" color="text.secondary">
-                コース名
+                {t('eventDetail.courseName')}
               </Typography>
               <Typography variant="h6">
                 {course.name}
@@ -222,7 +224,7 @@ export default function EventDetail() {
               <LocationOn sx={{ mr: 1, color: 'text.secondary' }} />
               <Box>
                 <Typography variant="body2" color="text.secondary">
-                  所在地
+                  {t('eventDetail.location')}
                 </Typography>
                 <Typography variant="body1">
                   {course.country} {course.state && `/ ${course.state}`}
@@ -232,7 +234,7 @@ export default function EventDetail() {
 
             <Box sx={{ mb: 2 }}>
               <Typography variant="body2" color="text.secondary">
-                コースタイプ
+                {t('eventDetail.courseType')}
               </Typography>
               <Chip label={course.courseType} size="small" />
             </Box>
@@ -240,10 +242,10 @@ export default function EventDetail() {
             {(course.referenceTime || course.referenceLapTime) && (
               <Box sx={{ mb: 2 }}>
                 <Typography variant="body2" color="text.secondary">
-                  基準ラップタイム
+                  {t('eventDetail.referenceLapTime')}
                 </Typography>
                 <Typography variant="body1">
-                  {((course.referenceTime || course.referenceLapTime || 0) / 1000).toFixed(3)}秒
+                  {t('eventDetail.secondsSuffix', { seconds: ((course.referenceTime || course.referenceLapTime || 0) / 1000).toFixed(3) })}
                 </Typography>
               </Box>
             )}
@@ -251,7 +253,7 @@ export default function EventDetail() {
             {course.courseLength && (
               <Box sx={{ mb: 2 }}>
                 <Typography variant="body2" color="text.secondary">
-                  コース長
+                  {t('eventDetail.courseLength')}
                 </Typography>
                 <Typography variant="body1">
                   {course.courseLength} km
@@ -262,7 +264,7 @@ export default function EventDetail() {
             {course.description && (
               <Box>
                 <Typography variant="body2" color="text.secondary">
-                  説明
+                  {t('eventDetail.description')}
                 </Typography>
                 <Typography variant="body1">
                   {course.description}
@@ -276,7 +278,7 @@ export default function EventDetail() {
         <Grid size={12}>
           <Paper sx={{ p: 2 }}>
             <Typography variant="h6" gutterBottom>
-              結果・集計
+              {t('eventDetail.results')}
             </Typography>
             {exportError && (
               <Alert severity="error" sx={{ mb: 2 }}>
@@ -289,7 +291,7 @@ export default function EventDetail() {
                 startIcon={<EmojiEvents />}
                 onClick={() => navigate('/ranking')}
               >
-                ランキングを見る
+                {t('eventDetail.viewRanking')}
               </Button>
               <Button
                 variant="outlined"
@@ -297,14 +299,14 @@ export default function EventDetail() {
                 onClick={handleExport}
                 disabled={exporting}
               >
-                {exporting ? '出力中...' : '結果をCSVダウンロード'}
+                {exporting ? t('eventDetail.exporting') : t('eventDetail.exportCsv')}
               </Button>
               <Button
                 variant="outlined"
                 startIcon={<MyLocation />}
                 onClick={() => navigate(`/events/${id}/live-map`)}
               >
-                参加者の現在地を見る
+                {t('eventDetail.viewLiveMap')}
               </Button>
             </Box>
           </Paper>
@@ -314,14 +316,14 @@ export default function EventDetail() {
         <Grid size={12}>
           <Paper sx={{ p: 2, textAlign: 'center' }}>
             <Typography variant="body2" color="text.secondary" gutterBottom>
-              編集・削除機能は準備中です
+              {t('eventDetail.editDeletePending')}
             </Typography>
             <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center', mt: 2 }}>
               <Button variant="outlined" disabled>
-                イベントを編集
+                {t('eventDetail.editEvent')}
               </Button>
               <Button variant="outlined" color="error" disabled>
-                イベントを削除
+                {t('eventDetail.deleteEvent')}
               </Button>
             </Box>
           </Paper>

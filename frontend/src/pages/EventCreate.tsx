@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import {
   Container,
   Box,
@@ -21,6 +22,7 @@ import type { Course } from '../types';
 
 export default function EventCreate() {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const { user } = useAuthStore();
 
   const [name, setName] = useState('');
@@ -76,7 +78,7 @@ export default function EventCreate() {
 
       navigate(`/events/${response.id}`);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'イベントの作成に失敗しました');
+      setError(err instanceof Error ? err.message : t('eventCreate.createFailed'));
     } finally {
       setLoading(false);
     }
@@ -89,14 +91,14 @@ export default function EventCreate() {
         onClick={() => navigate('/dashboard')}
         sx={{ mb: 2 }}
       >
-        ダッシュボードに戻る
+        {t('eventCreate.backToDashboard')}
       </Button>
 
       <Paper sx={{ p: 4 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
           <EventIcon sx={{ mr: 1, fontSize: 32 }} />
           <Typography variant="h4" component="h1">
-            新規イベント作成
+            {t('eventCreate.title')}
           </Typography>
         </Box>
 
@@ -105,7 +107,7 @@ export default function EventCreate() {
         <Box component="form" onSubmit={handleSubmit}>
           <TextField
             fullWidth
-            label="イベント名"
+            label={t('eventCreate.eventName')}
             value={name}
             onChange={(e) => setName(e.target.value)}
             required
@@ -116,7 +118,7 @@ export default function EventCreate() {
           <TextField
             fullWidth
             select
-            label="コース"
+            label={t('eventCreate.course')}
             value={courseId}
             onChange={(e) => setCourseId(e.target.value)}
             required
@@ -132,22 +134,22 @@ export default function EventCreate() {
           <TextField
             fullWidth
             select
-            label="スポーツカテゴリ"
+            label={t('eventCreate.sportCategory')}
             value={sportCategory}
             onChange={(e) => setSportCategory(e.target.value as any)}
             required
             sx={{ mb: 2 }}
           >
-            <MenuItem value="CAR">自動車</MenuItem>
-            <MenuItem value="MOTORCYCLE">オートバイ</MenuItem>
-            <MenuItem value="RUNNING">ランニング</MenuItem>
-            <MenuItem value="BICYCLE">自転車</MenuItem>
+            <MenuItem value="CAR">{t('eventCreate.car')}</MenuItem>
+            <MenuItem value="MOTORCYCLE">{t('eventCreate.motorcycle')}</MenuItem>
+            <MenuItem value="RUNNING">{t('eventCreate.running')}</MenuItem>
+            <MenuItem value="BICYCLE">{t('eventCreate.bicycle')}</MenuItem>
           </TextField>
 
           <TextField
             fullWidth
             type="datetime-local"
-            label="開催日時"
+            label={t('eventCreate.eventDateTime')}
             value={eventDate}
             onChange={(e) => setEventDate(e.target.value)}
             required
@@ -157,15 +159,13 @@ export default function EventCreate() {
 
           {/* 位置共有の許可時間帯。この時間内のみ主催者は参加者の現在地を見られる。 */}
           <Alert severity="info" sx={{ mb: 2 }}>
-            開催時間帯を設定すると、その時間内のみ参加者の現在地を主催者が
-            確認できます（時間外は一切表示されません）。未設定の場合は開催日
-            当日のみ有効になります。
+            {t('eventCreate.hoursInfo')}
           </Alert>
 
           <Box sx={{ display: 'flex', gap: 2, mb: 2, flexWrap: 'wrap' }}>
             <TextField
               type="datetime-local"
-              label="開催開始（任意）"
+              label={t('eventCreate.startAt')}
               value={startAt}
               onChange={(e) => setStartAt(e.target.value)}
               slotProps={{ inputLabel: { shrink: true } }}
@@ -173,7 +173,7 @@ export default function EventCreate() {
             />
             <TextField
               type="datetime-local"
-              label="開催終了（任意）"
+              label={t('eventCreate.endAt')}
               value={endAt}
               onChange={(e) => setEndAt(e.target.value)}
               slotProps={{ inputLabel: { shrink: true } }}
@@ -184,11 +184,11 @@ export default function EventCreate() {
           <TextField
             fullWidth
             type="number"
-            label="最大参加者数（任意）"
+            label={t('eventCreate.maxParticipants')}
             value={maxParticipants}
             onChange={(e) => setMaxParticipants(e.target.value ? parseInt(e.target.value) : '')}
             sx={{ mb: 2 }}
-            placeholder="未入力の場合は無制限"
+            placeholder={t('eventCreate.maxParticipantsPlaceholder')}
           />
 
           <FormControlLabel
@@ -198,7 +198,7 @@ export default function EventCreate() {
                 onChange={(e) => setIsPublic(e.target.checked)}
               />
             }
-            label="公開イベント"
+            label={t('eventCreate.publicEvent')}
             sx={{ mb: 3 }}
           />
 
@@ -210,7 +210,7 @@ export default function EventCreate() {
               disabled={loading || !name || !courseId || !eventDate}
               fullWidth
             >
-              {loading ? '作成中...' : 'イベントを作成'}
+              {loading ? t('eventCreate.creating') : t('eventCreate.create')}
             </Button>
             <Button
               variant="outlined"
@@ -218,7 +218,7 @@ export default function EventCreate() {
               onClick={() => navigate('/dashboard')}
               disabled={loading}
             >
-              キャンセル
+              {t('eventCreate.cancel')}
             </Button>
           </Box>
         </Box>

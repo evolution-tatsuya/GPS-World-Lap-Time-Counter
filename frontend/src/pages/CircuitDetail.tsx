@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import {
   Container,
   Box,
@@ -29,6 +30,7 @@ import type { Circuit } from '../types';
 export default function CircuitDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [circuit, setCircuit] = useState<Circuit | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -44,7 +46,7 @@ export default function CircuitDetail() {
         setError(null);
       } catch (err) {
         console.error('Failed to fetch circuit:', err);
-        setError('サーキット情報の取得に失敗しました');
+        setError(t('circuitDetail.fetchFailed'));
       } finally {
         setLoading(false);
       }
@@ -58,7 +60,7 @@ export default function CircuitDetail() {
       <Container maxWidth="md" sx={{ mt: 8, textAlign: 'center' }}>
         <CircularProgress />
         <Typography variant="body1" sx={{ mt: 2 }}>
-          読み込み中...
+          {t('circuitDetail.loading')}
         </Typography>
       </Container>
     );
@@ -68,13 +70,13 @@ export default function CircuitDetail() {
     return (
       <Container maxWidth="md" sx={{ mt: 4 }}>
         <Alert severity="error" sx={{ mb: 2 }}>
-          {error || 'サーキットが見つかりません'}
+          {error || t('circuitDetail.notFound')}
         </Alert>
         <Button
           startIcon={<ArrowBack />}
           onClick={() => navigate('/dashboard')}
         >
-          ダッシュボードに戻る
+          {t('circuitDetail.backToDashboard')}
         </Button>
       </Container>
     );
@@ -89,7 +91,7 @@ export default function CircuitDetail() {
           onClick={() => navigate('/dashboard')}
           sx={{ mb: 2 }}
         >
-          ダッシュボードに戻る
+          {t('circuitDetail.backToDashboard')}
         </Button>
 
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
@@ -97,7 +99,7 @@ export default function CircuitDetail() {
             {circuit.name}
           </Typography>
           <Chip
-            label={circuit.isPublic ? '公開' : '非公開'}
+            label={circuit.isPublic ? t('circuitDetail.public') : t('circuitDetail.private')}
             color={circuit.isPublic ? 'success' : 'default'}
           />
         </Box>
@@ -108,7 +110,7 @@ export default function CircuitDetail() {
         <Grid size={{ xs: 12, md: 6 }}>
           <Paper sx={{ p: 3 }}>
             <Typography variant="h6" gutterBottom>
-              基本情報
+              {t('circuitDetail.basicInfo')}
             </Typography>
             <Divider sx={{ mb: 2 }} />
 
@@ -116,7 +118,7 @@ export default function CircuitDetail() {
               <LocationOn sx={{ mr: 1, color: 'text.secondary' }} />
               <Box>
                 <Typography variant="body2" color="text.secondary">
-                  所在地
+                  {t('circuitDetail.location')}
                 </Typography>
                 <Typography variant="h6">
                   {circuit.country} {circuit.state && `/ ${circuit.state}`}
@@ -126,14 +128,14 @@ export default function CircuitDetail() {
 
             <Box sx={{ mb: 2 }}>
               <Typography variant="body2" color="text.secondary">
-                コースタイプ
+                {t('circuitDetail.courseType')}
               </Typography>
               <Chip label={circuit.courseType} color="primary" size="small" />
             </Box>
 
             <Box sx={{ mb: 2 }}>
               <Typography variant="body2" color="text.secondary">
-                対応スポーツ
+                {t('circuitDetail.supportedSports')}
               </Typography>
               <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
                 {circuit.sportCategories && circuit.sportCategories.length > 0 ? (
@@ -142,7 +144,7 @@ export default function CircuitDetail() {
                   ))
                 ) : (
                   <Typography variant="body2" color="text.secondary">
-                    未設定
+                    {t('circuitDetail.unset')}
                   </Typography>
                 )}
               </Box>
@@ -152,10 +154,10 @@ export default function CircuitDetail() {
               <Public sx={{ mr: 1, color: 'text.secondary' }} />
               <Box>
                 <Typography variant="body2" color="text.secondary">
-                  公開設定
+                  {t('circuitDetail.publicSetting')}
                 </Typography>
                 <Typography variant="body1">
-                  {circuit.isPublic ? '公開コース' : '非公開コース'}
+                  {circuit.isPublic ? t('circuitDetail.publicCourse') : t('circuitDetail.privateCourse')}
                 </Typography>
               </Box>
             </Box>
@@ -166,7 +168,7 @@ export default function CircuitDetail() {
         <Grid size={{ xs: 12, md: 6 }}>
           <Paper sx={{ p: 3 }}>
             <Typography variant="h6" gutterBottom>
-              コース仕様
+              {t('circuitDetail.courseSpec')}
             </Typography>
             <Divider sx={{ mb: 2 }} />
 
@@ -175,10 +177,10 @@ export default function CircuitDetail() {
                 <Speed sx={{ mr: 1, color: 'text.secondary' }} />
                 <Box>
                   <Typography variant="body2" color="text.secondary">
-                    基準ラップタイム
+                    {t('circuitDetail.referenceLapTime')}
                   </Typography>
                   <Typography variant="h6">
-                    {((circuit.referenceTime || circuit.referenceLapTime || 0) / 1000).toFixed(3)}秒
+                    {t('circuitDetail.secondsSuffix', { seconds: ((circuit.referenceTime || circuit.referenceLapTime || 0) / 1000).toFixed(3) })}
                   </Typography>
                 </Box>
               </Box>
@@ -189,7 +191,7 @@ export default function CircuitDetail() {
                 <DirectionsCar sx={{ mr: 1, color: 'text.secondary' }} />
                 <Box>
                   <Typography variant="body2" color="text.secondary">
-                    コース長
+                    {t('circuitDetail.courseLength')}
                   </Typography>
                   <Typography variant="body1">
                     {circuit.courseLength} km
@@ -203,7 +205,7 @@ export default function CircuitDetail() {
                 <Terrain sx={{ mr: 1, color: 'text.secondary' }} />
                 <Box>
                   <Typography variant="body2" color="text.secondary">
-                    高低差
+                    {t('circuitDetail.elevationGain')}
                   </Typography>
                   <Typography variant="body1">
                     {circuit.elevationGain} m
@@ -214,7 +216,7 @@ export default function CircuitDetail() {
 
             {!circuit.referenceTime && !circuit.courseLength && !circuit.elevationGain && (
               <Typography variant="body2" color="text.secondary">
-                コース仕様情報が登録されていません
+                {t('circuitDetail.noSpec')}
               </Typography>
             )}
           </Paper>
@@ -224,31 +226,31 @@ export default function CircuitDetail() {
         <Grid size={{ xs: 12, md: 6 }}>
           <Paper sx={{ p: 3 }}>
             <Typography variant="h6" gutterBottom>
-              コントロールライン座標
+              {t('circuitDetail.controlLineCoords')}
             </Typography>
             <Divider sx={{ mb: 2 }} />
 
             <Box sx={{ mb: 2 }}>
               <Typography variant="body2" color="text.secondary" gutterBottom>
-                地点A
+                {t('circuitDetail.pointA')}
               </Typography>
               <Typography variant="body1" sx={{ fontFamily: 'monospace' }}>
-                緯度: {circuit.controlLineA.lat.toFixed(7)}
+                {t('circuitDetail.latitude')}: {circuit.controlLineA.lat.toFixed(7)}
               </Typography>
               <Typography variant="body1" sx={{ fontFamily: 'monospace' }}>
-                経度: {circuit.controlLineA.lng.toFixed(7)}
+                {t('circuitDetail.longitude')}: {circuit.controlLineA.lng.toFixed(7)}
               </Typography>
             </Box>
 
             <Box>
               <Typography variant="body2" color="text.secondary" gutterBottom>
-                地点B
+                {t('circuitDetail.pointB')}
               </Typography>
               <Typography variant="body1" sx={{ fontFamily: 'monospace' }}>
-                緯度: {circuit.controlLineB.lat.toFixed(7)}
+                {t('circuitDetail.latitude')}: {circuit.controlLineB.lat.toFixed(7)}
               </Typography>
               <Typography variant="body1" sx={{ fontFamily: 'monospace' }}>
-                経度: {circuit.controlLineB.lng.toFixed(7)}
+                {t('circuitDetail.longitude')}: {circuit.controlLineB.lng.toFixed(7)}
               </Typography>
             </Box>
           </Paper>
@@ -261,7 +263,7 @@ export default function CircuitDetail() {
               <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
                 <Info sx={{ mr: 1 }} />
                 <Typography variant="h6">
-                  説明
+                  {t('circuitDetail.description')}
                 </Typography>
               </Box>
               <Divider sx={{ mb: 2 }} />
@@ -276,14 +278,14 @@ export default function CircuitDetail() {
         <Grid size={12}>
           <Paper sx={{ p: 2, textAlign: 'center' }}>
             <Typography variant="body2" color="text.secondary" gutterBottom>
-              編集・削除機能は準備中です
+              {t('circuitDetail.editDeletePending')}
             </Typography>
             <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center', mt: 2 }}>
               <Button variant="outlined" disabled>
-                サーキットを編集
+                {t('circuitDetail.editCircuit')}
               </Button>
               <Button variant="outlined" color="error" disabled>
-                サーキットを削除
+                {t('circuitDetail.deleteCircuit')}
               </Button>
             </Box>
           </Paper>

@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import {
   Container,
   Box,
@@ -29,6 +30,7 @@ const COURSE_TYPES = ['CLOSED_CIRCUIT', 'PUBLIC_ROAD', 'OFF_ROAD'] as const;
 
 export default function CircuitCreate() {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const { user } = useAuthStore();
 
   const [name, setName] = useState('');
@@ -74,9 +76,9 @@ export default function CircuitCreate() {
       else if (point === 'B') { setControlLineBLat(lat); setControlLineBLng(lng); }
       else if (point === 'GA') { setGoalLineALat(lat); setGoalLineALng(lng); }
       else if (point === 'GB') { setGoalLineBLat(lat); setGoalLineBLng(lng); }
-      setGpsInfo(`地点${point}を取得しました（精度±${Math.round(pos.accuracy)}m）`);
+      setGpsInfo(t('circuitCreate.pointACaptured', { point, accuracy: Math.round(pos.accuracy) }));
     } catch (err) {
-      setError(err instanceof Error ? err.message : '位置情報の取得に失敗しました');
+      setError(err instanceof Error ? err.message : t('circuitCreate.gpsFailed'));
     } finally {
       setGpsBusy(null);
     }
@@ -95,10 +97,10 @@ export default function CircuitCreate() {
       setControlLineBLat(line.b.lat.toFixed(6));
       setControlLineBLng(line.b.lng.toFixed(6));
       setGpsInfo(
-        `現在地を中心に幅約16mのラインを生成しました（精度±${Math.round(pos.accuracy)}m）`
+        t('circuitCreate.lineGenerated', { accuracy: Math.round(pos.accuracy) })
       );
     } catch (err) {
-      setError(err instanceof Error ? err.message : '位置情報の取得に失敗しました');
+      setError(err instanceof Error ? err.message : t('circuitCreate.gpsFailed'));
     } finally {
       setGpsBusy(null);
     }
@@ -142,7 +144,7 @@ export default function CircuitCreate() {
 
       navigate(`/circuits/${response.id}`);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'サーキットの登録に失敗しました');
+      setError(err instanceof Error ? err.message : t('circuitCreate.registerFailed'));
     } finally {
       setLoading(false);
     }
@@ -155,14 +157,14 @@ export default function CircuitCreate() {
         onClick={() => navigate('/dashboard')}
         sx={{ mb: 2 }}
       >
-        ダッシュボードに戻る
+        {t('circuitCreate.backToDashboard')}
       </Button>
 
       <Paper sx={{ p: 4 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
           <AddLocationAlt sx={{ mr: 1, fontSize: 32 }} />
           <Typography variant="h4" component="h1">
-            新規サーキット登録
+            {t('circuitCreate.title')}
           </Typography>
         </Box>
 
@@ -170,12 +172,12 @@ export default function CircuitCreate() {
 
         <Box component="form" onSubmit={handleSubmit}>
           <Typography variant="h6" gutterBottom sx={{ mt: 3 }}>
-            基本情報
+            {t('circuitCreate.basicInfo')}
           </Typography>
 
           <TextField
             fullWidth
-            label="サーキット名"
+            label={t('circuitCreate.circuitName')}
             value={name}
             onChange={(e) => setName(e.target.value)}
             required
@@ -187,7 +189,7 @@ export default function CircuitCreate() {
             <Grid size={6}>
               <TextField
                 fullWidth
-                label="国"
+                label={t('circuitCreate.country')}
                 value={country}
                 onChange={(e) => setCountry(e.target.value)}
                 required
@@ -197,7 +199,7 @@ export default function CircuitCreate() {
             <Grid size={6}>
               <TextField
                 fullWidth
-                label="都道府県（任意）"
+                label={t('circuitCreate.state')}
                 value={state}
                 onChange={(e) => setState(e.target.value)}
                 placeholder="例: Mie"
@@ -208,24 +210,24 @@ export default function CircuitCreate() {
           <TextField
             fullWidth
             select
-            label="コースタイプ"
+            label={t('circuitCreate.courseType')}
             value={courseType}
             onChange={(e) => setCourseType(e.target.value as any)}
             required
             sx={{ mb: 2 }}
           >
-            <MenuItem value="CLOSED_CIRCUIT">クローズドサーキット</MenuItem>
-            <MenuItem value="PUBLIC_ROAD">公道</MenuItem>
-            <MenuItem value="OFF_ROAD">オフロード</MenuItem>
+            <MenuItem value="CLOSED_CIRCUIT">{t('circuitCreate.closedCircuit')}</MenuItem>
+            <MenuItem value="PUBLIC_ROAD">{t('circuitCreate.publicRoad')}</MenuItem>
+            <MenuItem value="OFF_ROAD">{t('circuitCreate.offRoad')}</MenuItem>
           </TextField>
 
           <FormControl fullWidth sx={{ mb: 2 }}>
-            <InputLabel>対応スポーツ</InputLabel>
+            <InputLabel>{t('circuitCreate.supportedSports')}</InputLabel>
             <Select
               multiple
               value={sportCategories}
               onChange={(e) => setSportCategories(typeof e.target.value === 'string' ? e.target.value.split(',') : e.target.value)}
-              input={<OutlinedInput label="対応スポーツ" />}
+              input={<OutlinedInput label={t('circuitCreate.supportedSports')} />}
               renderValue={(selected) => (
                 <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
                   {selected.map((value) => (
@@ -234,36 +236,34 @@ export default function CircuitCreate() {
                 </Box>
               )}
             >
-              <MenuItem value="CAR">自動車</MenuItem>
-              <MenuItem value="MOTORCYCLE">オートバイ</MenuItem>
-              <MenuItem value="RUNNING">ランニング</MenuItem>
-              <MenuItem value="BICYCLE">自転車</MenuItem>
+              <MenuItem value="CAR">{t('circuitCreate.car')}</MenuItem>
+              <MenuItem value="MOTORCYCLE">{t('circuitCreate.motorcycle')}</MenuItem>
+              <MenuItem value="RUNNING">{t('circuitCreate.running')}</MenuItem>
+              <MenuItem value="BICYCLE">{t('circuitCreate.bicycle')}</MenuItem>
             </Select>
           </FormControl>
 
           <Typography variant="h6" gutterBottom sx={{ mt: 3 }}>
-            計測モード
+            {t('circuitCreate.measureMode')}
           </Typography>
           <TextField
             select
             fullWidth
-            label="計測モード"
+            label={t('circuitCreate.measureMode')}
             value={measureType}
             onChange={(e) => setMeasureType(e.target.value as 'LAP' | 'ONE_WAY')}
             sx={{ mb: 2 }}
           >
-            <MenuItem value="LAP">周回モード（サーキット：1本のラインを通るたびに1周）</MenuItem>
-            <MenuItem value="ONE_WAY">片道モード（スタート→ゴール別ラインで区間計測。ヒルクライム等）</MenuItem>
+            <MenuItem value="LAP">{t('circuitCreate.lapMode')}</MenuItem>
+            <MenuItem value="ONE_WAY">{t('circuitCreate.oneWayMode')}</MenuItem>
           </TextField>
 
           <Typography variant="h6" gutterBottom sx={{ mt: 3 }}>
-            {measureType === 'ONE_WAY' ? 'スタートライン座標（GPS）' : 'コントロールライン座標（GPS）'}
+            {measureType === 'ONE_WAY' ? t('circuitCreate.startLineCoords') : t('circuitCreate.controlLineCoords')}
           </Typography>
 
           <Alert severity="info" sx={{ mb: 2 }}>
-            計測ライン（車が通過する地点）です。実際にその場所に立って
-            「現在地から自動生成」を押すと、道を横切る幅約16mのラインを
-            自動で作成します。公道テストはこれが簡単です。
+            {t('circuitCreate.controlLineInfo')}
           </Alert>
 
           <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 2 }}>
@@ -274,7 +274,7 @@ export default function CircuitCreate() {
               onClick={captureLineFromHere}
               disabled={gpsBusy !== null}
             >
-              {gpsBusy === 'LINE' ? '取得中...' : '現在地からラインを自動生成'}
+              {gpsBusy === 'LINE' ? t('circuitCreate.capturing') : t('circuitCreate.autoGenerateLine')}
             </Button>
             <Button
               variant="outlined"
@@ -282,7 +282,7 @@ export default function CircuitCreate() {
               onClick={() => capturePoint('A')}
               disabled={gpsBusy !== null}
             >
-              {gpsBusy === 'A' ? '取得中...' : '現在地でA点'}
+              {gpsBusy === 'A' ? t('circuitCreate.capturing') : t('circuitCreate.capturePointA')}
             </Button>
             <Button
               variant="outlined"
@@ -290,7 +290,7 @@ export default function CircuitCreate() {
               onClick={() => capturePoint('B')}
               disabled={gpsBusy !== null}
             >
-              {gpsBusy === 'B' ? '取得中...' : '現在地でB点'}
+              {gpsBusy === 'B' ? t('circuitCreate.capturing') : t('circuitCreate.capturePointB')}
             </Button>
           </Box>
 
@@ -304,7 +304,7 @@ export default function CircuitCreate() {
             <Grid size={6}>
               <TextField
                 fullWidth
-                label="地点A 緯度"
+                label={t('circuitCreate.pointALat')}
                 type="number"
                 value={controlLineALat}
                 onChange={(e) => setControlLineALat(e.target.value)}
@@ -316,7 +316,7 @@ export default function CircuitCreate() {
             <Grid size={6}>
               <TextField
                 fullWidth
-                label="地点A 経度"
+                label={t('circuitCreate.pointALng')}
                 type="number"
                 value={controlLineALng}
                 onChange={(e) => setControlLineALng(e.target.value)}
@@ -331,7 +331,7 @@ export default function CircuitCreate() {
             <Grid size={6}>
               <TextField
                 fullWidth
-                label="地点B 緯度"
+                label={t('circuitCreate.pointBLat')}
                 type="number"
                 value={controlLineBLat}
                 onChange={(e) => setControlLineBLat(e.target.value)}
@@ -343,7 +343,7 @@ export default function CircuitCreate() {
             <Grid size={6}>
               <TextField
                 fullWidth
-                label="地点B 経度"
+                label={t('circuitCreate.pointBLng')}
                 type="number"
                 value={controlLineBLng}
                 onChange={(e) => setControlLineBLng(e.target.value)}
@@ -358,11 +358,10 @@ export default function CircuitCreate() {
           {measureType === 'ONE_WAY' && (
             <>
               <Typography variant="h6" gutterBottom sx={{ mt: 3 }}>
-                ゴールライン座標（GPS）
+                {t('circuitCreate.goalLineCoords')}
               </Typography>
               <Alert severity="info" sx={{ mb: 2 }}>
-                区間の終点（ゴール地点）を横切るラインです。ゴール地点に立って
-                A点・B点を取得してください。
+                {t('circuitCreate.goalLineInfo')}
               </Alert>
 
               <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 2 }}>
@@ -372,7 +371,7 @@ export default function CircuitCreate() {
                   onClick={() => capturePoint('GA')}
                   disabled={gpsBusy !== null}
                 >
-                  {gpsBusy === 'GA' ? '取得中...' : '現在地でゴールA点'}
+                  {gpsBusy === 'GA' ? t('circuitCreate.capturing') : t('circuitCreate.captureGoalA')}
                 </Button>
                 <Button
                   variant="outlined"
@@ -380,7 +379,7 @@ export default function CircuitCreate() {
                   onClick={() => capturePoint('GB')}
                   disabled={gpsBusy !== null}
                 >
-                  {gpsBusy === 'GB' ? '取得中...' : '現在地でゴールB点'}
+                  {gpsBusy === 'GB' ? t('circuitCreate.capturing') : t('circuitCreate.captureGoalB')}
                 </Button>
               </Box>
 
@@ -388,7 +387,7 @@ export default function CircuitCreate() {
                 <Grid size={6}>
                   <TextField
                     fullWidth
-                    label="ゴールA 緯度"
+                    label={t('circuitCreate.goalALat')}
                     type="number"
                     value={goalLineALat}
                     onChange={(e) => setGoalLineALat(e.target.value)}
@@ -399,7 +398,7 @@ export default function CircuitCreate() {
                 <Grid size={6}>
                   <TextField
                     fullWidth
-                    label="ゴールA 経度"
+                    label={t('circuitCreate.goalALng')}
                     type="number"
                     value={goalLineALng}
                     onChange={(e) => setGoalLineALng(e.target.value)}
@@ -412,7 +411,7 @@ export default function CircuitCreate() {
                 <Grid size={6}>
                   <TextField
                     fullWidth
-                    label="ゴールB 緯度"
+                    label={t('circuitCreate.goalBLat')}
                     type="number"
                     value={goalLineBLat}
                     onChange={(e) => setGoalLineBLat(e.target.value)}
@@ -423,7 +422,7 @@ export default function CircuitCreate() {
                 <Grid size={6}>
                   <TextField
                     fullWidth
-                    label="ゴールB 経度"
+                    label={t('circuitCreate.goalBLng')}
                     type="number"
                     value={goalLineBLng}
                     onChange={(e) => setGoalLineBLng(e.target.value)}
@@ -436,12 +435,12 @@ export default function CircuitCreate() {
           )}
 
           <Typography variant="h6" gutterBottom sx={{ mt: 3 }}>
-            コース詳細（任意）
+            {t('circuitCreate.courseDetail')}
           </Typography>
 
           <TextField
             fullWidth
-            label="基準ラップタイム（秒）"
+            label={t('circuitCreate.referenceLapTimeSeconds')}
             type="number"
             value={referenceTime}
             onChange={(e) => setReferenceTime(e.target.value ? parseFloat(e.target.value) : '')}
@@ -451,7 +450,7 @@ export default function CircuitCreate() {
 
           <TextField
             fullWidth
-            label="コース長（km）"
+            label={t('circuitCreate.courseLengthKm')}
             type="number"
             value={courseLength}
             onChange={(e) => setCourseLength(e.target.value)}
@@ -462,7 +461,7 @@ export default function CircuitCreate() {
 
           <TextField
             fullWidth
-            label="高低差（m）"
+            label={t('circuitCreate.elevationGainM')}
             type="number"
             value={elevationGain}
             onChange={(e) => setElevationGain(e.target.value ? parseInt(e.target.value) : '')}
@@ -472,13 +471,13 @@ export default function CircuitCreate() {
 
           <TextField
             fullWidth
-            label="説明"
+            label={t('circuitCreate.description')}
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             multiline
             rows={3}
             sx={{ mb: 2 }}
-            placeholder="コースの特徴や注意事項など"
+            placeholder={t('circuitCreate.descriptionPlaceholder')}
           />
 
           <FormControlLabel
@@ -488,7 +487,7 @@ export default function CircuitCreate() {
                 onChange={(e) => setIsPublic(e.target.checked)}
               />
             }
-            label="公開サーキット"
+            label={t('circuitCreate.publicCircuit')}
             sx={{ mb: 3 }}
           />
 
@@ -500,7 +499,7 @@ export default function CircuitCreate() {
               disabled={loading || !name || !country || !controlLineALat || !controlLineALng || !controlLineBLat || !controlLineBLng}
               fullWidth
             >
-              {loading ? '登録中...' : 'サーキットを登録'}
+              {loading ? t('circuitCreate.registering') : t('circuitCreate.register')}
             </Button>
             <Button
               variant="outlined"
@@ -508,7 +507,7 @@ export default function CircuitCreate() {
               onClick={() => navigate('/dashboard')}
               disabled={loading}
             >
-              キャンセル
+              {t('circuitCreate.cancel')}
             </Button>
           </Box>
         </Box>

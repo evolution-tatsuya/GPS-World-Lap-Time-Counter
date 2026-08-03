@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import {
   Container,
   Box,
@@ -33,6 +34,7 @@ type RankingTab = 'event' | 'circuit' | 'date' | 'overall';
 
 export default function Ranking() {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const { event, isAuthenticated, isOrganizer } = useAuthStore();
 
   const [currentTab, setCurrentTab] = useState<RankingTab>('event');
@@ -50,7 +52,7 @@ export default function Ranking() {
       await exportEventLapsCsv(event.id);
     } catch (err) {
       console.error('Failed to export CSV:', err);
-      setError(err instanceof Error ? err.message : 'CSVエクスポートに失敗しました');
+      setError(err instanceof Error ? err.message : t('ranking.csvExportFailed'));
     } finally {
       setExporting(false);
     }
@@ -69,11 +71,11 @@ export default function Ranking() {
 
       switch (tab) {
         case 'event':
-          if (!event) throw new Error('イベント情報がありません');
+          if (!event) throw new Error(t('ranking.noEventInfo'));
           data = await getEventRanking(event.id);
           break;
         case 'circuit':
-          if (!event) throw new Error('イベント情報がありません');
+          if (!event) throw new Error(t('ranking.noEventInfo'));
           data = await getCircuitRanking(event.circuitId);
           break;
         case 'date':
@@ -92,7 +94,7 @@ export default function Ranking() {
       console.error('Failed to fetch ranking:', err);
       // バックグラウンド更新の失敗は画面を壊さない（次の周期でリトライされる）
       if (!isBackground) {
-        setError('ランキングデータの取得に失敗しました');
+        setError(t('ranking.fetchFailed'));
       }
     } finally {
       if (!isBackground) setLoading(false);
@@ -121,7 +123,7 @@ export default function Ranking() {
     if (rank === 1) return '🥇';
     if (rank === 2) return '🥈';
     if (rank === 3) return '🥉';
-    return `${rank}位`;
+    return t('ranking.rankSuffix', { rank });
   };
 
   return (
@@ -133,11 +135,11 @@ export default function Ranking() {
           onClick={() => navigate(-1)}
           sx={{ mr: 2 }}
         >
-          戻る
+          {t('ranking.back')}
         </Button>
         <EmojiEvents sx={{ mr: 1, color: 'primary.main' }} />
         <Typography variant="h5" component="h1">
-          ランキング
+          {t('ranking.title')}
         </Typography>
         <Box
           sx={{
@@ -161,7 +163,7 @@ export default function Ranking() {
               },
             }}
           />
-          <Typography variant="caption">自動更新中</Typography>
+          <Typography variant="caption">{t('ranking.autoUpdating')}</Typography>
         </Box>
       </Box>
 
@@ -175,7 +177,7 @@ export default function Ranking() {
             onClick={handleExport}
             disabled={exporting}
           >
-            {exporting ? '出力中...' : 'CSVダウンロード'}
+            {exporting ? t('ranking.exporting') : t('ranking.csvDownload')}
           </Button>
         </Box>
       )}
@@ -188,10 +190,10 @@ export default function Ranking() {
           variant="scrollable"
           scrollButtons="auto"
         >
-          <Tab label="イベント別" value="event" />
-          <Tab label="サーキット別" value="circuit" />
-          <Tab label="本日" value="date" />
-          <Tab label="総合" value="overall" />
+          <Tab label={t('ranking.tabEvent')} value="event" />
+          <Tab label={t('ranking.tabCircuit')} value="circuit" />
+          <Tab label={t('ranking.tabDate')} value="date" />
+          <Tab label={t('ranking.tabOverall')} value="overall" />
         </Tabs>
       </Paper>
 
@@ -222,11 +224,11 @@ export default function Ranking() {
           <Table>
             <TableHead>
               <TableRow>
-                <TableCell width="80px">順位</TableCell>
-                <TableCell>ドライバー</TableCell>
-                <TableCell>車両</TableCell>
-                <TableCell align="right">ラップタイム</TableCell>
-                <TableCell width="120px">記録日時</TableCell>
+                <TableCell width="80px">{t('ranking.rank')}</TableCell>
+                <TableCell>{t('ranking.driver')}</TableCell>
+                <TableCell>{t('ranking.vehicle')}</TableCell>
+                <TableCell align="right">{t('ranking.lapTime')}</TableCell>
+                <TableCell width="120px">{t('ranking.recordedAt')}</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -234,7 +236,7 @@ export default function Ranking() {
                 <TableRow>
                   <TableCell colSpan={5} align="center">
                     <Typography variant="body2" color="text.secondary" sx={{ py: 4 }}>
-                      まだ記録がありません
+                      {t('ranking.noRecords')}
                     </Typography>
                   </TableCell>
                 </TableRow>
@@ -305,7 +307,7 @@ export default function Ranking() {
           sx={{ mt: 3 }}
           onClick={() => navigate('/measurement')}
         >
-          計測画面に戻る
+          {t('ranking.backToMeasurement')}
         </Button>
       )}
     </Container>
