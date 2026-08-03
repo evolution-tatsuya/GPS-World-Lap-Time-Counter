@@ -32,6 +32,8 @@
   .cell .lbl{font-size:10px;color:var(--gray);letter-spacing:1px}
   .cell .val{font-size:22px;font-weight:bold;font-variant-numeric:tabular-nums}
   #bestLap{color:var(--red)}
+  .val.faster{color:var(--green)}
+  .val.slower{color:var(--red)}
   .bigBtn{width:100%;padding:16px;font-size:18px;font-weight:bold;border:none;border-radius:8px;letter-spacing:2px}
   #startBtn{background:var(--red);color:#fff}
   #startBtn.running{background:#444;color:#ddd}
@@ -91,6 +93,11 @@
   <div class="row2">
     <div class="cell"><div class="lbl">LAST</div><div class="val" id="lastLap">--:--.---</div></div>
     <div class="cell"><div class="lbl">BEST</div><div class="val" id="bestLap">--:--.---</div></div>
+  </div>
+  <div class="row2">
+    <div class="cell"><div class="lbl">SPEED km/h</div><div class="val" id="curSpeed">--</div></div>
+    <div class="cell"><div class="lbl">MAX km/h</div><div class="val" id="maxSpeed">--</div></div>
+    <div class="cell"><div class="lbl">Δ vs BEST</div><div class="val" id="deltaVal">--</div></div>
   </div>
   <button class="bigBtn" id="startBtn" onclick="toggleRun()">計測スタート</button>
   <div id="lapList"><table><tbody id="lapBody"></tbody></table></div>
@@ -161,6 +168,7 @@ let running=false, watchId=null, wakeLock=null;
 let prevPt=null, lastCrossT=null, lapNo=0, bestMs=null, firstSign=null;
 let rafId=null;
 let sessionId=''; // 計測スタートごとに発行するセッションID（同日の複数走行を区別）
+let curSpeedKmh=0, maxSpeedKmh=0; // 現在速度・セッション最高速度(km/h)
 
 /* ---------- タブ ---------- */
 function showTab(i,btn){
@@ -212,6 +220,9 @@ async function toggleRun(){
     sessionId=makeSessionId();
     lapBody.innerHTML=''; bestMs=null; // 画面のラップ一覧・ベストをリセット
     lastLap.textContent='--:--.---'; bestLap.textContent='--:--.---';
+    curSpeedKmh=0; maxSpeedKmh=0; // 速度リセット
+    curSpeed.textContent='--'; maxSpeed.textContent='--';
+    deltaVal.textContent='--'; deltaVal.className='val';
     startBtn.textContent='計測ストップ'; startBtn.classList.add('running');
     watchId=navigator.geolocation.watchPosition(onPos,onErr,{enableHighAccuracy:true,maximumAge:0,timeout:15000});
     try{wakeLock=await navigator.wakeLock.request('screen');}catch(e){}
@@ -227,11 +238,33 @@ async function toggleRun(){
 }
 function onErr(e){gpsStatus.textContent='GPSエラー: '+e.message; gpsStatus.classList.remove('ok');}
 
+/* 2点間の距離(m)。速度算出用（Haversine） */
+function distM(a,b){
+  const R=6371e3,toR=x=>x*Math.PI/180;
+  const dφ=toR(b.lat-a.lat),dλ=toR(b.lng-a.lng),φ1=toR(a.lat),φ2=toR(b.lat);
+  const h=Math.sin(dφ/2)**2+Math.cos(φ1)*Math.cos(φ2)*Math.sin(dλ/2)**2;
+  return 2*R*Math.asin(Math.sqrt(h));
+}
+
 /* ---------- GPS点の処理 ---------- */
 function onPos(p){
   const pt={lat:p.coords.latitude,lng:p.coords.longitude,t:p.timestamp};
   gpsStatus.textContent=`GPS OK  精度±${Math.round(p.coords.accuracy)}m`;
   gpsStatus.classList.add('ok');
+
+  // 速度(km/h): 端末のspeed(m/s)を優先、無ければ直前点から算出
+  let spd=null;
+  if(typeof p.coords.speed==='number' && p.coords.speed>=0 && !isNaN(p.coords.speed)){
+    spd=p.coords.speed*3.6;
+  }else if(prevPt){
+    const dt=(pt.t-prevPt.t)/1000;
+    if(dt>0) spd=distM(prevPt,pt)/dt*3.6;
+  }
+  if(spd!==null){
+    curSpeedKmh=spd;
+    if(spd>maxSpeedKmh) maxSpeedKmh=spd;
+  }
+
   if(prevPt){
     const hit=crossCheck(prevPt,pt,cfg.A,cfg.B);
     if(hit){
@@ -295,6 +328,16 @@ function registerOutLap(no){
 /* ---------- ラップ確定 ---------- */
 function registerLap(no,ms){
   lastLap.textContent=fmt(ms);
+  // デルタ: 直前までのベストとの差（このラップが速い/遅い）。初回ベストは基準扱い。
+  const prevBest=bestMs;
+  if(prevBest!==null){
+    const diff=ms-prevBest; // マイナス=速い
+    const sign=diff<=0?'-':'+';
+    deltaVal.textContent=sign+fmtDelta(Math.abs(diff));
+    deltaVal.className='val '+(diff<=0?'faster':'slower');
+  }else{
+    deltaVal.textContent='基準'; deltaVal.className='val';
+  }
   if(bestMs===null||ms<bestMs){bestMs=ms;bestLap.textContent=fmt(ms);}
   const tr=document.createElement('tr');
   if(ms===bestMs) tr.className='best';
@@ -397,6 +440,9 @@ function tick(){
   }else{
     curLap.textContent='待機中';
   }
+  // 速度表示（現在・最高）
+  curSpeed.textContent=Math.round(curSpeedKmh);
+  maxSpeed.textContent=Math.round(maxSpeedKmh);
   rafId=requestAnimationFrame(tick);
 }
 
@@ -456,6 +502,11 @@ function fmt(ms){
 function fmtShort(ms){
   const m=Math.floor(ms/60000), s=Math.floor(ms%60000/1000), x=Math.floor(ms%1000/100);
   return `${m}:${String(s).padStart(2,'0')}.${x}`;
+}
+// デルタ表示用（秒.ミリ秒）。符号は呼び出し側で付ける。
+function fmtDelta(ms){
+  const s=Math.floor(ms/1000), x=Math.round(ms%1000);
+  return `${s}.${String(x).padStart(3,'0')}`;
 }
 function esc(s){return String(s??'').replace(/[<>&"]/g,c=>({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[c]));}
 
