@@ -1341,6 +1341,15 @@ Phase 3移行時の原則:
 - backend/frontend 起動OK。DB(Neon)にデータあり（users3/courses7/events11/laps11）。
 - 認証（login/register/logout/session, bcrypt, ロール, event-login）実装済み。
 - laps API（保存/ranking/**CSV export**/history/delete/best）、events API（CRUD/stats）、権限ガード（requireSession/Organizer/Admin）実装済み。
-- **未実装/要追加**: i18n、片道モードのDB対応、プロモ枠、統括ページの網羅性、運営モニター（ライブ）、PWA化。
+
+### 実装完了（2026-08-03、フルアプリ）
+- **Phase 1-A 計測フロー一本化**: Lap拡張(session/ゼッケン/クラス/タイヤ/メモ・アウトラップ)、useGPS実働仕様化(アウトラップ=LAP1/セッション/片道2ライン)、Course片道対応(measureType/ゴールライン)、堅牢送信(未送信キュー+再送)。すべてE2E/合成データ検証済。
+- **フロントエンド基盤**: MUI v9移行(ビルド可能化)、i18n基盤(日英中韓)、PWA化(manifest/SW/オフライン)。
+- **フロント機能**: 片道コース登録UI、**全ページi18n化完了(全10画面・4言語225キー完全一致)**。
+
+### 未実装/次の作業（担当別）
+- フロントエンドエンジニア: 統括ページ・運営モニターの画面(既存API範囲=一覧/ランキング/CSV)。
+- バックエンドエンジニア: プロモ枠(課金免除)、統括ページAPI(ユーザー管理/コース承認)、運営ライブモニターのSSE。
+- 連絡機能: 統括への連絡は英語/日本語のみ+注意書き(機械翻訳は不採用)。
 
 **追補最終更新**: 2026-08-03
