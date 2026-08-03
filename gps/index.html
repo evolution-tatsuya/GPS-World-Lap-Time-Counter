@@ -133,7 +133,15 @@
   <div class="field"><label>送信先URL（GASデプロイURL）*</label><input type="url" id="cfgGas" placeholder="https://script.google.com/macros/s/…/exec"></div>
 
   <div class="field">
-    <label>コントロールライン（コースを横切る2点）</label>
+    <label>計測モード</label>
+    <select id="cfgMode" onchange="onModeChange()" style="width:100%;padding:10px;background:#0d0d0d;border:1px solid var(--line);border-radius:6px;color:var(--white);font-size:15px">
+      <option value="lap">周回モード（サーキット：1本のラインを通るたびに1周）</option>
+      <option value="oneway">片道モード（スタート→ゴール別ラインで区間計測。ヒルクライム等）</option>
+    </select>
+  </div>
+
+  <div class="field">
+    <label id="lblStart">コントロールライン（コースを横切る2点）</label>
     <div class="lineRow">
       <input type="text" id="ptA" placeholder="A点 lat,lng" readonly>
       <button class="miniBtn" onclick="capture('A')">A点=現在地</button>
@@ -142,10 +150,24 @@
       <input type="text" id="ptB" placeholder="B点 lat,lng" readonly>
       <button class="miniBtn" onclick="capture('B')">B点=現在地</button>
     </div>
-    <div class="note">コントロールラインの両端（コース左端・右端の外側）にそれぞれ立って取得してください。手入力する場合は「34.123456,135.123456」形式で直接編集も可能です。</div>
+    <div class="note">ラインの両端（コース左端・右端の外側）にそれぞれ立って取得。手入力（「34.123456,135.123456」形式）も可能です。</div>
   </div>
 
-  <div class="field"><label>最小ラップタイム（秒）※これ未満は誤検知として無視</label><input type="number" id="cfgMinLap" value="30"></div>
+  <!-- 片道モード時のみ表示：ゴールライン -->
+  <div class="field" id="goalLineField" style="display:none">
+    <label>ゴールライン（区間の終点を横切る2点）</label>
+    <div class="lineRow">
+      <input type="text" id="ptGA" placeholder="ゴールA点 lat,lng" readonly>
+      <button class="miniBtn" onclick="capture('GA')">A点=現在地</button>
+    </div>
+    <div class="lineRow">
+      <input type="text" id="ptGB" placeholder="ゴールB点 lat,lng" readonly>
+      <button class="miniBtn" onclick="capture('GB')">B点=現在地</button>
+    </div>
+    <div class="note">スタートラインを通過して計測開始→ゴールラインを通過で区間タイム確定。何回でも繰り返せます。</div>
+  </div>
+
+  <div class="field"><label id="lblMinLap">最小ラップタイム（秒）※これ未満は誤検知として無視</label><input type="number" id="cfgMinLap" value="30"></div>
   <label class="chk"><input type="checkbox" id="cfgOneWay" checked>逆方向の通過を無視する</label>
 
   <button class="saveBtn" onclick="saveCfg()">設定を保存</button>
@@ -197,7 +219,7 @@
    計測ロジック: 連続する2つのGPS点の線分と、コントロール
    ラインAB線分の交差判定 + 時刻線形補間でライン通過時刻を算出
 ============================================================ */
-let cfg = {name:'', car:'', no:'', klass:'', tire:'', note:'', gas:'', session:'', A:null, B:null, minLap:30, oneWay:true};
+let cfg = {name:'', car:'', no:'', klass:'', tire:'', note:'', gas:'', session:'', mode:'lap', A:null, B:null, GA:null, GB:null, minLap:30, oneWay:true};
 let running=false, watchId=null, wakeLock=null;
 let prevPt=null, lastCrossT=null, lapNo=0, bestMs=null, firstSign=null;
 let rafId=null;
@@ -205,6 +227,7 @@ let sessionId=''; // 計測スタートごとに発行するセッションID（
 let curSpeedKmh=0, maxSpeedKmh=0; // 現在速度・セッション最高速度(km/h)
 let trackPts=[];      // 現在セッションのGPS全点 [{lat,lng,t,acc,spd,lap}]
 let trackSaveT=0;     // トラックの最終保存時刻（間引き保存用）
+let owState='idle', owStartT=null; // 片道モードの状態: idle=スタート待ち / timing=ゴール待ち
 
 /* ---------- タブ ---------- */
 function showTab(i,btn){
@@ -224,18 +247,30 @@ function loadCfg(){
   cfgNo.value=cfg.no||''; cfgClass.value=cfg.klass||''; cfgTire.value=cfg.tire||''; cfgNote.value=cfg.note||'';
   cfgSession.value=cfg.session||'';
   ptA.value=cfg.A?cfg.A.join(','):''; ptB.value=cfg.B?cfg.B.join(','):'';
+  ptGA.value=cfg.GA?cfg.GA.join(','):''; ptGB.value=cfg.GB?cfg.GB.join(','):'';
   cfgMinLap.value=cfg.minLap||30; cfgOneWay.checked=cfg.oneWay!==false;
-  ptA.readOnly=false; ptB.readOnly=false;
+  cfgMode.value=cfg.mode||'lap';
+  ptA.readOnly=false; ptB.readOnly=false; ptGA.readOnly=false; ptGB.readOnly=false;
+  onModeChange();
 }
 function saveCfg(){
   cfg.name=cfgName.value.trim(); cfg.car=cfgCar.value.trim(); cfg.gas=cfgGas.value.trim();
   cfg.no=cfgNo.value.trim(); cfg.klass=cfgClass.value.trim(); cfg.tire=cfgTire.value.trim(); cfg.note=cfgNote.value.trim();
   cfg.session=cfgSession.value.trim();
+  cfg.mode=cfgMode.value;
   cfg.A=parsePt(ptA.value); cfg.B=parsePt(ptB.value);
+  cfg.GA=parsePt(ptGA.value); cfg.GB=parsePt(ptGB.value);
   cfg.minLap=parseFloat(cfgMinLap.value)||30; cfg.oneWay=cfgOneWay.checked;
   try{localStorage.setItem('lapCfg',JSON.stringify(cfg));}catch(e){}
   saveMsg.textContent='保存しました';
   setTimeout(()=>saveMsg.textContent='',2000);
+}
+// モード切替でゴールライン欄・ラベルを出し分け
+function onModeChange(){
+  var oneway=cfgMode.value==='oneway';
+  document.getElementById('goalLineField').style.display=oneway?'':'none';
+  document.getElementById('lblStart').textContent=oneway?'スタートライン（区間の始点を横切る2点）':'コントロールライン（コースを横切る2点）';
+  document.getElementById('lblMinLap').textContent=oneway?'最小区間タイム（秒）※これ未満は誤検知として無視':'最小ラップタイム（秒）※これ未満は誤検知として無視';
 }
 function parsePt(s){
   const m=s.split(',').map(x=>parseFloat(x.trim()));
@@ -243,16 +278,21 @@ function parsePt(s){
 }
 function capture(which){
   navigator.geolocation.getCurrentPosition(p=>{
-    const v=[p.coords.latitude.toFixed(7), p.coords.longitude.toFixed(7)];
-    if(which==='A') ptA.value=v.join(','); else ptB.value=v.join(',');
+    const v=[p.coords.latitude.toFixed(7), p.coords.longitude.toFixed(7)].join(',');
+    if(which==='A') ptA.value=v;
+    else if(which==='B') ptB.value=v;
+    else if(which==='GA') ptGA.value=v;
+    else if(which==='GB') ptGB.value=v;
   },e=>alert('位置取得失敗: '+e.message),{enableHighAccuracy:true,timeout:10000});
 }
 
 /* ---------- 計測開始/停止 ---------- */
 async function toggleRun(){
   if(!running){
-    if(!cfg.name||!cfg.A||!cfg.B){alert('設定タブでドライバー名とコントロールラインを設定してください');return;}
+    if(!cfg.name||!cfg.A||!cfg.B){alert('設定タブでドライバー名とコントロールライン（スタートライン）を設定してください');return;}
+    if(cfg.mode==='oneway' && (!cfg.GA||!cfg.GB)){alert('片道モードではゴールラインも設定してください');return;}
     running=true; prevPt=null; lastCrossT=null; lapNo=0; firstSign=null;
+    owState='idle'; owStartT=null; // 片道モードの状態リセット
     // セッションIDを発行（計測スタート毎に一意）。セッション名があれば併記。
     sessionId=makeSessionId();
     lapBody.innerHTML=''; bestMs=null; // 画面のラップ一覧・ベストをリセット
@@ -305,25 +345,10 @@ function onPos(p){
   }
 
   if(prevPt){
-    const hit=crossCheck(prevPt,pt,cfg.A,cfg.B);
-    if(hit){
-      // 方向フィルタ
-      if(cfg.oneWay){
-        if(firstSign===null) firstSign=hit.sign;
-        else if(hit.sign!==firstSign){prevPt=pt;return;}
-      }
-      const crossT=prevPt.t + hit.u*(pt.t-prevPt.t); // 補間した通過時刻(ms)
-      if(lastCrossT===null){
-        // 1回目の通過＝アウトラップ。LAP1としてカウント（タイムなし）。
-        lastCrossT=crossT; lapNo=1;
-        registerOutLap(1);
-      }else{
-        const lapMs=crossT-lastCrossT;
-        if(lapMs>=cfg.minLap*1000){
-          lastCrossT=crossT; lapNo++;
-          registerLap(lapNo,lapMs);
-        }
-      }
+    if(cfg.mode==='oneway'){
+      onewayDetect(pt);
+    }else{
+      lapDetect(pt);
     }
   }
 
@@ -337,6 +362,52 @@ function onPos(p){
   if(pt.t-trackSaveT>2000){ trackSaveT=pt.t; saveTrack(); }
 
   prevPt=pt;
+}
+
+/* 周回モードの検出（従来ロジック）: 1本のラインを通るたびに1周 */
+function lapDetect(pt){
+  const hit=crossCheck(prevPt,pt,cfg.A,cfg.B);
+  if(!hit) return;
+  // 方向フィルタ
+  if(cfg.oneWay){
+    if(firstSign===null) firstSign=hit.sign;
+    else if(hit.sign!==firstSign){ return; }
+  }
+  const crossT=prevPt.t + hit.u*(pt.t-prevPt.t);
+  if(lastCrossT===null){
+    lastCrossT=crossT; lapNo=1; registerOutLap(1); // アウトラップ=LAP1
+  }else{
+    const lapMs=crossT-lastCrossT;
+    if(lapMs>=cfg.minLap*1000){
+      lastCrossT=crossT; lapNo++; registerLap(lapNo,lapMs);
+    }
+  }
+}
+
+/* 片道モードの検出: スタートライン通過→計測開始→ゴールライン通過→区間確定。
+   ゴール後は再びスタート待ちに戻り、何回でも繰り返せる（各回をLAPとして記録）。 */
+function onewayDetect(pt){
+  if(owState==='idle'){
+    // スタートライン通過を待つ
+    const hs=crossCheck(prevPt,pt,cfg.A,cfg.B);
+    if(hs){
+      owStartT=prevPt.t + hs.u*(pt.t-prevPt.t);
+      owState='timing';
+      gpsStatus.textContent='計測中… ゴールラインへ';
+      gpsStatus.classList.add('ok');
+    }
+  }else if(owState==='timing'){
+    // ゴールライン通過を待つ
+    const hg=crossCheck(prevPt,pt,cfg.GA,cfg.GB);
+    if(hg){
+      const goalT=prevPt.t + hg.u*(pt.t-prevPt.t);
+      const segMs=goalT-owStartT;
+      if(segMs>=cfg.minLap*1000){
+        lapNo++; registerLap(lapNo,segMs);
+        owState='idle'; owStartT=null; lastCrossT=null; // 次の走行へ（現在ラップ表示は待機に）
+      }
+    }
+  }
 }
 
 /* 線分交差判定: 走行線分P1P2 × コントロールラインAB
@@ -523,9 +594,15 @@ function flushQueue(){
 /* ---------- 走行中タイマー表示 ---------- */
 function tick(){
   if(!running) return;
-  if(lastCrossT!==null){
-    const ms=Date.now()-lastCrossT;
-    curLap.textContent=fmtShort(ms);
+  if(cfg.mode==='oneway'){
+    // 片道: timing中は開始からの経過、idleはスタート待ち
+    if(owState==='timing' && owStartT!==null){
+      curLap.textContent=fmtShort(Date.now()-owStartT);
+    }else{
+      curLap.textContent='スタート待ち';
+    }
+  }else if(lastCrossT!==null){
+    curLap.textContent=fmtShort(Date.now()-lastCrossT);
   }else{
     curLap.textContent='待機中';
   }
