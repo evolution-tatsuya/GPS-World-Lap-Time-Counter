@@ -64,7 +64,8 @@ function doGet(e) {
 
 /**
  * ラップ1件をシートに追記する共通処理（POST/GET両方から利用）
- * 列: 記録日時, ドライバー, 車両, ラップ, タイム(ms), タイム, セッションID, セッション名
+ * 列: 記録日時, ドライバー, 車両, ラップ, タイム(ms), タイム, セッションID, セッション名,
+ *     ゼッケン, クラス, タイヤ/天候, メモ
  */
 function appendLap_(p) {
   var sheet = getSheet_();
@@ -77,6 +78,10 @@ function appendLap_(p) {
     String(p.time_str || ''),
     String(p.session || ''),       // G列: セッションID
     String(p.session_name || ''),  // H列: セッション名（任意）
+    String(p.no || ''),            // I列: ゼッケン番号
+    String(p.klass || ''),         // J列: クラス・カテゴリ
+    String(p.tire || ''),          // K列: タイヤ・天候メモ
+    String(p.note || ''),          // L列: 自由メモ
   ]);
   return { ok: true };
 }
@@ -159,13 +164,15 @@ function collectValidLaps_() {
     var str = String(values[i][5] || '');
     var session = String(values[i][6] || '');
     var sessionName = String(values[i][7] || '');
+    var no = String(values[i][8] || '');
+    var klass = String(values[i][9] || '');
     if (!name) continue;
     if (EXCLUDE_NAMES.indexOf(name) !== -1) continue;
     var isOut = (ms === 0);                 // アウトラップ（タイムなし）
     if (!isOut && ms >= MAX_VALID_MS) continue; // タイム有りの異常値のみ除外
     out.push({
       when: when, name: name, car: car, lap: lap, ms: ms, str: str,
-      session: session, sessionName: sessionName, isOut: isOut
+      session: session, sessionName: sessionName, no: no, klass: klass, isOut: isOut
     });
   }
   return out;
@@ -199,25 +206,25 @@ function writeRankSheet_(laps) {
     var key = l.name + '||' + l.car;
     var b = bySession[sKey].best;
     if (!b[key] || l.ms < b[key].ms) {
-      b[key] = { name: l.name, car: l.car, ms: l.ms, str: l.str, when: l.when };
+      b[key] = { name: l.name, car: l.car, ms: l.ms, str: l.str, when: l.when, no: l.no, klass: l.klass };
     }
   });
 
-  var rows = [['セッション', '順位', 'ドライバー', '車両', 'ベストタイム', '記録日時']];
+  var rows = [['セッション', '順位', 'ゼッケン', 'ドライバー', '車両', 'クラス', 'ベストタイム', '記録日時']];
   Object.keys(bySession).forEach(function (sKey) {
     var sess = bySession[sKey];
     var list = Object.keys(sess.best).map(function (k) { return sess.best[k]; });
     list.sort(function (a, b) { return a.ms - b.ms; });
     list.forEach(function (d, i) {
-      rows.push([sess.label, i + 1, d.name, d.car, d.str, fmtWhen_(d.when)]);
+      rows.push([sess.label, i + 1, d.no, d.name, d.car, d.klass, d.str, fmtWhen_(d.when)]);
     });
-    rows.push(['', '', '', '', '', '']); // セッション間に空行
+    rows.push(['', '', '', '', '', '', '', '']); // セッション間に空行
   });
 
   var sheet = getOrCreateSheet_(RANK_SHEET);
   sheet.clearContents();
-  sheet.getRange(1, 1, rows.length, 6).setValues(rows);
-  sheet.getRange(1, 1, 1, 6).setFontWeight('bold');
+  sheet.getRange(1, 1, rows.length, 8).setValues(rows);
+  sheet.getRange(1, 1, 1, 8).setFontWeight('bold');
 }
 
 /**
@@ -312,7 +319,7 @@ function getSheet_() {
   var sheet = ss.getSheetByName(SHEET_NAME);
   if (!sheet) {
     sheet = ss.insertSheet(SHEET_NAME);
-    sheet.appendRow(['記録日時', 'ドライバー', '車両', 'ラップ', 'タイム(ms)', 'タイム', 'セッションID', 'セッション名']);
+    sheet.appendRow(['記録日時', 'ドライバー', '車両', 'ラップ', 'タイム(ms)', 'タイム', 'セッションID', 'セッション名', 'ゼッケン', 'クラス', 'タイヤ/天候', 'メモ']);
   }
   return sheet;
 }

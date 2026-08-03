@@ -105,6 +105,10 @@
 <div class="tab" id="tab1">
   <div class="field"><label>ドライバー名 *</label><input type="text" id="cfgName" placeholder="例：安福"></div>
   <div class="field"><label>車両</label><input type="text" id="cfgCar" placeholder="例：FD2 CIVIC TYPE R"></div>
+  <div class="field"><label>ゼッケン番号</label><input type="text" id="cfgNo" placeholder="例：26"></div>
+  <div class="field"><label>クラス・カテゴリ</label><input type="text" id="cfgClass" placeholder="例：NA1クラス"></div>
+  <div class="field"><label>タイヤ・天候メモ</label><input type="text" id="cfgTire" placeholder="例：71RS / ドライ"></div>
+  <div class="field"><label>自由メモ</label><input type="text" id="cfgNote" placeholder="例：セッティング変更後"></div>
   <div class="field"><label>セッション名（任意）※走行会・枠の名前。空なら自動で番号が付きます</label><input type="text" id="cfgSession" placeholder="例：午前フリー走行"></div>
   <div class="field"><label>送信先URL（GASデプロイURL）*</label><input type="url" id="cfgGas" placeholder="https://script.google.com/macros/s/…/exec"></div>
 
@@ -152,7 +156,7 @@
    計測ロジック: 連続する2つのGPS点の線分と、コントロール
    ラインAB線分の交差判定 + 時刻線形補間でライン通過時刻を算出
 ============================================================ */
-let cfg = {name:'', car:'', gas:'', session:'', A:null, B:null, minLap:30, oneWay:true};
+let cfg = {name:'', car:'', no:'', klass:'', tire:'', note:'', gas:'', session:'', A:null, B:null, minLap:30, oneWay:true};
 let running=false, watchId=null, wakeLock=null;
 let prevPt=null, lastCrossT=null, lapNo=0, bestMs=null, firstSign=null;
 let rafId=null;
@@ -172,6 +176,7 @@ function loadCfg(){
     if(s){cfg=JSON.parse(s);}
   }catch(e){}
   cfgName.value=cfg.name||''; cfgCar.value=cfg.car||''; cfgGas.value=cfg.gas||'';
+  cfgNo.value=cfg.no||''; cfgClass.value=cfg.klass||''; cfgTire.value=cfg.tire||''; cfgNote.value=cfg.note||'';
   cfgSession.value=cfg.session||'';
   ptA.value=cfg.A?cfg.A.join(','):''; ptB.value=cfg.B?cfg.B.join(','):'';
   cfgMinLap.value=cfg.minLap||30; cfgOneWay.checked=cfg.oneWay!==false;
@@ -179,6 +184,7 @@ function loadCfg(){
 }
 function saveCfg(){
   cfg.name=cfgName.value.trim(); cfg.car=cfgCar.value.trim(); cfg.gas=cfgGas.value.trim();
+  cfg.no=cfgNo.value.trim(); cfg.klass=cfgClass.value.trim(); cfg.tire=cfgTire.value.trim(); cfg.note=cfgNote.value.trim();
   cfg.session=cfgSession.value.trim();
   cfg.A=parsePt(ptA.value); cfg.B=parsePt(ptB.value);
   cfg.minLap=parseFloat(cfgMinLap.value)||30; cfg.oneWay=cfgOneWay.checked;
@@ -338,6 +344,7 @@ function sendLap(no,ms){
     session: sessionId,
     session_name: cfg.session||'',
     name:cfg.name, car:cfg.car, lap:no,
+    no: cfg.no||'', klass: cfg.klass||'', tire: cfg.tire||'', note: cfg.note||'',
     time_ms: isOut ? 0 : Math.round(ms),
     time_str: isOut ? 'アウトラップ' : fmt(ms)
   });
@@ -353,6 +360,7 @@ function sendOne(item){
     mode:'add',
     session:item.session||'', session_name:item.session_name||'',
     name:item.name||'', car:item.car||'',
+    no:item.no||'', klass:item.klass||'', tire:item.tire||'', note:item.note||'',
     lap:item.lap, time_ms:item.time_ms, time_str:item.time_str
   }).toString();
   return fetch(cfg.gas+'?'+qs, {method:'GET'})
