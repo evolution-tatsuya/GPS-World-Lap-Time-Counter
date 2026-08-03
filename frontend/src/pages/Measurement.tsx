@@ -15,6 +15,7 @@ import {
   Alert,
   FormControlLabel,
   Switch,
+  TextField,
 } from '@mui/material';
 import {
   PlayArrow,
@@ -46,6 +47,13 @@ export default function Measurement() {
   const [simulationMode, setSimulationMode] = useState(DEFAULT_SIMULATION);
   // 片道モード切替（ON=片道／同一方向の通過のみ、OFF=往復・周回）
   const [oneWay, setOneWay] = useState(false);
+
+  // 追加入力項目（任意）・セッション名。計測前に入力してラップに付与する。
+  const [sessionName, setSessionName] = useState('');
+  const [zekken, setZekken] = useState('');
+  const [klass, setKlass] = useState('');
+  const [tire, setTire] = useState('');
+  const [note, setNote] = useState('');
 
   // 現在地を主催者と共有するか（計測とは独立。参加者自身の意思でON/OFF）
   const [sharing, setSharing] = useState(false);
@@ -158,15 +166,22 @@ export default function Measurement() {
     ],
     minLapTime: (course.referenceTime || course.referenceLapTime || 30000) / 1000, // ミリ秒→秒に変換
     simulationMode, // 実GPS計測 or シミュレーション（画面上のトグルで切替）
-    oneWay, // 片道モード（同一方向の通過のみカウント）
+    oneWay, // 周回モードで逆方向通過を無視（従来フラグ）
+    sessionName, // 任意のセッション名（ラップに付与）
     onPosition: handlePosition, // 位置共有（主催者へ送信）
     onLap: async (lap: LapData) => {
-      // ラップ記録をサーバーに送信
+      // ラップ記録をサーバーに送信（セッション・追加項目も付与）
       try {
         await createLap({
           lapNumber: lap.lapNumber,
           lapTimeMs: lap.lapTimeMs,
           lapTimeStr: lap.lapTimeStr,
+          sessionId: lap.sessionId,
+          sessionName: lap.sessionName,
+          zekken: zekken || undefined,
+          klass: klass || undefined,
+          tire: tire || undefined,
+          note: note || undefined,
         });
         console.log('Lap saved:', lap);
       } catch (error) {
@@ -319,6 +334,56 @@ export default function Measurement() {
           </Typography>
         </Paper>
       </Box>
+
+      {/* 計測情報の入力（計測前のみ。ラップに付与される。すべて任意） */}
+      {!running && (
+        <Paper variant="outlined" sx={{ p: 2, mb: 2 }}>
+          <Typography variant="body2" sx={{ mb: 1, fontWeight: 'medium' }}>
+            計測情報（任意）
+          </Typography>
+          <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+            <TextField
+              size="small"
+              label="セッション名"
+              placeholder="例：午前フリー走行"
+              value={sessionName}
+              onChange={(e) => setSessionName(e.target.value)}
+              sx={{ flex: '1 1 45%' }}
+            />
+            <TextField
+              size="small"
+              label="ゼッケン"
+              placeholder="例：26"
+              value={zekken}
+              onChange={(e) => setZekken(e.target.value)}
+              sx={{ flex: '1 1 45%' }}
+            />
+            <TextField
+              size="small"
+              label="クラス"
+              placeholder="例：NA1"
+              value={klass}
+              onChange={(e) => setKlass(e.target.value)}
+              sx={{ flex: '1 1 45%' }}
+            />
+            <TextField
+              size="small"
+              label="タイヤ・天候"
+              placeholder="例：71RS/ドライ"
+              value={tire}
+              onChange={(e) => setTire(e.target.value)}
+              sx={{ flex: '1 1 45%' }}
+            />
+            <TextField
+              size="small"
+              label="メモ"
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+              sx={{ flex: '1 1 100%' }}
+            />
+          </Box>
+        </Paper>
+      )}
 
       {/* コントロールボタン */}
       <Box sx={{ display: 'flex', gap: 2, mb: 3 }}>

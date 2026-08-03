@@ -170,6 +170,12 @@ export interface LapCreateInput {
   lapNumber: number;
   lapTimeMs: number;
   lapTimeStr: string;
+  sessionId?: string;
+  sessionName?: string;
+  zekken?: string;
+  klass?: string;
+  tire?: string;
+  note?: string;
 }
 
 export interface RankingEntry {
@@ -215,6 +221,9 @@ export interface LapData {
   lapTimeMs: number;
   lapTimeStr: string;
   timestamp: Date;
+  sessionId?: string;    // 計測スタート毎のセッションID
+  sessionName?: string;  // 任意のセッション名
+  isOutlap?: boolean;    // アウトラップ（1周目の通過・タイムなし）か
 }
 
 // ========== 後方互換性のための型エイリアス ==========
