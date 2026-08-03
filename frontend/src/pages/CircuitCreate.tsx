@@ -40,6 +40,12 @@ export default function CircuitCreate() {
   const [controlLineALng, setControlLineALng] = useState('');
   const [controlLineBLat, setControlLineBLat] = useState('');
   const [controlLineBLng, setControlLineBLng] = useState('');
+  // 計測モード（周回/片道）と片道のゴールライン
+  const [measureType, setMeasureType] = useState<'LAP' | 'ONE_WAY'>('LAP');
+  const [goalLineALat, setGoalLineALat] = useState('');
+  const [goalLineALng, setGoalLineALng] = useState('');
+  const [goalLineBLat, setGoalLineBLat] = useState('');
+  const [goalLineBLng, setGoalLineBLng] = useState('');
   const [referenceTime, setReferenceTime] = useState<number | ''>('');
   const [courseLength, setCourseLength] = useState('');
   const [elevationGain, setElevationGain] = useState<number | ''>('');
@@ -47,7 +53,7 @@ export default function CircuitCreate() {
   const [isPublic, setIsPublic] = useState(true);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [gpsBusy, setGpsBusy] = useState<null | 'A' | 'B' | 'LINE'>(null);
+  const [gpsBusy, setGpsBusy] = useState<null | 'A' | 'B' | 'GA' | 'GB' | 'LINE'>(null);
   const [gpsInfo, setGpsInfo] = useState('');
 
   if (!user) {
@@ -55,8 +61,8 @@ export default function CircuitCreate() {
     return null;
   }
 
-  // 現在地でA点またはB点を取得
-  const capturePoint = async (point: 'A' | 'B') => {
+  // 現在地でスタートラインA/B・ゴールラインA/Bのいずれかを取得
+  const capturePoint = async (point: 'A' | 'B' | 'GA' | 'GB') => {
     setError('');
     setGpsInfo('');
     setGpsBusy(point);
@@ -64,13 +70,10 @@ export default function CircuitCreate() {
       const pos = await getCurrentPositionOnce();
       const lat = pos.lat.toFixed(6);
       const lng = pos.lng.toFixed(6);
-      if (point === 'A') {
-        setControlLineALat(lat);
-        setControlLineALng(lng);
-      } else {
-        setControlLineBLat(lat);
-        setControlLineBLng(lng);
-      }
+      if (point === 'A') { setControlLineALat(lat); setControlLineALng(lng); }
+      else if (point === 'B') { setControlLineBLat(lat); setControlLineBLng(lng); }
+      else if (point === 'GA') { setGoalLineALat(lat); setGoalLineALng(lng); }
+      else if (point === 'GB') { setGoalLineBLat(lat); setGoalLineBLng(lng); }
       setGpsInfo(`地点${point}を取得しました（精度±${Math.round(pos.accuracy)}m）`);
     } catch (err) {
       setError(err instanceof Error ? err.message : '位置情報の取得に失敗しました');
@@ -122,6 +125,14 @@ export default function CircuitCreate() {
           lat: parseFloat(controlLineBLat),
           lng: parseFloat(controlLineBLng),
         },
+        // 計測モード。片道(ONE_WAY)のときはゴールラインも送る
+        measureType,
+        goalLineA: measureType === 'ONE_WAY'
+          ? { lat: parseFloat(goalLineALat), lng: parseFloat(goalLineALng) }
+          : null,
+        goalLineB: measureType === 'ONE_WAY'
+          ? { lat: parseFloat(goalLineBLat), lng: parseFloat(goalLineBLng) }
+          : null,
         referenceTime: referenceTime ? referenceTime * 1000 : null, // 秒→ミリ秒
         courseLength: courseLength || null,
         elevationGain: elevationGain || null,
@@ -231,7 +242,22 @@ export default function CircuitCreate() {
           </FormControl>
 
           <Typography variant="h6" gutterBottom sx={{ mt: 3 }}>
-            コントロールライン座標（GPS）
+            計測モード
+          </Typography>
+          <TextField
+            select
+            fullWidth
+            label="計測モード"
+            value={measureType}
+            onChange={(e) => setMeasureType(e.target.value as 'LAP' | 'ONE_WAY')}
+            sx={{ mb: 2 }}
+          >
+            <MenuItem value="LAP">周回モード（サーキット：1本のラインを通るたびに1周）</MenuItem>
+            <MenuItem value="ONE_WAY">片道モード（スタート→ゴール別ラインで区間計測。ヒルクライム等）</MenuItem>
+          </TextField>
+
+          <Typography variant="h6" gutterBottom sx={{ mt: 3 }}>
+            {measureType === 'ONE_WAY' ? 'スタートライン座標（GPS）' : 'コントロールライン座標（GPS）'}
           </Typography>
 
           <Alert severity="info" sx={{ mb: 2 }}>
@@ -327,6 +353,87 @@ export default function CircuitCreate() {
               />
             </Grid>
           </Grid>
+
+          {/* 片道モードのゴールライン */}
+          {measureType === 'ONE_WAY' && (
+            <>
+              <Typography variant="h6" gutterBottom sx={{ mt: 3 }}>
+                ゴールライン座標（GPS）
+              </Typography>
+              <Alert severity="info" sx={{ mb: 2 }}>
+                区間の終点（ゴール地点）を横切るラインです。ゴール地点に立って
+                A点・B点を取得してください。
+              </Alert>
+
+              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 2 }}>
+                <Button
+                  variant="outlined"
+                  startIcon={<MyLocation />}
+                  onClick={() => capturePoint('GA')}
+                  disabled={gpsBusy !== null}
+                >
+                  {gpsBusy === 'GA' ? '取得中...' : '現在地でゴールA点'}
+                </Button>
+                <Button
+                  variant="outlined"
+                  startIcon={<MyLocation />}
+                  onClick={() => capturePoint('GB')}
+                  disabled={gpsBusy !== null}
+                >
+                  {gpsBusy === 'GB' ? '取得中...' : '現在地でゴールB点'}
+                </Button>
+              </Box>
+
+              <Grid container spacing={2} sx={{ mb: 2 }}>
+                <Grid size={6}>
+                  <TextField
+                    fullWidth
+                    label="ゴールA 緯度"
+                    type="number"
+                    value={goalLineALat}
+                    onChange={(e) => setGoalLineALat(e.target.value)}
+                    required
+                    slotProps={{ htmlInput: { step: '0.0001' } }}
+                  />
+                </Grid>
+                <Grid size={6}>
+                  <TextField
+                    fullWidth
+                    label="ゴールA 経度"
+                    type="number"
+                    value={goalLineALng}
+                    onChange={(e) => setGoalLineALng(e.target.value)}
+                    required
+                    slotProps={{ htmlInput: { step: '0.0001' } }}
+                  />
+                </Grid>
+              </Grid>
+              <Grid container spacing={2} sx={{ mb: 2 }}>
+                <Grid size={6}>
+                  <TextField
+                    fullWidth
+                    label="ゴールB 緯度"
+                    type="number"
+                    value={goalLineBLat}
+                    onChange={(e) => setGoalLineBLat(e.target.value)}
+                    required
+                    slotProps={{ htmlInput: { step: '0.0001' } }}
+                  />
+                </Grid>
+                <Grid size={6}>
+                  <TextField
+                    fullWidth
+                    label="ゴールB 経度"
+                    type="number"
+                    value={goalLineBLng}
+                    onChange={(e) => setGoalLineBLng(e.target.value)}
+                    required
+                    slotProps={{ htmlInput: { step: '0.0001' } }}
+                  />
+                </Grid>
+              </Grid>
+            </>
+          )}
 
           <Typography variant="h6" gutterBottom sx={{ mt: 3 }}>
             コース詳細（任意）
