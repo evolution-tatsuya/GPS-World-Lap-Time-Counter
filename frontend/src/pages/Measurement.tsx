@@ -27,8 +27,8 @@ import {
 import { useAuthStore } from '../stores/authStore';
 import { useGPS } from '../hooks/useGPS';
 import { formatLapTime } from '../utils/gpsUtils';
-import { createLap } from '../api/laps';
 import { sendPosition } from '../api/positions';
+import { enqueueLap, flushQueue, pendingCount } from '../utils/lapQueue';
 import type { LapData, GPSPosition } from '../types';
 
 // 位置共有の送信間隔（ミリ秒）。GPSは頻繁に更新されるため間引く。
@@ -54,6 +54,9 @@ export default function Measurement() {
   const [klass, setKlass] = useState('');
   const [tire, setTire] = useState('');
   const [note, setNote] = useState('');
+
+  // 未送信ラップ件数（堅牢送信キュー）
+  const [pending, setPending] = useState(0);
 
   // 現在地を主催者と共有するか（計測とは独立。参加者自身の意思でON/OFF）
   const [sharing, setSharing] = useState(false);
@@ -124,6 +127,24 @@ export default function Measurement() {
     }
   }, [event, navigate]);
 
+  // 未送信ラップの自動再送: 起動時＋15秒毎＋画面復帰時。電波復帰でまとめて届く。
+  useEffect(() => {
+    if (!event) return;
+    const eid = event.id;
+    setPending(pendingCount(eid));
+    const tryFlush = async () => setPending(await flushQueue(eid));
+    tryFlush(); // 起動時に前回の未送信を送る
+    const iv = window.setInterval(tryFlush, 15000);
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') tryFlush();
+    };
+    document.addEventListener('visibilitychange', onVisible);
+    return () => {
+      clearInterval(iv);
+      document.removeEventListener('visibilitychange', onVisible);
+    };
+  }, [event]);
+
   if (!event) return null;
 
   // v2.2対応: event.courseを使用（後方互換のためevent.circuitも利用可能）
@@ -174,23 +195,21 @@ export default function Measurement() {
     sessionName, // 任意のセッション名（ラップに付与）
     onPosition: handlePosition, // 位置共有（主催者へ送信）
     onLap: async (lap: LapData) => {
-      // ラップ記録をサーバーに送信（セッション・追加項目も付与）
-      try {
-        await createLap({
-          lapNumber: lap.lapNumber,
-          lapTimeMs: lap.lapTimeMs,
-          lapTimeStr: lap.lapTimeStr,
-          sessionId: lap.sessionId,
-          sessionName: lap.sessionName,
-          zekken: zekken || undefined,
-          klass: klass || undefined,
-          tire: tire || undefined,
-          note: note || undefined,
-        });
-        console.log('Lap saved:', lap);
-      } catch (error) {
-        console.error('Failed to save lap:', error);
-      }
+      // ラップは必ずキューに保存してから送信を試みる（電波弱でも失わない）
+      if (!event) return;
+      enqueueLap(event.id, {
+        lapNumber: lap.lapNumber,
+        lapTimeMs: lap.lapTimeMs,
+        lapTimeStr: lap.lapTimeStr,
+        sessionId: lap.sessionId,
+        sessionName: lap.sessionName,
+        zekken: zekken || undefined,
+        klass: klass || undefined,
+        tire: tire || undefined,
+        note: note || undefined,
+      });
+      const remain = await flushQueue(event.id);
+      setPending(remain);
     },
   });
 
@@ -228,6 +247,27 @@ export default function Measurement() {
       >
         {gpsStatus}
       </Alert>
+
+      {/* 未送信ラップ（電波弱で送れなかった分の手動再送） */}
+      {pending > 0 && (
+        <Alert
+          severity="warning"
+          sx={{ mb: 2 }}
+          action={
+            <Button
+              color="inherit"
+              size="small"
+              onClick={async () => {
+                if (event) setPending(await flushQueue(event.id));
+              }}
+            >
+              今すぐ送信
+            </Button>
+          }
+        >
+          未送信 {pending} 件（電波の良い場所で自動送信されます）
+        </Alert>
+      )}
 
       {/* 現在地の共有（計測とは独立。参加者自身の意思でON/OFF） */}
       <Paper variant="outlined" sx={{ p: 2, mb: 2 }}>
