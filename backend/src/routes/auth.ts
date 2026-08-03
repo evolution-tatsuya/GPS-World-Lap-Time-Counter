@@ -4,6 +4,7 @@ import { Router, Request, Response } from 'express';
 import bcrypt from 'bcrypt';
 import { prisma } from '../index';
 import { LoginRequest, EventLoginRequest } from '../types';
+import { formatCourseLines } from '../utils/formatCourse';
 
 const router = Router();
 
@@ -52,14 +53,7 @@ router.post('/event-login', async (req: Request, res: Response) => {
           name: event.course.name,
           country: event.course.country,
           state: event.course.state,
-          controlLineA: {
-            lat: Number(event.course.controlLineALat),
-            lng: Number(event.course.controlLineALng)
-          },
-          controlLineB: {
-            lat: Number(event.course.controlLineBLat),
-            lng: Number(event.course.controlLineBLng)
-          },
+          ...formatCourseLines(event.course),
           referenceLapTime: event.course.referenceTime
         }
       },
@@ -247,14 +241,7 @@ router.get('/session', async (req: Request, res: Response) => {
         state: event.course.state,
         courseType: event.course.courseType,
         sportCategories: event.course.sportCategories,
-        controlLineA: {
-          lat: Number(event.course.controlLineALat),
-          lng: Number(event.course.controlLineALng),
-        },
-        controlLineB: {
-          lat: Number(event.course.controlLineBLat),
-          lng: Number(event.course.controlLineBLng),
-        },
+        ...formatCourseLines(event.course),
         referenceTime: event.course.referenceTime,
         referenceLapTime: event.course.referenceTime,
       };

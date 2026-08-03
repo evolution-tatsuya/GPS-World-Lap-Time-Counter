@@ -5,6 +5,7 @@ import { prisma } from '../index';
 import { requireOrganizer } from '../middleware/auth';
 import { EventCreateInput } from '../types';
 import { generateEventCode } from '../utils/eventCodeGenerator';
+import { formatCourseLines } from '../utils/formatCourse';
 
 const router = Router();
 
@@ -108,14 +109,7 @@ router.get('/:idOrCode', async (req: Request, res: Response) => {
       ...event,
       circuit: {
         ...event.course,
-        controlLineA: {
-          lat: Number(event.course.controlLineALat),
-          lng: Number(event.course.controlLineALng)
-        },
-        controlLineB: {
-          lat: Number(event.course.controlLineBLat),
-          lng: Number(event.course.controlLineBLng)
-        },
+        ...formatCourseLines(event.course),
         referenceLapTime: event.course.referenceTime
       }
     };
@@ -201,14 +195,7 @@ router.post('/', requireOrganizer, async (req: Request, res: Response) => {
       ...event,
       circuit: {
         ...event.course,
-        controlLineA: {
-          lat: Number(event.course.controlLineALat),
-          lng: Number(event.course.controlLineALng)
-        },
-        controlLineB: {
-          lat: Number(event.course.controlLineBLat),
-          lng: Number(event.course.controlLineBLng)
-        },
+        ...formatCourseLines(event.course),
         referenceLapTime: event.course.referenceTime
       }
     });

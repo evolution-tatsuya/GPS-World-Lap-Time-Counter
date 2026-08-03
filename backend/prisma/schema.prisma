@@ -48,6 +48,13 @@ model Course {
   controlLineALng    Decimal     @map("control_line_a_lng") @db.Decimal(10, 7)
   controlLineBLat    Decimal     @map("control_line_b_lat") @db.Decimal(10, 7)
   controlLineBLng    Decimal     @map("control_line_b_lng") @db.Decimal(10, 7)
+  // 計測タイプ: LAP=周回(1本のライン)、ONE_WAY=片道(スタート/ゴール別ライン)
+  measureType        MeasureType @default(LAP) @map("measure_type")
+  // 片道モードのゴールライン（ONE_WAYのとき使用。nullable）
+  goalLineALat       Decimal?    @map("goal_line_a_lat") @db.Decimal(10, 7)
+  goalLineALng       Decimal?    @map("goal_line_a_lng") @db.Decimal(10, 7)
+  goalLineBLat       Decimal?    @map("goal_line_b_lat") @db.Decimal(10, 7)
+  goalLineBLng       Decimal?    @map("goal_line_b_lng") @db.Decimal(10, 7)
   referenceTime      Int?        @map("reference_time") // 秒単位
   courseLength       Decimal?    @map("course_length") @db.Decimal(5, 2) // km
   elevationGain      Int?        @map("elevation_gain") // m（高低差）
@@ -73,6 +80,11 @@ enum CourseType {
   TRAIL          // トレイル・山道
   WATER          // 水上（海・湖・川）
   OTHER          // その他
+}
+
+enum MeasureType {
+  LAP      // 周回計測（1本のコントロールライン）
+  ONE_WAY  // 片道計測（スタートライン→ゴールラインの区間）
 }
 
 // ========== イベント管理（マルチスポーツ対応） ==========

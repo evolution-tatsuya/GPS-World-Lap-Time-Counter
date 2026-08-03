@@ -4,6 +4,7 @@ import { Router, Request, Response } from 'express';
 import { prisma } from '../index';
 import { requireOrganizer } from '../middleware/auth';
 import { CircuitCreateInput } from '../types';
+import { formatCourseLines } from '../utils/formatCourse';
 
 const router = Router();
 
@@ -34,14 +35,7 @@ router.get('/', async (req: Request, res: Response) => {
       state: circuit.state,
       name: circuit.name,
       type: circuit.courseType,
-      controlLineA: {
-        lat: Number(circuit.controlLineALat),
-        lng: Number(circuit.controlLineALng)
-      },
-      controlLineB: {
-        lat: Number(circuit.controlLineBLat),
-        lng: Number(circuit.controlLineBLng)
-      },
+      ...formatCourseLines(circuit),
       referenceLapTime: circuit.referenceTime,
       description: circuit.description,
       isPublic: circuit.isPublic,
@@ -81,14 +75,7 @@ router.get('/:id', async (req: Request, res: Response) => {
       state: circuit.state,
       name: circuit.name,
       type: circuit.courseType,
-      controlLineA: {
-        lat: Number(circuit.controlLineALat),
-        lng: Number(circuit.controlLineALng)
-      },
-      controlLineB: {
-        lat: Number(circuit.controlLineBLat),
-        lng: Number(circuit.controlLineBLng)
-      },
+      ...formatCourseLines(circuit),
       referenceLapTime: circuit.referenceTime,
       description: circuit.description,
       isPublic: circuit.isPublic,
@@ -117,6 +104,9 @@ router.post('/', requireOrganizer, async (req: Request, res: Response) => {
       courseType,
       controlLineA,
       controlLineB,
+      measureType,
+      goalLineA,
+      goalLineB,
       referenceLapTime,
       referenceTime,
       description,
@@ -155,6 +145,12 @@ router.post('/', requireOrganizer, async (req: Request, res: Response) => {
         controlLineALng: controlLineA.lng,
         controlLineBLat: controlLineB.lat,
         controlLineBLng: controlLineB.lng,
+        // 片道モード（ONE_WAY）のときはゴールラインも保存
+        measureType: measureType === 'ONE_WAY' ? 'ONE_WAY' : 'LAP',
+        goalLineALat: goalLineA?.lat ?? null,
+        goalLineALng: goalLineA?.lng ?? null,
+        goalLineBLat: goalLineB?.lat ?? null,
+        goalLineBLng: goalLineB?.lng ?? null,
         referenceTime: referenceTime || referenceLapTime || null,
         description: description || null,
         isPublic: isPublic !== undefined ? isPublic : true,
@@ -168,14 +164,7 @@ router.post('/', requireOrganizer, async (req: Request, res: Response) => {
       state: circuit.state,
       name: circuit.name,
       type: circuit.courseType,
-      controlLineA: {
-        lat: Number(circuit.controlLineALat),
-        lng: Number(circuit.controlLineALng)
-      },
-      controlLineB: {
-        lat: Number(circuit.controlLineBLat),
-        lng: Number(circuit.controlLineBLng)
-      },
+      ...formatCourseLines(circuit),
       referenceLapTime: circuit.referenceTime,
       description: circuit.description,
       isPublic: circuit.isPublic,
@@ -242,14 +231,7 @@ router.put('/:id', requireOrganizer, async (req: Request, res: Response) => {
       state: circuit.state,
       name: circuit.name,
       type: circuit.courseType,
-      controlLineA: {
-        lat: Number(circuit.controlLineALat),
-        lng: Number(circuit.controlLineALng)
-      },
-      controlLineB: {
-        lat: Number(circuit.controlLineBLat),
-        lng: Number(circuit.controlLineBLng)
-      },
+      ...formatCourseLines(circuit),
       referenceLapTime: circuit.referenceTime,
       description: circuit.description,
       isPublic: circuit.isPublic,

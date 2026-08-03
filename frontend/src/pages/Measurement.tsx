@@ -165,6 +165,10 @@ export default function Measurement() {
       course.controlLineB.lng,
     ],
     minLapTime: (course.referenceTime || course.referenceLapTime || 30000) / 1000, // ミリ秒→秒に変換
+    // コースが片道(ONE_WAY)かつゴールライン有りなら片道モード、それ以外は周回
+    mode: course.measureType === 'ONE_WAY' && course.goalLineA && course.goalLineB ? 'oneway' : 'lap',
+    goalLineA: course.goalLineA ? [course.goalLineA.lat, course.goalLineA.lng] : undefined,
+    goalLineB: course.goalLineB ? [course.goalLineB.lat, course.goalLineB.lng] : undefined,
     simulationMode, // 実GPS計測 or シミュレーション（画面上のトグルで切替）
     oneWay, // 周回モードで逆方向通過を無視（従来フラグ）
     sessionName, // 任意のセッション名（ラップに付与）

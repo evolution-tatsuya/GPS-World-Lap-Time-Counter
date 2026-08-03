@@ -55,6 +55,10 @@ export interface Course {
     lat: number;
     lng: number;
   };
+  // 計測タイプと片道モードのゴールライン（片道のときのみ値あり）
+  measureType?: 'LAP' | 'ONE_WAY';
+  goalLineA?: { lat: number; lng: number } | null;
+  goalLineB?: { lat: number; lng: number } | null;
   referenceTime: number | null;
   referenceLapTime: number | null; // 後方互換性のため（referenceTimeのエイリアス）
   courseLength: number | null;
