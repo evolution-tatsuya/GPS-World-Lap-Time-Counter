@@ -1,7 +1,8 @@
-// 運営者ダッシュボード
+// {t('dashboard.title')}
 
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import {
   Container,
   Box,
@@ -40,6 +41,7 @@ interface DashboardStats {
 
 export default function Dashboard() {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const { user, isOrganizer, logout } = useAuthStore();
 
   const [currentTab, setCurrentTab] = useState(0);
@@ -97,7 +99,7 @@ export default function Dashboard() {
       });
     } catch (err) {
       console.error('Failed to fetch dashboard data:', err);
-      setError('ダッシュボードデータの取得に失敗しました');
+      setError(t('dashboard.loadError'));
     } finally {
       setLoading(false);
     }
@@ -121,11 +123,11 @@ export default function Dashboard() {
     const eventDay = eventDate.toDateString();
 
     if (today === eventDay) {
-      return { label: '開催中', color: 'success' as const };
+      return { label: t('dashboard.statusActive'), color: 'success' as const };
     } else if (now < eventDate) {
-      return { label: '予定', color: 'default' as const };
+      return { label: t('dashboard.statusUpcoming'), color: 'default' as const };
     } else {
-      return { label: '終了', color: 'error' as const };
+      return { label: t('dashboard.statusEnded'), color: 'error' as const };
     }
   };
 
@@ -139,7 +141,7 @@ export default function Dashboard() {
           <DashboardIcon sx={{ mr: 1, color: 'primary.main', fontSize: 32 }} />
           <Box>
             <Typography variant="h4" component="h1">
-              運営者ダッシュボード
+              {t('dashboard.title')}
             </Typography>
             <Typography variant="body2" color="text.secondary">
               {user?.name} ({user?.email})
@@ -151,7 +153,7 @@ export default function Dashboard() {
           onClick={handleLogout}
           variant="outlined"
         >
-          ログアウト
+          {t('dashboard.logout')}
         </Button>
       </Box>
 
@@ -180,7 +182,7 @@ export default function Dashboard() {
                   <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
                     <EventIcon color="primary" />
                     <Typography variant="body2" color="text.secondary" sx={{ ml: 1 }}>
-                      総イベント数
+                      {t('dashboard.totalEvents')}
                     </Typography>
                   </Box>
                   <Typography variant="h3" component="div">
@@ -196,7 +198,7 @@ export default function Dashboard() {
                   <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
                     <Timer color="success" />
                     <Typography variant="body2" color="text.secondary" sx={{ ml: 1 }}>
-                      開催中
+                      {t('dashboard.activeEvents')}
                     </Typography>
                   </Box>
                   <Typography variant="h3" component="div" color="success.main">
@@ -212,7 +214,7 @@ export default function Dashboard() {
                   <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
                     <DirectionsCar color="info" />
                     <Typography variant="body2" color="text.secondary" sx={{ ml: 1 }}>
-                      登録サーキット数
+                      {t('dashboard.totalCourses')}
                     </Typography>
                   </Box>
                   <Typography variant="h3" component="div">
@@ -228,7 +230,7 @@ export default function Dashboard() {
                   <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
                     <People color="warning" />
                     <Typography variant="body2" color="text.secondary" sx={{ ml: 1 }}>
-                      総ラップ数
+                      {t('dashboard.totalLaps')}
                     </Typography>
                   </Box>
                   <Typography variant="h3" component="div">
@@ -242,8 +244,8 @@ export default function Dashboard() {
           {/* タブ */}
           <Paper sx={{ mb: 2 }}>
             <Tabs value={currentTab} onChange={handleTabChange}>
-              <Tab label="イベント管理" />
-              <Tab label="サーキット管理" />
+              <Tab label={t('dashboard.tabEvents')} />
+              <Tab label={t('dashboard.tabCourses')} />
             </Tabs>
           </Paper>
 
@@ -251,20 +253,20 @@ export default function Dashboard() {
           {currentTab === 0 && (
             <Box>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
-                <Typography variant="h6">イベント一覧</Typography>
+                <Typography variant="h6">{t('dashboard.eventList')}</Typography>
                 <Button
                   startIcon={<Add />}
                   variant="contained"
                   onClick={() => navigate('/events/create')}
                 >
-                  新規イベント作成
+                  {t('dashboard.newEvent')}
                 </Button>
               </Box>
 
               {events.length === 0 ? (
                 <Paper sx={{ p: 4, textAlign: 'center' }}>
                   <Typography variant="body1" color="text.secondary">
-                    まだイベントが登録されていません
+                    {t('dashboard.noEvents')}
                   </Typography>
                   <Button
                     variant="contained"
@@ -272,7 +274,7 @@ export default function Dashboard() {
                     sx={{ mt: 2 }}
                     onClick={() => navigate('/events/create')}
                   >
-                    最初のイベントを作成
+                    {t('dashboard.createFirstEvent')}
                   </Button>
                 </Paper>
               ) : (
@@ -294,13 +296,13 @@ export default function Dashboard() {
                               <Chip label={status.label} color={status.color} size="small" />
                             </Box>
                             <Typography variant="body2" color="text.secondary" gutterBottom>
-                              イベントコード: {event.eventCode}
+                              {t('dashboard.eventCode')}: {event.eventCode}
                             </Typography>
                             <Typography variant="body2" color="text.secondary">
-                              サーキット: {event.circuit?.name || '未設定'}
+                              {t('dashboard.course')}: {event.circuit?.name || t('dashboard.unset')}
                             </Typography>
                             <Typography variant="body2" color="text.secondary">
-                              開催日: {new Date(event.eventDate).toLocaleDateString()}
+                              {t('dashboard.eventDate')}: {new Date(event.eventDate).toLocaleDateString()}
                             </Typography>
                           </CardContent>
                         </Card>
@@ -316,20 +318,20 @@ export default function Dashboard() {
           {currentTab === 1 && (
             <Box>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
-                <Typography variant="h6">サーキット一覧</Typography>
+                <Typography variant="h6">{t('dashboard.courseList')}</Typography>
                 <Button
                   startIcon={<Add />}
                   variant="contained"
                   onClick={() => navigate('/circuits/create')}
                 >
-                  新規サーキット登録
+                  {t('dashboard.newCourse')}
                 </Button>
               </Box>
 
               {circuits.length === 0 ? (
                 <Paper sx={{ p: 4, textAlign: 'center' }}>
                   <Typography variant="body1" color="text.secondary">
-                    まだサーキットが登録されていません
+                    {t('dashboard.noCourses')}
                   </Typography>
                   <Button
                     variant="contained"
@@ -337,7 +339,7 @@ export default function Dashboard() {
                     sx={{ mt: 2 }}
                     onClick={() => navigate('/circuits/create')}
                   >
-                    最初のサーキットを登録
+                    {t('dashboard.createFirstCourse')}
                   </Button>
                 </Paper>
               ) : (
@@ -356,11 +358,11 @@ export default function Dashboard() {
                             {circuit.name}
                           </Typography>
                           <Typography variant="body2" color="text.secondary">
-                            所在地: {circuit.country} {circuit.state && `- ${circuit.state}`}
+                            {t('dashboard.location')}: {circuit.country} {circuit.state && `- ${circuit.state}`}
                           </Typography>
                           {circuit.referenceLapTime && (
                             <Typography variant="body2" color="text.secondary">
-                              基準ラップタイム: {circuit.referenceLapTime}秒
+                              {t('dashboard.referenceLapTime')}: {circuit.referenceLapTime}{t('dashboard.seconds')}
                             </Typography>
                           )}
                         </CardContent>
