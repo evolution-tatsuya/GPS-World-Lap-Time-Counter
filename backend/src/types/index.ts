@@ -123,6 +123,13 @@ export interface LapCreateInput {
   lapNumber: number;
   lapTimeMs: number;
   lapTimeStr: string;
+  // セッション管理（計測スタート毎に発行）と追加入力項目（任意）
+  sessionId?: string;
+  sessionName?: string;
+  zekken?: string;
+  klass?: string;
+  tire?: string;
+  note?: string;
 }
 
 export interface RankingEntry {

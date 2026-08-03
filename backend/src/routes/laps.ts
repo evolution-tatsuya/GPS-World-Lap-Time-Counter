@@ -15,10 +15,14 @@ const router = Router();
  */
 router.post('/', requireSession, async (req: Request, res: Response) => {
   try {
-    const { lapNumber, lapTimeMs, lapTimeStr } = req.body as LapCreateInput;
+    const {
+      lapNumber, lapTimeMs, lapTimeStr,
+      sessionId, sessionName, zekken, klass, tire, note,
+    } = req.body as LapCreateInput;
 
     // バリデーション
-    if (!lapNumber || !lapTimeMs || !lapTimeStr) {
+    // ※ アウトラップ(lapTimeMs=0)も記録するため、lapTimeMsは「未定義」のみ弾く（0はOK）。
+    if (lapNumber == null || lapTimeMs == null || !lapTimeStr) {
       res.status(400).json({ error: 'Required fields are missing' });
       return;
     }
@@ -33,6 +37,12 @@ router.post('/', requireSession, async (req: Request, res: Response) => {
       return;
     }
 
+    // イベントのスポーツカテゴリを取得（ハードコードを避ける）
+    const event = await prisma.event.findUnique({
+      where: { id: req.session.eventId },
+      select: { sportCategory: true },
+    });
+
     // ラップ記録作成
     const lap = await prisma.lap.create({
       data: {
@@ -40,10 +50,16 @@ router.post('/', requireSession, async (req: Request, res: Response) => {
         userId: req.session.userId || undefined,
         participantName: req.session.driverName,
         vehicleOrGear: req.session.vehicle || undefined,
-        sportCategory: 'CAR', // デフォルトは車
+        sportCategory: event?.sportCategory || 'CAR', // イベントのカテゴリ、無ければ車
         lapNumber,
         lapTimeMs,
-        lapTimeStr
+        lapTimeStr,
+        sessionId: sessionId || undefined,
+        sessionName: sessionName || undefined,
+        zekken: zekken || undefined,
+        klass: klass || undefined,
+        tire: tire || undefined,
+        note: note || undefined,
       }
     });
 
@@ -247,12 +263,17 @@ router.get('/export', requireOrganizer, async (req: Request, res: Response) => {
     // ヘッダー行
     const header = [
       '順位',
+      'ゼッケン',
       'ドライバー',
       '車両/装備',
+      'クラス',
+      'セッション',
       'ラップ番号',
       'ラップタイム',
       'ラップタイム(ms)',
       'ベストラップか',
+      'タイヤ/天候',
+      'メモ',
       '記録日時',
     ];
 
@@ -262,12 +283,17 @@ router.get('/export', requireOrganizer, async (req: Request, res: Response) => {
       const isBest = lap.lapTimeMs === bestMsByDriver.get(key);
       return [
         rankByDriver.get(key) ?? '',
+        lap.zekken ?? '',
         lap.participantName,
         lap.vehicleOrGear ?? '',
+        lap.klass ?? '',
+        lap.sessionName ?? lap.sessionId ?? '',
         lap.lapNumber,
         lap.lapTimeStr,
         lap.lapTimeMs,
         isBest ? '○' : '',
+        lap.tire ?? '',
+        lap.note ?? '',
         new Date(lap.recordedAt).toISOString(),
       ];
     });

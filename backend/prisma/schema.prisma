@@ -135,6 +135,14 @@ model Lap {
   lapNumber       Int           @map("lap_number")
   lapTimeMs       Int           @map("lap_time_ms") // ミリ秒
   lapTimeStr      String        @map("lap_time_str") // 表示用 (例: "1:23.456")
+  // セッション管理（計測スタート毎に発行。同日の複数走行を区別）
+  sessionId       String?       @map("session_id")
+  sessionName     String?       @map("session_name") // 任意のセッション名（例: 午前フリー走行）
+  // 追加入力項目（単体HTML版と同等）
+  zekken          String?       @map("zekken") // ゼッケン番号
+  klass           String?       @map("klass") // クラス・カテゴリ
+  tire            String?       @map("tire") // タイヤ・天候メモ
+  note            String?       @map("note") // 自由メモ
   recordedAt      DateTime      @default(now()) @map("recorded_at")
 
   // リレーション
@@ -145,5 +153,6 @@ model Lap {
   @@index([userId])
   @@index([sportCategory]) // スポーツカテゴリでの検索高速化
   @@index([recordedAt])
+  @@index([eventId, sessionId]) // セッション別集計
   @@map("laps")
 }
