@@ -215,8 +215,14 @@ time logging/
 - [x] LiveMonitor画面（/events/:id/monitor）: 最新ラップを新しい順で表示、5秒ポーリング、新着にNEWバッジ。トランスポンダー風。SSE不要のポーリング方式
 - [x] getEventLapsFeed API、EventDetailに導線、4言語
 
+### 課金の土台 完了（2026-08-04、決済連携前の手動管理）
+- [x] User に subscriptionPlan/subscriptionStatus/subscriptionUntil ＋enum＋migration
+- [x] canUsePaidFeatures(プロモ枠 or 有効サブスク)。個人計測APIに課金ゲート接続(未加入は402)
+- [x] ADMIN API(PUT /admin/users/:id/subscription)＋統括ページに有効化/無効化UI。手動でサブスク管理
+- [x] E2E検証: 未加入→402、有効化→201。将来Stripe Webhookでstatus更新すれば自動化
+
 ### 残タスク・次フェーズ（要件はPRODUCT_VISION.md）
-- **サブスク課金・決済連携（Stripe）**: 大・お金が絡むため要相談・別フェーズ。個人計測/プロモ枠に課金判定バイパス点(コメント)を用意済み。料金プラン確定・決済事業者選定・規約とセットで進める
+- **決済連携（Stripe）本体**: 土台は完成済み。あとはStripe契約＋WebhookでsubscriptionStatusを更新するだけ。お金/事業判断が絡むため要相談（料金プラン確定・決済事業者選定・利用規約・特商法表記とセット）
 - 個人計測の堅牢送信（未送信キュー）は現状シンプル直接送信。必要ならlapQueue同様の仕組みを後付け
 - 連絡機能: 統括への連絡は「英語/日本語のみ＋注意書き」（機械翻訳は不採用）
 
