@@ -21,6 +21,10 @@ model User {
   // プロモ枠: 課金免除の特別運営アカウント（オーナーのPR/営業デモ用）。
   // このユーザーが作るイベントは課金判定をバイパスする。
   isPromo      Boolean  @default(false) @map("is_promo")
+  // サブスク課金の状態（決済連携前はADMINが手動で設定。将来Stripe Webhookで更新）。
+  subscriptionPlan   SubscriptionPlan   @default(NONE)   @map("subscription_plan")
+  subscriptionStatus SubscriptionStatus @default(INACTIVE) @map("subscription_status")
+  subscriptionUntil  DateTime?          @map("subscription_until") // 有効期限（nullは無期限/未設定）
   createdAt    DateTime @default(now()) @map("created_at")
   updatedAt    DateTime @updatedAt @map("updated_at")
 
@@ -36,6 +40,18 @@ enum UserRole {
   DRIVER     // 一般参加者
   ORGANIZER  // イベント運営者
   ADMIN      // システム管理者
+}
+
+enum SubscriptionPlan {
+  NONE       // 未加入
+  PERSONAL   // 個人利用プラン
+  ORGANIZER  // 運営者プラン
+}
+
+enum SubscriptionStatus {
+  INACTIVE   // 無効（未加入/解約）
+  ACTIVE     // 有効
+  EXPIRED    // 期限切れ
 }
 
 // ========== コース管理（マルチスポーツ対応） ==========

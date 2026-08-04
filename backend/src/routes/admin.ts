@@ -22,6 +22,9 @@ router.get('/users', requireAdmin, async (_req: Request, res: Response) => {
         name: true,
         role: true,
         isPromo: true,
+        subscriptionPlan: true,
+        subscriptionStatus: true,
+        subscriptionUntil: true,
         createdAt: true,
         _count: { select: { events: true, courses: true } },
       },
@@ -57,6 +60,52 @@ router.put('/users/:id/promo', requireAdmin, async (req: Request, res: Response)
     res.json(user);
   } catch (error) {
     console.error('Admin set promo error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// ========== サブスク課金の手動設定（決済連携前の運用） ==========
+
+/**
+ * PUT /api/admin/users/:id/subscription
+ * body: { plan?: 'NONE'|'PERSONAL'|'ORGANIZER', status?: 'INACTIVE'|'ACTIVE'|'EXPIRED', until?: string|null }
+ * ADMINがユーザーのサブスク状態を手動で設定する。将来Stripe Webhookが同じ値を更新する。
+ */
+router.put('/users/:id/subscription', requireAdmin, async (req: Request, res: Response) => {
+  try {
+    const id = String(req.params.id);
+    const { plan, status, until } = req.body as {
+      plan?: string; status?: string; until?: string | null;
+    };
+    const data: Record<string, unknown> = {};
+    if (plan !== undefined) {
+      if (!['NONE', 'PERSONAL', 'ORGANIZER'].includes(plan)) {
+        res.status(400).json({ error: 'invalid plan' });
+        return;
+      }
+      data.subscriptionPlan = plan;
+    }
+    if (status !== undefined) {
+      if (!['INACTIVE', 'ACTIVE', 'EXPIRED'].includes(status)) {
+        res.status(400).json({ error: 'invalid status' });
+        return;
+      }
+      data.subscriptionStatus = status;
+    }
+    if (until !== undefined) {
+      data.subscriptionUntil = until ? new Date(until) : null;
+    }
+    const user = await prisma.user.update({
+      where: { id },
+      data,
+      select: {
+        id: true, name: true, email: true, role: true, isPromo: true,
+        subscriptionPlan: true, subscriptionStatus: true, subscriptionUntil: true,
+      },
+    });
+    res.json(user);
+  } catch (error) {
+    console.error('Admin set subscription error:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });

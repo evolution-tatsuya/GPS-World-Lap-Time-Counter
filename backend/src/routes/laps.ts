@@ -4,6 +4,7 @@ import { Router, Request, Response } from 'express';
 import { prisma } from '../index';
 import { requireSession, requireOrganizer } from '../middleware/auth';
 import { LapCreateInput, RankingEntry } from '../types';
+import { canUsePaidFeatures } from '../utils/subscription';
 
 const router = Router();
 
@@ -86,7 +87,21 @@ router.post('/personal', requireSession, async (req: Request, res: Response) => 
       res.status(403).json({ error: 'Login required for personal measurement' });
       return;
     }
-    // 将来: ここで有効なサブスク課金かをチェックする（今はログインで通す）。
+
+    // 課金ゲート: プロモ枠 or 有効なサブスクのみ個人計測を利用可。
+    // （決済連携前はADMINが手動でサブスクを有効化する運用。将来Stripe Webhookで自動化）
+    const user = await prisma.user.findUnique({
+      where: { id: req.session.userId },
+      select: { name: true, isPromo: true, subscriptionStatus: true, subscriptionUntil: true },
+    });
+    if (!user) {
+      res.status(403).json({ error: 'User not found' });
+      return;
+    }
+    if (!canUsePaidFeatures(user)) {
+      res.status(402).json({ error: 'Subscription required for personal measurement' });
+      return;
+    }
 
     const {
       courseId, lapNumber, lapTimeMs, lapTimeStr, vehicle,
@@ -108,11 +123,6 @@ router.post('/personal', requireSession, async (req: Request, res: Response) => 
       res.status(403).json({ error: 'This course is not approved yet' });
       return;
     }
-
-    const user = await prisma.user.findUnique({
-      where: { id: req.session.userId },
-      select: { name: true },
-    });
 
     const lap = await prisma.lap.create({
       data: {
