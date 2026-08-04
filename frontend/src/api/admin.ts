@@ -2,12 +2,18 @@
 
 import { apiClient } from './client';
 
+export type SubscriptionPlan = 'NONE' | 'PERSONAL' | 'ORGANIZER';
+export type SubscriptionStatus = 'INACTIVE' | 'ACTIVE' | 'EXPIRED';
+
 export interface AdminUser {
   id: string;
   email: string | null;
   name: string;
   role: 'DRIVER' | 'ORGANIZER' | 'ADMIN';
   isPromo: boolean;
+  subscriptionPlan: SubscriptionPlan;
+  subscriptionStatus: SubscriptionStatus;
+  subscriptionUntil: string | null;
   createdAt: string;
   _count: { events: number; courses: number };
 }
@@ -20,6 +26,14 @@ export async function getAdminUsers(): Promise<AdminUser[]> {
 // プロモ枠（課金免除）の付与/解除
 export async function setUserPromo(id: string, isPromo: boolean): Promise<AdminUser> {
   return apiClient.put<AdminUser>(`/admin/users/${id}/promo`, { isPromo });
+}
+
+// サブスク状態を手動設定（決済連携前の運用）
+export async function setUserSubscription(
+  id: string,
+  data: { plan?: SubscriptionPlan; status?: SubscriptionStatus; until?: string | null }
+): Promise<AdminUser> {
+  return apiClient.put<AdminUser>(`/admin/users/${id}/subscription`, data);
 }
 
 export type ApprovalStatus = 'PENDING' | 'APPROVED' | 'REJECTED';

@@ -297,7 +297,18 @@
     "reject": "却下",
     "creator": "登録者",
     "approvalUpdateFailed": "承認状態の更新に失敗しました",
-    "approvalHint": "運営が登録したコースは「申請中」です。承認すると、そのコースでイベントを作れるようになります。統括が登録したコースは即「承認済み」です。"
+    "approvalHint": "運営が登録したコースは「申請中」です。承認すると、そのコースでイベントを作れるようになります。統括が登録したコースは即「承認済み」です。",
+    "subStatus": "サブスク",
+    "subPlanNone": "未加入",
+    "subPlanPersonal": "個人",
+    "subPlanOrganizer": "運営",
+    "subActive": "有効",
+    "subInactive": "無効",
+    "subExpired": "期限切れ",
+    "subActivate": "有効化",
+    "subDeactivate": "無効化",
+    "subHint": "サブスク状態を手動で設定できます（決済連携前の運用）。有効にすると個人計測などの有料機能が使えます。",
+    "subUpdateFailed": "サブスク状態の更新に失敗しました"
   },
   "personal": {
     "title": "個人計測",

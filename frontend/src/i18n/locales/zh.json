@@ -297,7 +297,18 @@
     "reject": "拒绝",
     "creator": "注册者",
     "approvalUpdateFailed": "更新审核状态失败",
-    "approvalHint": "由主办方注册的赛道为“申请中”。批准后即可用于创建活动。由总管理员注册的赛道自动批准。"
+    "approvalHint": "由主办方注册的赛道为“申请中”。批准后即可用于创建活动。由总管理员注册的赛道自动批准。",
+    "subStatus": "订阅",
+    "subPlanNone": "未订阅",
+    "subPlanPersonal": "个人",
+    "subPlanOrganizer": "主办方",
+    "subActive": "有效",
+    "subInactive": "无效",
+    "subExpired": "已过期",
+    "subActivate": "启用",
+    "subDeactivate": "停用",
+    "subHint": "可手动设置订阅状态（对接支付前的运营）。启用后可使用个人计时等付费功能。",
+    "subUpdateFailed": "更新订阅状态失败"
   },
   "personal": {
     "title": "个人计时",

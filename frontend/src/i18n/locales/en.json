@@ -297,7 +297,18 @@
     "reject": "Reject",
     "creator": "Registered by",
     "approvalUpdateFailed": "Failed to update approval status",
-    "approvalHint": "Courses registered by organizers are Pending. Once approved, events can be created on them. Courses registered by the admin are auto-approved."
+    "approvalHint": "Courses registered by organizers are Pending. Once approved, events can be created on them. Courses registered by the admin are auto-approved.",
+    "subStatus": "Subscription",
+    "subPlanNone": "None",
+    "subPlanPersonal": "Personal",
+    "subPlanOrganizer": "Organizer",
+    "subActive": "Active",
+    "subInactive": "Inactive",
+    "subExpired": "Expired",
+    "subActivate": "Activate",
+    "subDeactivate": "Deactivate",
+    "subHint": "Set subscription status manually (before payment integration). When active, paid features like personal measurement are enabled.",
+    "subUpdateFailed": "Failed to update subscription"
   },
   "personal": {
     "title": "Personal Measurement",

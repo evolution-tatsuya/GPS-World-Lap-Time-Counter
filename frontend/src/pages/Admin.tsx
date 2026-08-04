@@ -29,7 +29,7 @@ import { useAuthStore } from '../stores/authStore';
 import { getEvents } from '../api/events';
 import { exportEventLapsCsv } from '../api/laps';
 import {
-  getAdminUsers, setUserPromo, type AdminUser,
+  getAdminUsers, setUserPromo, setUserSubscription, type AdminUser,
   getAdminCourses, setCourseApproval, type AdminCourse, type ApprovalStatus,
 } from '../api/admin';
 import LanguageSwitcher from '../components/LanguageSwitcher';
@@ -92,6 +92,24 @@ export default function Admin() {
       setUsers((prev) => prev.map((x) => (x.id === u.id ? { ...x, isPromo: updated.isPromo } : x)));
     } catch (err) {
       setError(err instanceof Error ? err.message : t('admin.promoUpdateFailed'));
+    } finally {
+      setPromoUpdatingId(null);
+    }
+  };
+
+  const handleToggleSub = async (u: AdminUser) => {
+    setPromoUpdatingId(u.id);
+    try {
+      const active = u.subscriptionStatus === 'ACTIVE';
+      const updated = await setUserSubscription(u.id, {
+        status: active ? 'INACTIVE' : 'ACTIVE',
+        plan: active ? 'NONE' : (u.role === 'ORGANIZER' ? 'ORGANIZER' : 'PERSONAL'),
+      });
+      setUsers((prev) => prev.map((x) => (x.id === u.id
+        ? { ...x, subscriptionStatus: updated.subscriptionStatus, subscriptionPlan: updated.subscriptionPlan }
+        : x)));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t('admin.subUpdateFailed'));
     } finally {
       setPromoUpdatingId(null);
     }
@@ -293,7 +311,7 @@ export default function Admin() {
       {/* ユーザー管理（プロモ枠ON/OFF） */}
       {!loading && tab === 2 && (
         <>
-          <Alert severity="info" sx={{ mb: 2 }}>{t('admin.promoHint')}</Alert>
+          <Alert severity="info" sx={{ mb: 2 }}>{t('admin.subHint')}</Alert>
           <TableContainer component={Paper}>
             <Table size="small">
               <TableHead>
@@ -302,13 +320,14 @@ export default function Admin() {
                   <TableCell>{t('admin.userEmail')}</TableCell>
                   <TableCell>{t('admin.userRole')}</TableCell>
                   <TableCell align="center">{t('admin.userEvents')}</TableCell>
+                  <TableCell align="center">{t('admin.subStatus')}</TableCell>
                   <TableCell align="center">{t('admin.userPromo')}</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
                 {users.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={5}>{t('admin.noUsers')}</TableCell>
+                    <TableCell colSpan={6}>{t('admin.noUsers')}</TableCell>
                   </TableRow>
                 )}
                 {users.map((u) => (
@@ -317,6 +336,22 @@ export default function Admin() {
                     <TableCell>{u.email || '—'}</TableCell>
                     <TableCell><Chip label={u.role} size="small" /></TableCell>
                     <TableCell align="center">{u._count.events}</TableCell>
+                    <TableCell align="center">
+                      <Chip
+                        label={u.subscriptionStatus === 'ACTIVE' ? t('admin.subActive') : t('admin.subInactive')}
+                        color={u.subscriptionStatus === 'ACTIVE' ? 'success' : 'default'}
+                        size="small"
+                        sx={{ mr: 1 }}
+                      />
+                      <Button
+                        size="small"
+                        variant="text"
+                        disabled={promoUpdatingId === u.id}
+                        onClick={() => handleToggleSub(u)}
+                      >
+                        {u.subscriptionStatus === 'ACTIVE' ? t('admin.subDeactivate') : t('admin.subActivate')}
+                      </Button>
+                    </TableCell>
                     <TableCell align="center">
                       <Switch
                         checked={u.isPromo}
