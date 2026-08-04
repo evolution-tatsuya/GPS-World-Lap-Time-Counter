@@ -298,5 +298,25 @@
     "creator": "Registered by",
     "approvalUpdateFailed": "Failed to update approval status",
     "approvalHint": "Courses registered by organizers are Pending. Once approved, events can be created on them. Courses registered by the admin are auto-approved."
+  },
+  "personal": {
+    "title": "Personal Measurement",
+    "selectCourse": "Select course",
+    "noCourse": "Please select a course",
+    "vehicle": "Vehicle",
+    "start": "Start",
+    "stop": "Stop",
+    "reset": "Reset",
+    "waiting": "Waiting for start",
+    "myBest": "My Best",
+    "history": "History",
+    "noHistory": "No records yet",
+    "saveFailed": "Failed to save lap",
+    "loadFailed": "Failed to load records",
+    "loginRequired": "Login is required for personal measurement",
+    "gpsStatus": "GPS status",
+    "backToDashboard": "Back to dashboard",
+    "personalUse": "Personal",
+    "courseInfo": "Measures on the selected course's GPS line. Only approved courses are available."
   }
 }

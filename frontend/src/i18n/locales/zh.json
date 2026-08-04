@@ -298,5 +298,25 @@
     "creator": "注册者",
     "approvalUpdateFailed": "更新审核状态失败",
     "approvalHint": "由主办方注册的赛道为“申请中”。批准后即可用于创建活动。由总管理员注册的赛道自动批准。"
+  },
+  "personal": {
+    "title": "个人计时",
+    "selectCourse": "选择赛道",
+    "noCourse": "请选择赛道",
+    "vehicle": "车辆",
+    "start": "开始计时",
+    "stop": "停止计时",
+    "reset": "重置",
+    "waiting": "等待开始",
+    "myBest": "我的最佳",
+    "history": "历史记录",
+    "noHistory": "暂无记录",
+    "saveFailed": "保存记录失败",
+    "loadFailed": "获取记录失败",
+    "loginRequired": "个人计时需要登录",
+    "gpsStatus": "GPS状态",
+    "backToDashboard": "返回仪表板",
+    "personalUse": "个人计时",
+    "courseInfo": "在所选赛道的GPS线上计时。仅可选择已批准的赛道。"
   }
 }

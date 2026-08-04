@@ -19,6 +19,7 @@ import CircuitDetail from './pages/CircuitDetail';
 import EventCreate from './pages/EventCreate';
 import CircuitCreate from './pages/CircuitCreate';
 import Admin from './pages/Admin';
+import PersonalMeasurement from './pages/PersonalMeasurement';
 
 // React Query Client
 const queryClient = new QueryClient({
@@ -81,6 +82,7 @@ function App() {
             <Route path="/ranking" element={<Ranking />} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/admin" element={<Admin />} />
+            <Route path="/personal" element={<PersonalMeasurement />} />
 
             {/* 詳細ページ */}
             <Route path="/events/:id" element={<EventDetail />} />

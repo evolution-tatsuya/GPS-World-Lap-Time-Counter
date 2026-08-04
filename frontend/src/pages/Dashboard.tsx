@@ -149,6 +149,12 @@ export default function Dashboard() {
           </Box>
         </Box>
         <Box sx={{ display: 'flex', gap: 1 }}>
+          <Button
+            variant="contained"
+            onClick={() => navigate('/personal')}
+          >
+            {t('personal.title')}
+          </Button>
           {isAdmin() && (
             <Button
               variant="contained"

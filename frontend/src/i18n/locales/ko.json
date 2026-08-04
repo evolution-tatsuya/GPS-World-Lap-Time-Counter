@@ -298,5 +298,25 @@
     "creator": "등록자",
     "approvalUpdateFailed": "승인 상태 업데이트에 실패했습니다",
     "approvalHint": "주최자가 등록한 서킷은 '신청 중'입니다. 승인하면 해당 서킷으로 이벤트를 만들 수 있습니다. 총괄이 등록한 서킷은 자동 승인됩니다."
+  },
+  "personal": {
+    "title": "개인 측정",
+    "selectCourse": "서킷 선택",
+    "noCourse": "서킷을 선택하세요",
+    "vehicle": "차량",
+    "start": "측정 시작",
+    "stop": "측정 정지",
+    "reset": "리셋",
+    "waiting": "스타트 대기",
+    "myBest": "내 베스트",
+    "history": "기록",
+    "noHistory": "아직 기록이 없습니다",
+    "saveFailed": "기록 저장에 실패했습니다",
+    "loadFailed": "기록을 가져오지 못했습니다",
+    "loginRequired": "개인 측정에는 로그인이 필요합니다",
+    "gpsStatus": "GPS 상태",
+    "backToDashboard": "대시보드로",
+    "personalUse": "개인 측정",
+    "courseInfo": "선택한 서킷의 GPS 라인에서 측정합니다. 승인된 서킷만 선택할 수 있습니다."
   }
 }

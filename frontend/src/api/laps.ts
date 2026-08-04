@@ -4,10 +4,32 @@ import { apiClient } from './client';
 import type { LapCreateInput, Lap } from '../types';
 
 /**
- * ラップ記録を送信
+ * ラップ記録を送信（イベント計測）
  */
 export async function createLap(data: LapCreateInput): Promise<Lap> {
   return apiClient.post<Lap>('/laps', data);
+}
+
+/**
+ * 個人計測のラップを送信（イベントなし・ログインユーザー）
+ */
+export async function createPersonalLap(
+  data: LapCreateInput & { courseId: string; vehicle?: string }
+): Promise<Lap> {
+  return apiClient.post<Lap>('/laps/personal', data);
+}
+
+export interface PersonalLapsResult {
+  best: Lap | null;
+  laps: (Lap & { course?: { name: string } | null })[];
+}
+
+/**
+ * 自分の個人計測ラップ（履歴・ベスト）を取得
+ */
+export async function getPersonalLaps(courseId?: string): Promise<PersonalLapsResult> {
+  const q = courseId ? `?courseId=${encodeURIComponent(courseId)}` : '';
+  return apiClient.get<PersonalLapsResult>(`/laps/personal${q}`);
 }
 
 /**

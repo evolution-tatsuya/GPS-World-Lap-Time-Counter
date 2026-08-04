@@ -298,5 +298,25 @@
     "creator": "登録者",
     "approvalUpdateFailed": "承認状態の更新に失敗しました",
     "approvalHint": "運営が登録したコースは「申請中」です。承認すると、そのコースでイベントを作れるようになります。統括が登録したコースは即「承認済み」です。"
+  },
+  "personal": {
+    "title": "個人計測",
+    "selectCourse": "コースを選択",
+    "noCourse": "コースを選んでください",
+    "vehicle": "車両",
+    "start": "計測開始",
+    "stop": "計測ストップ",
+    "reset": "リセット",
+    "waiting": "スタート待ち",
+    "myBest": "自分のベスト",
+    "history": "履歴",
+    "noHistory": "まだ記録がありません",
+    "saveFailed": "記録の保存に失敗しました",
+    "loadFailed": "記録の取得に失敗しました",
+    "loginRequired": "個人計測にはログインが必要です",
+    "gpsStatus": "GPS状態",
+    "backToDashboard": "ダッシュボードに戻る",
+    "personalUse": "個人計測",
+    "courseInfo": "選択したコースのGPSラインで計測します。承認済みコースのみ選べます。"
   }
 }
