@@ -11,6 +11,7 @@
 import { Router, Request, Response } from 'express';
 import { prisma } from '../index';
 import { requireSession, requireOrganizer } from '../middleware/auth';
+import { isWithinEventWindow } from '../utils/eventWindow';
 
 const router = Router();
 
@@ -31,27 +32,7 @@ const positionStore = new Map<string, Map<string, LivePosition>>();
 const OFFLINE_MS = 15 * 60 * 1000;
 
 /**
- * イベントが「開催時間内」かどうかを判定する。
- * startAt/endAt が両方未設定の場合は eventDate 当日(ローカル0:00〜翌0:00)を開催時間とみなす。
- * 位置共有はこの時間内でのみ許可される。
- */
-function isWithinEventWindow(event: {
-  startAt: Date | null;
-  endAt: Date | null;
-  eventDate: Date;
-}): boolean {
-  const now = Date.now();
-
-  if (event.startAt && event.endAt) {
-    return now >= event.startAt.getTime() && now <= event.endAt.getTime();
-  }
-
-  // 後方互換: 時間帯未設定なら eventDate の当日のみ許可
-  const day = new Date(event.eventDate);
-  const start = new Date(day.getFullYear(), day.getMonth(), day.getDate(), 0, 0, 0, 0);
-  const end = new Date(day.getFullYear(), day.getMonth(), day.getDate() + 1, 0, 0, 0, 0);
-  return now >= start.getTime() && now < end.getTime();
-}
+// 開催時間内判定は utils/eventWindow.ts の isWithinEventWindow を使用（共通化）。
 
 // ========== 参加者: 現在地を送信 ==========
 

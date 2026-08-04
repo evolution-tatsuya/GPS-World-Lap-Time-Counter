@@ -5,6 +5,7 @@ import bcrypt from 'bcrypt';
 import { prisma } from '../index';
 import { LoginRequest, EventLoginRequest } from '../types';
 import { formatCourseLines } from '../utils/formatCourse';
+import { isWithinEventWindow } from '../utils/eventWindow';
 
 const router = Router();
 
@@ -34,6 +35,13 @@ router.post('/event-login', async (req: Request, res: Response) => {
 
     if (!event) {
       res.status(404).json({ error: 'Event not found' });
+      return;
+    }
+
+    // 開催期間外はコードで入れない（無料体験を「その日/その回」に限定）。
+    // startAt/endAt があればその範囲、無ければ eventDate 当日のみ有効。
+    if (!isWithinEventWindow(event)) {
+      res.status(403).json({ error: 'This event is not open now (outside the event period)' });
       return;
     }
 
