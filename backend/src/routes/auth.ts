@@ -5,7 +5,7 @@ import bcrypt from 'bcrypt';
 import { prisma } from '../index';
 import { LoginRequest, EventLoginRequest } from '../types';
 import { formatCourseLines } from '../utils/formatCourse';
-import { isWithinEventWindow } from '../utils/eventWindow';
+import { isJoinWindowOpen } from '../utils/eventWindow';
 
 const router = Router();
 
@@ -38,10 +38,10 @@ router.post('/event-login', async (req: Request, res: Response) => {
       return;
     }
 
-    // 開催期間外はコードで入れない（無料体験を「その日/その回」に限定）。
-    // startAt/endAt があればその範囲、無ければ eventDate 当日のみ有効。
-    if (!isWithinEventWindow(event)) {
-      res.status(403).json({ error: 'This event is not open now (outside the event period)' });
+    // 参加受付は開催開始の24時間前から（前日準備を可能にしつつ、それより早い/終了後は拒否）。
+    // 計測・位置共有は別途 isWithinEventWindow で開催時間内に限定される。
+    if (!isJoinWindowOpen(event)) {
+      res.status(403).json({ error: 'This event is not open for joining yet (opens 24h before start)' });
       return;
     }
 
