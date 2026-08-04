@@ -277,6 +277,15 @@
     "lap": "周回",
     "oneway": "片道",
     "totalEvents": "イベント数",
-    "totalCourses": "コース数"
+    "totalCourses": "コース数",
+    "userName": "名前",
+    "userEmail": "メール",
+    "userRole": "ロール",
+    "userPromo": "プロモ枠",
+    "userEvents": "イベント",
+    "userCourses": "コース",
+    "promoHint": "ONにすると、このユーザーが作るイベントは課金免除(最大100台)になります",
+    "promoUpdateFailed": "プロモ枠の更新に失敗しました",
+    "noUsers": "ユーザーがいません"
   }
 }

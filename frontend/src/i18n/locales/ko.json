@@ -277,6 +277,15 @@
     "lap": "랩",
     "oneway": "편도",
     "totalEvents": "이벤트 수",
-    "totalCourses": "서킷 수"
+    "totalCourses": "서킷 수",
+    "userName": "이름",
+    "userEmail": "이메일",
+    "userRole": "역할",
+    "userPromo": "프로모",
+    "userEvents": "이벤트",
+    "userCourses": "서킷",
+    "promoHint": "켜면 이 사용자가 만드는 이벤트는 청구 면제(최대 100대)가 됩니다",
+    "promoUpdateFailed": "프로모 상태 업데이트에 실패했습니다",
+    "noUsers": "사용자가 없습니다"
   }
 }

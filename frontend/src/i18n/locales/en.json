@@ -277,6 +277,15 @@
     "lap": "Lap",
     "oneway": "One-way",
     "totalEvents": "Events",
-    "totalCourses": "Courses"
+    "totalCourses": "Courses",
+    "userName": "Name",
+    "userEmail": "Email",
+    "userRole": "Role",
+    "userPromo": "Promo",
+    "userEvents": "Events",
+    "userCourses": "Courses",
+    "promoHint": "When ON, this user's events are billing-exempt (up to 100 devices)",
+    "promoUpdateFailed": "Failed to update promo status",
+    "noUsers": "No users"
   }
 }

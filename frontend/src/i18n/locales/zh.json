@@ -277,6 +277,15 @@
     "lap": "绕圈",
     "oneway": "单程",
     "totalEvents": "活动数",
-    "totalCourses": "赛道数"
+    "totalCourses": "赛道数",
+    "userName": "姓名",
+    "userEmail": "邮箱",
+    "userRole": "角色",
+    "userPromo": "推广名额",
+    "userEvents": "活动",
+    "userCourses": "赛道",
+    "promoHint": "开启后，该用户创建的活动将免费(最多100台)",
+    "promoUpdateFailed": "更新推广名额失败",
+    "noUsers": "暂无用户"
   }
 }

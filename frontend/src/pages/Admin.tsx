@@ -23,11 +23,13 @@ import {
   Alert,
   CircularProgress,
 } from '@mui/material';
+import { Switch } from '@mui/material';
 import { Download, AdminPanelSettings, Logout } from '@mui/icons-material';
 import { useAuthStore } from '../stores/authStore';
 import { getEvents } from '../api/events';
 import { getCircuits } from '../api/circuits';
 import { exportEventLapsCsv } from '../api/laps';
+import { getAdminUsers, setUserPromo, type AdminUser } from '../api/admin';
 import LanguageSwitcher from '../components/LanguageSwitcher';
 import type { Event, Circuit } from '../types';
 
@@ -39,9 +41,11 @@ export default function Admin() {
   const [tab, setTab] = useState(0);
   const [events, setEvents] = useState<Event[]>([]);
   const [courses, setCourses] = useState<Circuit[]>([]);
+  const [users, setUsers] = useState<AdminUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [exportingId, setExportingId] = useState<string | null>(null);
+  const [promoUpdatingId, setPromoUpdatingId] = useState<string | null>(null);
 
   useEffect(() => {
     // ADMIN以外はダッシュボードへ
@@ -52,9 +56,10 @@ export default function Admin() {
     const load = async () => {
       try {
         setLoading(true);
-        const [ev, cs] = await Promise.all([getEvents(), getCircuits()]);
+        const [ev, cs, us] = await Promise.all([getEvents(), getCircuits(), getAdminUsers()]);
         setEvents(ev);
         setCourses(cs);
+        setUsers(us);
         setError('');
       } catch {
         setError(t('admin.loadFailed'));
@@ -74,6 +79,18 @@ export default function Admin() {
       setError(err instanceof Error ? err.message : t('admin.exportFailed'));
     } finally {
       setExportingId(null);
+    }
+  };
+
+  const handleTogglePromo = async (u: AdminUser) => {
+    setPromoUpdatingId(u.id);
+    try {
+      const updated = await setUserPromo(u.id, !u.isPromo);
+      setUsers((prev) => prev.map((x) => (x.id === u.id ? { ...x, isPromo: updated.isPromo } : x)));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t('admin.promoUpdateFailed'));
+    } finally {
+      setPromoUpdatingId(null);
     }
   };
 
@@ -213,9 +230,47 @@ export default function Admin() {
         </TableContainer>
       )}
 
-      {/* ユーザー管理（準備中） */}
+      {/* ユーザー管理（プロモ枠ON/OFF） */}
       {!loading && tab === 2 && (
-        <Alert severity="info">{t('admin.usersComingSoon')}</Alert>
+        <>
+          <Alert severity="info" sx={{ mb: 2 }}>{t('admin.promoHint')}</Alert>
+          <TableContainer component={Paper}>
+            <Table size="small">
+              <TableHead>
+                <TableRow>
+                  <TableCell>{t('admin.userName')}</TableCell>
+                  <TableCell>{t('admin.userEmail')}</TableCell>
+                  <TableCell>{t('admin.userRole')}</TableCell>
+                  <TableCell align="center">{t('admin.userEvents')}</TableCell>
+                  <TableCell align="center">{t('admin.userPromo')}</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {users.length === 0 && (
+                  <TableRow>
+                    <TableCell colSpan={5}>{t('admin.noUsers')}</TableCell>
+                  </TableRow>
+                )}
+                {users.map((u) => (
+                  <TableRow key={u.id} hover>
+                    <TableCell>{u.name}</TableCell>
+                    <TableCell>{u.email || '—'}</TableCell>
+                    <TableCell><Chip label={u.role} size="small" /></TableCell>
+                    <TableCell align="center">{u._count.events}</TableCell>
+                    <TableCell align="center">
+                      <Switch
+                        checked={u.isPromo}
+                        disabled={promoUpdatingId === u.id}
+                        onChange={() => handleTogglePromo(u)}
+                        color="secondary"
+                      />
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        </>
       )}
     </Container>
   );
