@@ -169,6 +169,9 @@ export interface Lap {
   lapNumber: number;
   lapTimeMs: number;
   lapTimeStr: string;
+  sessionName?: string | null;
+  zekken?: string | null;
+  klass?: string | null;
   recordedAt: Date;
   createdAt: Date; // 後方互換性のため（recordedAtのエイリアス）
 }

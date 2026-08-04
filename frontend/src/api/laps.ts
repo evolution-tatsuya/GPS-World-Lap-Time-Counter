@@ -39,6 +39,11 @@ export async function getMyLaps(eventId: string): Promise<Lap[]> {
   return apiClient.get<Lap[]>(`/laps?eventId=${eventId}`);
 }
 
+// モニター用: イベントの最新ラップを新しい順で取得（時系列モニター）
+export async function getEventLapsFeed(eventId: string, limit = 50): Promise<Lap[]> {
+  return apiClient.get<Lap[]>(`/laps?eventId=${encodeURIComponent(eventId)}&limit=${limit}`);
+}
+
 const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
 
 /**

@@ -318,5 +318,21 @@
     "backToDashboard": "ダッシュボードに戻る",
     "personalUse": "個人計測",
     "courseInfo": "選択したコースのGPSラインで計測します。承認済みコースのみ選べます。"
+  },
+  "monitor": {
+    "title": "ライブモニター",
+    "subtitle": "最新ラップが上から流れます（5秒ごと自動更新）",
+    "zekken": "ゼッケン",
+    "driver": "ドライバー",
+    "vehicle": "車両",
+    "lap": "ラップ",
+    "time": "タイム",
+    "recorded": "記録時刻",
+    "new": "NEW",
+    "noLaps": "まだラップがありません",
+    "loadFailed": "データの取得に失敗しました",
+    "autoUpdating": "自動更新中",
+    "backToEvent": "イベントに戻る",
+    "openMonitor": "ライブモニター"
   }
 }

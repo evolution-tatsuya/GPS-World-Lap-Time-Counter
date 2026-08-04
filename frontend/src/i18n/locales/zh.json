@@ -318,5 +318,21 @@
     "backToDashboard": "返回仪表板",
     "personalUse": "个人计时",
     "courseInfo": "在所选赛道的GPS线上计时。仅可选择已批准的赛道。"
+  },
+  "monitor": {
+    "title": "实时监控",
+    "subtitle": "最新圈速从上方滚动（每5秒自动更新）",
+    "zekken": "号码",
+    "driver": "车手",
+    "vehicle": "车辆",
+    "lap": "圈",
+    "time": "时间",
+    "recorded": "记录时间",
+    "new": "NEW",
+    "noLaps": "暂无圈速",
+    "loadFailed": "获取数据失败",
+    "autoUpdating": "自动更新中",
+    "backToEvent": "返回活动",
+    "openMonitor": "实时监控"
   }
 }

@@ -308,6 +308,13 @@ export default function EventDetail() {
               >
                 {t('eventDetail.viewLiveMap')}
               </Button>
+              <Button
+                variant="contained"
+                color="error"
+                onClick={() => navigate(`/events/${id}/monitor`)}
+              >
+                {t('monitor.openMonitor')}
+              </Button>
             </Box>
           </Paper>
         </Grid>

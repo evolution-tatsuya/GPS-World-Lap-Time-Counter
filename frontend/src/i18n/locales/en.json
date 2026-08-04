@@ -318,5 +318,21 @@
     "backToDashboard": "Back to dashboard",
     "personalUse": "Personal",
     "courseInfo": "Measures on the selected course's GPS line. Only approved courses are available."
+  },
+  "monitor": {
+    "title": "Live Monitor",
+    "subtitle": "Latest laps stream from the top (auto-updates every 5s)",
+    "zekken": "No.",
+    "driver": "Driver",
+    "vehicle": "Vehicle",
+    "lap": "Lap",
+    "time": "Time",
+    "recorded": "Recorded",
+    "new": "NEW",
+    "noLaps": "No laps yet",
+    "loadFailed": "Failed to load data",
+    "autoUpdating": "Auto-updating",
+    "backToEvent": "Back to event",
+    "openMonitor": "Live Monitor"
   }
 }

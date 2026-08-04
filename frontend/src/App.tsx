@@ -20,6 +20,7 @@ import EventCreate from './pages/EventCreate';
 import CircuitCreate from './pages/CircuitCreate';
 import Admin from './pages/Admin';
 import PersonalMeasurement from './pages/PersonalMeasurement';
+import LiveMonitor from './pages/LiveMonitor';
 
 // React Query Client
 const queryClient = new QueryClient({
@@ -87,6 +88,7 @@ function App() {
             {/* 詳細ページ */}
             <Route path="/events/:id" element={<EventDetail />} />
             <Route path="/events/:id/live-map" element={<LiveMap />} />
+            <Route path="/events/:id/monitor" element={<LiveMonitor />} />
             <Route path="/circuits/:id" element={<CircuitDetail />} />
 
             {/* 作成ページ */}
