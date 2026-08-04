@@ -169,6 +169,12 @@ router.post('/', requireOrganizer, async (req: Request, res: Response) => {
       return;
     }
 
+    // 承認済みコースのみイベントに使える（未承認/却下のコースは弾く）。
+    if (course.approvalStatus !== 'APPROVED') {
+      res.status(403).json({ error: 'This course is not approved yet' });
+      return;
+    }
+
     // イベントコード生成
     const eventCode = await generateEventCode();
 

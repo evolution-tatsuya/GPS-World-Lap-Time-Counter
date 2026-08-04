@@ -133,6 +133,10 @@ router.post('/', requireOrganizer, async (req: Request, res: Response) => {
       return;
     }
 
+    // 承認ステータス: 統括(ADMIN)が作るコースは即APPROVED（どんどん作れる）。
+    // 運営(ORGANIZER)が作るコースはPENDING（統括の承認待ち）。
+    const approvalStatus = req.session.role === 'ADMIN' ? 'APPROVED' : 'PENDING';
+
     // コース作成（後方互換性のため両方のフィールド名をサポート）
     const circuit = await prisma.course.create({
       data: {
@@ -154,6 +158,7 @@ router.post('/', requireOrganizer, async (req: Request, res: Response) => {
         referenceTime: referenceTime || referenceLapTime || null,
         description: description || null,
         isPublic: isPublic !== undefined ? isPublic : true,
+        approvalStatus,
         createdBy: req.session.userId
       }
     });

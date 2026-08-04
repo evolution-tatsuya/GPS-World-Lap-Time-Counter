@@ -63,6 +63,9 @@ model Course {
   elevationGain      Int?        @map("elevation_gain") // m（高低差）
   description        String?     @db.Text
   isPublic           Boolean     @default(true) @map("is_public")
+  // 承認ステータス: 運営が登録したコースはPENDING、統括(ADMIN)が承認するとAPPROVED。
+  // イベントで使えるのはAPPROVEDのみ。既存コースは移行時にAPPROVED扱い（default）。
+  approvalStatus     ApprovalStatus @default(APPROVED) @map("approval_status")
   createdBy          String?     @map("created_by")
   createdAt          DateTime    @default(now()) @map("created_at")
   updatedAt          DateTime    @updatedAt @map("updated_at")
@@ -88,6 +91,12 @@ enum CourseType {
 enum MeasureType {
   LAP      // 周回計測（1本のコントロールライン）
   ONE_WAY  // 片道計測（スタートライン→ゴールラインの区間）
+}
+
+enum ApprovalStatus {
+  PENDING   // 申請中（運営が登録、統括の承認待ち）
+  APPROVED  // 承認済み（統括が検証。イベントで使える）
+  REJECTED  // 却下
 }
 
 // ========== イベント管理（マルチスポーツ対応） ==========

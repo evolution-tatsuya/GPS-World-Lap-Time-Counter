@@ -61,4 +61,57 @@ router.put('/users/:id/promo', requireAdmin, async (req: Request, res: Response)
   }
 });
 
+// ========== コース承認 ==========
+
+/**
+ * GET /api/admin/courses?status=PENDING
+ * コースを承認ステータスで絞って一覧（デフォルトは全件、statusで絞込）。
+ */
+router.get('/courses', requireAdmin, async (req: Request, res: Response) => {
+  try {
+    const status = typeof req.query.status === 'string' ? req.query.status : undefined;
+    const where = status && ['PENDING', 'APPROVED', 'REJECTED'].includes(status)
+      ? { approvalStatus: status as 'PENDING' | 'APPROVED' | 'REJECTED' }
+      : {};
+    const courses = await prisma.course.findMany({
+      where,
+      select: {
+        id: true, name: true, country: true, state: true,
+        courseType: true, measureType: true, approvalStatus: true,
+        createdAt: true,
+        creator: { select: { name: true, email: true } },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+    res.json(courses);
+  } catch (error) {
+    console.error('Admin list courses error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+/**
+ * PUT /api/admin/courses/:id/approval  body: { status: 'APPROVED' | 'REJECTED' | 'PENDING' }
+ * コースの承認ステータスを変更する。APPROVEDにするとイベントで使えるようになる。
+ */
+router.put('/courses/:id/approval', requireAdmin, async (req: Request, res: Response) => {
+  try {
+    const id = String(req.params.id);
+    const { status } = req.body as { status?: string };
+    if (!status || !['APPROVED', 'REJECTED', 'PENDING'].includes(status)) {
+      res.status(400).json({ error: 'status must be APPROVED, REJECTED or PENDING' });
+      return;
+    }
+    const course = await prisma.course.update({
+      where: { id },
+      data: { approvalStatus: status as 'APPROVED' | 'REJECTED' | 'PENDING' },
+      select: { id: true, name: true, approvalStatus: true },
+    });
+    res.json(course);
+  } catch (error) {
+    console.error('Admin course approval error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 export default router;
