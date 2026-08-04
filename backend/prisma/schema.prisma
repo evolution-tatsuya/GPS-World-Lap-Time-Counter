@@ -73,6 +73,7 @@ model Course {
   // リレーション
   creator User?   @relation(fields: [createdBy], references: [id])
   events  Event[]
+  laps    Lap[]   // 個人計測ラップ（courseId経由）
 
   @@unique([country, state, name]) // 重複防止
   @@index([country, state]) // 検索高速化
@@ -154,7 +155,10 @@ enum SportCategory {
 
 model Lap {
   id              String        @id @default(uuid())
-  eventId         String        @map("event_id")
+  // イベント計測ではeventId必須。個人計測(イベントなし)ではnull。
+  eventId         String?       @map("event_id")
+  // 個人計測でどのコースを走ったか（イベント計測ではeventから辿れるので任意）。
+  courseId        String?       @map("course_id")
   userId          String?       @map("user_id") // ログインユーザーの場合
   participantName String        @map("participant_name") // ドライバー/ランナー/ライダー等
   sportCategory   SportCategory @map("sport_category") // スポーツカテゴリ
@@ -173,11 +177,13 @@ model Lap {
   recordedAt      DateTime      @default(now()) @map("recorded_at")
 
   // リレーション
-  event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
-  user  User? @relation(fields: [userId], references: [id])
+  event  Event?  @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  course Course? @relation(fields: [courseId], references: [id], onDelete: SetNull)
+  user   User?   @relation(fields: [userId], references: [id])
 
   @@index([eventId, lapTimeMs]) // ランキング高速化
   @@index([userId])
+  @@index([userId, courseId]) // 個人のコース別ベスト
   @@index([sportCategory]) // スポーツカテゴリでの検索高速化
   @@index([recordedAt])
   @@index([eventId, sessionId]) // セッション別集計

@@ -70,6 +70,112 @@ router.post('/', requireSession, async (req: Request, res: Response) => {
   }
 });
 
+// ========== 個人計測（イベントなし・ログインユーザーのみ） ==========
+
+/**
+ * POST /api/laps/personal
+ * 個人計測のラップを保存する。イベントに属さず、ログインユーザー(userId)に紐づく。
+ * body: { courseId, lapNumber, lapTimeMs, lapTimeStr, session..., zekken/klass/tire/note, vehicle? }
+ * - courseId は承認済み(APPROVED)コースのみ。
+ * - 参加者(eventセッション)ではなく、ログインユーザー(userId)のみ許可。
+ */
+router.post('/personal', requireSession, async (req: Request, res: Response) => {
+  try {
+    // 個人計測はログインユーザー限定（参加者=eventセッションは不可）
+    if (!req.session.userId) {
+      res.status(403).json({ error: 'Login required for personal measurement' });
+      return;
+    }
+    // 将来: ここで有効なサブスク課金かをチェックする（今はログインで通す）。
+
+    const {
+      courseId, lapNumber, lapTimeMs, lapTimeStr, vehicle,
+      sessionId, sessionName, zekken, klass, tire, note,
+    } = req.body as LapCreateInput & { courseId?: string; vehicle?: string };
+
+    if (!courseId || lapNumber == null || lapTimeMs == null || !lapTimeStr) {
+      res.status(400).json({ error: 'Required fields are missing' });
+      return;
+    }
+
+    // 承認済みコースのみ使える
+    const course = await prisma.course.findUnique({ where: { id: courseId } });
+    if (!course) {
+      res.status(404).json({ error: 'Course not found' });
+      return;
+    }
+    if (course.approvalStatus !== 'APPROVED') {
+      res.status(403).json({ error: 'This course is not approved yet' });
+      return;
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { id: req.session.userId },
+      select: { name: true },
+    });
+
+    const lap = await prisma.lap.create({
+      data: {
+        eventId: null,
+        courseId,
+        userId: req.session.userId,
+        participantName: user?.name || 'me',
+        vehicleOrGear: vehicle || undefined,
+        sportCategory: 'CAR',
+        lapNumber,
+        lapTimeMs,
+        lapTimeStr,
+        sessionId: sessionId || undefined,
+        sessionName: sessionName || undefined,
+        zekken: zekken || undefined,
+        klass: klass || undefined,
+        tire: tire || undefined,
+        note: note || undefined,
+      },
+    });
+
+    res.status(201).json(lap);
+  } catch (error) {
+    console.error('Create personal lap error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+/**
+ * GET /api/laps/personal?courseId=
+ * 自分(userId)の個人計測ラップ（eventIdなし）を取得。任意でコース絞込。
+ * 戻り値: { best: Lap|null, laps: Lap[] }（新しい順）
+ */
+router.get('/personal', requireSession, async (req: Request, res: Response) => {
+  try {
+    if (!req.session.userId) {
+      res.status(403).json({ error: 'Login required' });
+      return;
+    }
+    const courseId = typeof req.query.courseId === 'string' ? req.query.courseId : undefined;
+
+    const laps = await prisma.lap.findMany({
+      where: {
+        userId: req.session.userId,
+        eventId: null, // 個人計測のみ
+        ...(courseId && { courseId }),
+        lapTimeMs: { gt: 0 }, // アウトラップ(0)は除外
+      },
+      orderBy: { recordedAt: 'desc' },
+      include: { course: { select: { name: true } } },
+    });
+
+    const best = laps.reduce<typeof laps[number] | null>((b, l) => {
+      return !b || l.lapTimeMs < b.lapTimeMs ? l : b;
+    }, null);
+
+    res.json({ best, laps });
+  } catch (error) {
+    console.error('Get personal laps error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 // ========== ラップ記録一覧取得 ==========
 
 /**
@@ -159,8 +265,8 @@ router.get('/ranking', async (req: Request, res: Response) => {
           vehicle: lap.vehicleOrGear,
           bestTime: lap.lapTimeStr,
           bestTimeMs: lap.lapTimeMs,
-          eventName: lap.event.name,
-          circuitName: lap.event.course.name,
+          eventName: lap.event?.name ?? '',
+          circuitName: lap.event?.course?.name ?? '',
           recordedAt: lap.recordedAt
         });
       } else {
@@ -171,8 +277,8 @@ router.get('/ranking', async (req: Request, res: Response) => {
             vehicle: lap.vehicleOrGear,
             bestTime: lap.lapTimeStr,
             bestTimeMs: lap.lapTimeMs,
-            eventName: lap.event.name,
-            circuitName: lap.event.course.name,
+            eventName: lap.event?.name ?? '',
+            circuitName: lap.event?.course?.name ?? '',
             recordedAt: lap.recordedAt
           });
         }
@@ -358,12 +464,14 @@ router.get('/history', async (req: Request, res: Response) => {
     const eventGroups = new Map<string, any>();
 
     for (const lap of laps) {
+      // 個人計測ラップ(eventIdなし)はイベント別履歴には含めない
+      if (!lap.eventId || !lap.event) continue;
       if (!eventGroups.has(lap.eventId)) {
         eventGroups.set(lap.eventId, {
           eventId: lap.eventId,
           eventName: lap.event.name,
           eventDate: lap.event.eventDate,
-          circuitName: lap.event.course.name,
+          circuitName: lap.event.course?.name ?? '',
           laps: [],
           bestLap: null
         });
