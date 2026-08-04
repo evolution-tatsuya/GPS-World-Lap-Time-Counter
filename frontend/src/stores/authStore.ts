@@ -25,6 +25,7 @@ interface AuthState {
   // 認証状態確認
   isAuthenticated: () => boolean;
   isOrganizer: () => boolean;
+  isAdmin: () => boolean;
   isParticipant: () => boolean;
 }
 
@@ -80,6 +81,11 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   isOrganizer: () => {
     const state = get();
     return !!state.user;
+  },
+
+  isAdmin: () => {
+    const state = get();
+    return state.user?.role === 'ADMIN';
   },
 
   isParticipant: () => {

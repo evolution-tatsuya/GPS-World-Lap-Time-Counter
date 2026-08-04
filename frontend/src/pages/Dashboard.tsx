@@ -42,7 +42,7 @@ interface DashboardStats {
 export default function Dashboard() {
   const navigate = useNavigate();
   const { t } = useTranslation();
-  const { user, isOrganizer, logout } = useAuthStore();
+  const { user, isOrganizer, isAdmin, logout } = useAuthStore();
 
   const [currentTab, setCurrentTab] = useState(0);
   const [events, setEvents] = useState<Event[]>([]);
@@ -148,13 +148,24 @@ export default function Dashboard() {
             </Typography>
           </Box>
         </Box>
-        <Button
-          startIcon={<Logout />}
-          onClick={handleLogout}
-          variant="outlined"
-        >
-          {t('dashboard.logout')}
-        </Button>
+        <Box sx={{ display: 'flex', gap: 1 }}>
+          {isAdmin() && (
+            <Button
+              variant="contained"
+              color="secondary"
+              onClick={() => navigate('/admin')}
+            >
+              {t('admin.title')}
+            </Button>
+          )}
+          <Button
+            startIcon={<Logout />}
+            onClick={handleLogout}
+            variant="outlined"
+          >
+            {t('dashboard.logout')}
+          </Button>
+        </Box>
       </Box>
 
       {/* ローディング */}
