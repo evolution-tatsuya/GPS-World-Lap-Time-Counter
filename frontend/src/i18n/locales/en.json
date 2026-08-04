@@ -99,7 +99,7 @@
     "running": "Running",
     "bicycle": "Bicycle",
     "eventDateTime": "Date & Time",
-    "hoursInfo": "If you set an event time window, the organizer can view participants’ locations only during that window (never outside it). If left unset, it is valid only on the event date.",
+    "hoursInfo": "When you set an event time window, participants can only join with the code during that window (they cannot join outside it). You can create the event the day before and distribute the code; participation activates when the window starts on the day. Location sharing is also limited to this window. If left unset, only the event day is valid.",
     "startAt": "Start time (optional)",
     "endAt": "End time (optional)",
     "maxParticipants": "Max participants (optional)",
