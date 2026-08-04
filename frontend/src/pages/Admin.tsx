@@ -27,11 +27,13 @@ import { Switch } from '@mui/material';
 import { Download, AdminPanelSettings, Logout } from '@mui/icons-material';
 import { useAuthStore } from '../stores/authStore';
 import { getEvents } from '../api/events';
-import { getCircuits } from '../api/circuits';
 import { exportEventLapsCsv } from '../api/laps';
-import { getAdminUsers, setUserPromo, type AdminUser } from '../api/admin';
+import {
+  getAdminUsers, setUserPromo, type AdminUser,
+  getAdminCourses, setCourseApproval, type AdminCourse, type ApprovalStatus,
+} from '../api/admin';
 import LanguageSwitcher from '../components/LanguageSwitcher';
-import type { Event, Circuit } from '../types';
+import type { Event } from '../types';
 
 export default function Admin() {
   const navigate = useNavigate();
@@ -40,8 +42,9 @@ export default function Admin() {
 
   const [tab, setTab] = useState(0);
   const [events, setEvents] = useState<Event[]>([]);
-  const [courses, setCourses] = useState<Circuit[]>([]);
+  const [courses, setCourses] = useState<AdminCourse[]>([]);
   const [users, setUsers] = useState<AdminUser[]>([]);
+  const [approvingId, setApprovingId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [exportingId, setExportingId] = useState<string | null>(null);
@@ -56,7 +59,7 @@ export default function Admin() {
     const load = async () => {
       try {
         setLoading(true);
-        const [ev, cs, us] = await Promise.all([getEvents(), getCircuits(), getAdminUsers()]);
+        const [ev, cs, us] = await Promise.all([getEvents(), getAdminCourses(), getAdminUsers()]);
         setEvents(ev);
         setCourses(cs);
         setUsers(us);
@@ -92,6 +95,28 @@ export default function Admin() {
     } finally {
       setPromoUpdatingId(null);
     }
+  };
+
+  const handleApproval = async (id: string, status: ApprovalStatus) => {
+    setApprovingId(id);
+    try {
+      const updated = await setCourseApproval(id, status);
+      setCourses((prev) => prev.map((c) => (c.id === id ? { ...c, approvalStatus: updated.approvalStatus } : c)));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t('admin.approvalUpdateFailed'));
+    } finally {
+      setApprovingId(null);
+    }
+  };
+
+  const approvalChip = (s: ApprovalStatus) => {
+    const map = {
+      PENDING: { label: t('admin.statusPending'), color: 'warning' as const },
+      APPROVED: { label: t('admin.statusApproved'), color: 'success' as const },
+      REJECTED: { label: t('admin.statusRejected'), color: 'error' as const },
+    };
+    const m = map[s];
+    return <Chip label={m.label} color={m.color} size="small" />;
   };
 
   const handleLogout = () => {
@@ -195,39 +220,74 @@ export default function Admin() {
         </TableContainer>
       )}
 
-      {/* 全コース */}
+      {/* 全コース（承認フロー） */}
       {!loading && tab === 1 && (
-        <TableContainer component={Paper}>
-          <Table size="small">
-            <TableHead>
-              <TableRow>
-                <TableCell>{t('admin.course')}</TableCell>
-                <TableCell>{t('admin.country')}</TableCell>
-                <TableCell>{t('admin.measureType')}</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {courses.length === 0 && (
+        <>
+          <Alert severity="info" sx={{ mb: 2 }}>{t('admin.approvalHint')}</Alert>
+          <TableContainer component={Paper}>
+            <Table size="small">
+              <TableHead>
                 <TableRow>
-                  <TableCell colSpan={3}>{t('admin.noCourses')}</TableCell>
+                  <TableCell>{t('admin.course')}</TableCell>
+                  <TableCell>{t('admin.country')}</TableCell>
+                  <TableCell>{t('admin.measureType')}</TableCell>
+                  <TableCell>{t('admin.creator')}</TableCell>
+                  <TableCell>{t('admin.status')}</TableCell>
+                  <TableCell align="right"> </TableCell>
                 </TableRow>
-              )}
-              {courses.map((c) => (
-                <TableRow key={c.id} hover sx={{ cursor: 'pointer' }} onClick={() => navigate(`/circuits/${c.id}`)}>
-                  <TableCell>{c.name}</TableCell>
-                  <TableCell>{c.country}{c.state ? ` / ${c.state}` : ''}</TableCell>
-                  <TableCell>
-                    <Chip
-                      label={c.measureType === 'ONE_WAY' ? t('admin.oneway') : t('admin.lap')}
-                      size="small"
-                      color={c.measureType === 'ONE_WAY' ? 'secondary' : 'default'}
-                    />
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
+              </TableHead>
+              <TableBody>
+                {courses.length === 0 && (
+                  <TableRow>
+                    <TableCell colSpan={6}>{t('admin.noCourses')}</TableCell>
+                  </TableRow>
+                )}
+                {courses.map((c) => (
+                  <TableRow key={c.id} hover>
+                    <TableCell
+                      sx={{ cursor: 'pointer' }}
+                      onClick={() => navigate(`/circuits/${c.id}`)}
+                    >
+                      {c.name}
+                    </TableCell>
+                    <TableCell>{c.country}{c.state ? ` / ${c.state}` : ''}</TableCell>
+                    <TableCell>
+                      <Chip
+                        label={c.measureType === 'ONE_WAY' ? t('admin.oneway') : t('admin.lap')}
+                        size="small"
+                        color={c.measureType === 'ONE_WAY' ? 'secondary' : 'default'}
+                      />
+                    </TableCell>
+                    <TableCell>{c.creator?.name || '—'}</TableCell>
+                    <TableCell>{approvalChip(c.approvalStatus)}</TableCell>
+                    <TableCell align="right">
+                      {c.approvalStatus !== 'APPROVED' && (
+                        <Button
+                          size="small"
+                          color="success"
+                          disabled={approvingId === c.id}
+                          onClick={() => handleApproval(c.id, 'APPROVED')}
+                        >
+                          {t('admin.approve')}
+                        </Button>
+                      )}
+                      {c.approvalStatus === 'PENDING' && (
+                        <Button
+                          size="small"
+                          color="error"
+                          disabled={approvingId === c.id}
+                          onClick={() => handleApproval(c.id, 'REJECTED')}
+                        >
+                          {t('admin.reject')}
+                        </Button>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        </>
       )}
 
       {/* ユーザー管理（プロモ枠ON/OFF） */}

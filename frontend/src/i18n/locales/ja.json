@@ -286,6 +286,15 @@
     "userCourses": "コース",
     "promoHint": "ONにすると、このユーザーが作るイベントは課金免除(最大100台)になります",
     "promoUpdateFailed": "プロモ枠の更新に失敗しました",
-    "noUsers": "ユーザーがいません"
+    "noUsers": "ユーザーがいません",
+    "status": "承認",
+    "statusPending": "申請中",
+    "statusApproved": "承認済み",
+    "statusRejected": "却下",
+    "approve": "承認",
+    "reject": "却下",
+    "creator": "登録者",
+    "approvalUpdateFailed": "承認状態の更新に失敗しました",
+    "approvalHint": "運営が登録したコースは「申請中」です。承認すると、そのコースでイベントを作れるようになります。統括が登録したコースは即「承認済み」です。"
   }
 }

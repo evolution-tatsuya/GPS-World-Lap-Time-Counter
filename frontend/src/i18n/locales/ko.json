@@ -286,6 +286,15 @@
     "userCourses": "서킷",
     "promoHint": "켜면 이 사용자가 만드는 이벤트는 청구 면제(최대 100대)가 됩니다",
     "promoUpdateFailed": "프로모 상태 업데이트에 실패했습니다",
-    "noUsers": "사용자가 없습니다"
+    "noUsers": "사용자가 없습니다",
+    "status": "승인",
+    "statusPending": "신청 중",
+    "statusApproved": "승인됨",
+    "statusRejected": "거부됨",
+    "approve": "승인",
+    "reject": "거부",
+    "creator": "등록자",
+    "approvalUpdateFailed": "승인 상태 업데이트에 실패했습니다",
+    "approvalHint": "주최자가 등록한 서킷은 '신청 중'입니다. 승인하면 해당 서킷으로 이벤트를 만들 수 있습니다. 총괄이 등록한 서킷은 자동 승인됩니다."
   }
 }

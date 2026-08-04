@@ -286,6 +286,15 @@
     "userCourses": "赛道",
     "promoHint": "开启后，该用户创建的活动将免费(最多100台)",
     "promoUpdateFailed": "更新推广名额失败",
-    "noUsers": "暂无用户"
+    "noUsers": "暂无用户",
+    "status": "审核",
+    "statusPending": "申请中",
+    "statusApproved": "已批准",
+    "statusRejected": "已拒绝",
+    "approve": "批准",
+    "reject": "拒绝",
+    "creator": "注册者",
+    "approvalUpdateFailed": "更新审核状态失败",
+    "approvalHint": "由主办方注册的赛道为“申请中”。批准后即可用于创建活动。由总管理员注册的赛道自动批准。"
   }
 }

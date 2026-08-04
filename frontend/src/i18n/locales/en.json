@@ -286,6 +286,15 @@
     "userCourses": "Courses",
     "promoHint": "When ON, this user's events are billing-exempt (up to 100 devices)",
     "promoUpdateFailed": "Failed to update promo status",
-    "noUsers": "No users"
+    "noUsers": "No users",
+    "status": "Approval",
+    "statusPending": "Pending",
+    "statusApproved": "Approved",
+    "statusRejected": "Rejected",
+    "approve": "Approve",
+    "reject": "Reject",
+    "creator": "Registered by",
+    "approvalUpdateFailed": "Failed to update approval status",
+    "approvalHint": "Courses registered by organizers are Pending. Once approved, events can be created on them. Courses registered by the admin are auto-approved."
   }
 }

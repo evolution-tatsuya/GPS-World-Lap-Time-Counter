@@ -21,3 +21,28 @@ export async function getAdminUsers(): Promise<AdminUser[]> {
 export async function setUserPromo(id: string, isPromo: boolean): Promise<AdminUser> {
   return apiClient.put<AdminUser>(`/admin/users/${id}/promo`, { isPromo });
 }
+
+export type ApprovalStatus = 'PENDING' | 'APPROVED' | 'REJECTED';
+
+export interface AdminCourse {
+  id: string;
+  name: string;
+  country: string;
+  state: string | null;
+  courseType: string;
+  measureType: 'LAP' | 'ONE_WAY';
+  approvalStatus: ApprovalStatus;
+  createdAt: string;
+  creator: { name: string; email: string | null } | null;
+}
+
+// コース一覧（statusで絞込可。省略時は全件）
+export async function getAdminCourses(status?: ApprovalStatus): Promise<AdminCourse[]> {
+  const q = status ? `?status=${status}` : '';
+  return apiClient.get<AdminCourse[]>(`/admin/courses${q}`);
+}
+
+// コースの承認ステータスを変更（承認/却下）
+export async function setCourseApproval(id: string, status: ApprovalStatus): Promise<AdminCourse> {
+  return apiClient.put<AdminCourse>(`/admin/courses/${id}/approval`, { status });
+}
