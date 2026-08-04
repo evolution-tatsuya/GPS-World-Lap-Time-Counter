@@ -18,6 +18,9 @@ model User {
   passwordHash String?  @map("password_hash")
   name         String
   role         UserRole @default(DRIVER)
+  // プロモ枠: 課金免除の特別運営アカウント（オーナーのPR/営業デモ用）。
+  // このユーザーが作るイベントは課金判定をバイパスする。
+  isPromo      Boolean  @default(false) @map("is_promo")
   createdAt    DateTime @default(now()) @map("created_at")
   updatedAt    DateTime @updatedAt @map("updated_at")
 
@@ -102,6 +105,9 @@ model Event {
   eventCode       String        @unique @map("event_code") // 6桁コード (例: ABC123)
   maxParticipants Int?          @map("max_participants")
   isPublic        Boolean       @default(true) @map("is_public")
+  // プロモ枠のイベント（課金免除・最大100台まで無料）。
+  // プロモアカウントが作成、または作成時に指定される。
+  isPromo         Boolean       @default(false) @map("is_promo")
   organizerId     String        @map("organizer_id")
   createdAt       DateTime      @default(now()) @map("created_at")
   updatedAt       DateTime      @updatedAt @map("updated_at")

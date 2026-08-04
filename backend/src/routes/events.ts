@@ -172,6 +172,18 @@ router.post('/', requireOrganizer, async (req: Request, res: Response) => {
     // イベントコード生成
     const eventCode = await generateEventCode();
 
+    // プロモ枠: 作成者が課金免除アカウント(isPromo)なら、このイベントもプロモ枠にする。
+    // プロモ枠は最大100台まで無料（上限未指定/超過時は100に丸める）。
+    const organizer = await prisma.user.findUnique({
+      where: { id: req.session.userId! },
+      select: { isPromo: true },
+    });
+    const PROMO_MAX = 100;
+    const isPromoEvent = !!organizer?.isPromo;
+    const cap = isPromoEvent
+      ? Math.min(maxParticipants || PROMO_MAX, PROMO_MAX)
+      : (maxParticipants || null);
+
     // イベント作成
     const event = await prisma.event.create({
       data: {
@@ -182,8 +194,9 @@ router.post('/', requireOrganizer, async (req: Request, res: Response) => {
         startAt: startAt ? new Date(startAt) : null,
         endAt: endAt ? new Date(endAt) : null,
         eventCode,
-        maxParticipants: maxParticipants || null,
+        maxParticipants: cap,
         isPublic: isPublic !== undefined ? isPublic : true,
+        isPromo: isPromoEvent,
         organizerId: req.session.userId!
       },
       include: {
