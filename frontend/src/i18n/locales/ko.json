@@ -130,7 +130,9 @@
     "backToMeasurement": "계측 화면으로 돌아가기",
     "noEventInfo": "이벤트 정보가 없습니다",
     "fetchFailed": "랭킹 데이터를 불러오지 못했습니다",
-    "csvExportFailed": "CSV 내보내기에 실패했습니다"
+    "csvExportFailed": "CSV 내보내기에 실패했습니다",
+    "joinedEvent": "참가 중인 이벤트",
+    "settingsDone": "설정 완료. 이 이벤트에서 측정할 수 있습니다"
   },
   "eventDetail": {
     "backToDashboard": "대시보드로 돌아가기",

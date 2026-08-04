@@ -55,6 +55,7 @@ router.post('/event-login', async (req: Request, res: Response) => {
       event: {
         id: event.id,
         name: event.name,
+        eventCode: event.eventCode,
         eventDate: event.eventDate,
         circuit: {
           id: event.course.id,
@@ -259,6 +260,7 @@ router.get('/session', async (req: Request, res: Response) => {
         event: {
           id: event.id,
           name: event.name,
+          eventCode: event.eventCode,
           courseId: event.courseId,
           circuitId: event.courseId, // 後方互換（フロントのcircuitIdエイリアス）
           circuitName: event.course.name,

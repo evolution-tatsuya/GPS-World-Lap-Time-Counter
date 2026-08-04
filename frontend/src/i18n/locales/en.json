@@ -130,7 +130,9 @@
     "backToMeasurement": "Back to Measurement",
     "noEventInfo": "No event information",
     "fetchFailed": "Failed to load ranking data",
-    "csvExportFailed": "Failed to export CSV"
+    "csvExportFailed": "Failed to export CSV",
+    "joinedEvent": "Joined event",
+    "settingsDone": "Setup complete. You can measure in this event"
   },
   "eventDetail": {
     "backToDashboard": "Back to Dashboard",

@@ -130,7 +130,9 @@
     "backToMeasurement": "返回计测界面",
     "noEventInfo": "没有赛事信息",
     "fetchFailed": "获取排行榜数据失败",
-    "csvExportFailed": "导出 CSV 失败"
+    "csvExportFailed": "导出 CSV 失败",
+    "joinedEvent": "已参加的活动",
+    "settingsDone": "设置完成。可在此活动中计时"
   },
   "eventDetail": {
     "backToDashboard": "返回仪表板",

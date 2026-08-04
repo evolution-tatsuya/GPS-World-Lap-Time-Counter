@@ -130,7 +130,9 @@
     "backToMeasurement": "計測画面に戻る",
     "noEventInfo": "イベント情報がありません",
     "fetchFailed": "ランキングデータの取得に失敗しました",
-    "csvExportFailed": "CSVエクスポートに失敗しました"
+    "csvExportFailed": "CSVエクスポートに失敗しました",
+    "joinedEvent": "参加中のイベント",
+    "settingsDone": "設定完了。このイベントで計測できます"
   },
   "eventDetail": {
     "backToDashboard": "ダッシュボードに戻る",

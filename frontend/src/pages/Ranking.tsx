@@ -19,6 +19,7 @@ import {
   Button,
   CircularProgress,
   Alert,
+  Chip,
 } from '@mui/material';
 import {
   ArrowBack,
@@ -166,6 +167,22 @@ export default function Ranking() {
           <Typography variant="caption">{t('ranking.autoUpdating')}</Typography>
         </Box>
       </Box>
+
+      {/* 参加中のイベント（設定完了の可視化）。参加者がどのイベントに入っているか一目で分かる。 */}
+      {event && (
+        <Paper variant="outlined" sx={{ p: 2, mb: 2 }}>
+          <Typography variant="caption" color="text.secondary">
+            {t('ranking.joinedEvent')}
+          </Typography>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5, flexWrap: 'wrap' }}>
+            <Typography variant="h6">{event.name}</Typography>
+            {event.eventCode && <Chip label={event.eventCode} size="small" color="primary" />}
+          </Box>
+          <Typography variant="caption" color="success.main">
+            {t('ranking.settingsDone')}
+          </Typography>
+        </Paper>
+      )}
 
       {/* CSVエクスポート（運営者のみ・イベント特定時） */}
       {isOrganizer() && event && (
