@@ -249,6 +249,10 @@ router.get('/ranking', async (req: Request, res: Response) => {
       whereClause.recordedAt = { gte: startOfDay, lt: endOfDay };
     }
 
+    // アウトラップ(lapTimeMs=0)はタイムなしのためランキング集計から除外する。
+    // （除外しないと0msが最速扱いになり、ベストタイムがアウトラップになってしまう）
+    whereClause.lapTimeMs = { gt: 0 };
+
     // ラップ記録取得
     const laps = await prisma.lap.findMany({
       where: whereClause,
@@ -350,8 +354,10 @@ router.get('/export', requireOrganizer, async (req: Request, res: Response) => {
     });
 
     // ドライバー別ベストタイムを算出して順位を付与
+    // ※ アウトラップ(lapTimeMs=0)はタイムなしのためベスト算出から除外する
     const bestMsByDriver = new Map<string, number>();
     for (const lap of laps) {
+      if (lap.lapTimeMs <= 0) continue;
       const key = lap.userId || lap.participantName;
       const current = bestMsByDriver.get(key);
       if (current === undefined || lap.lapTimeMs < current) {
@@ -496,8 +502,8 @@ router.get('/history', async (req: Request, res: Response) => {
         recordedAt: lap.recordedAt
       });
 
-      // ベストラップ更新
-      if (!group.bestLap || lap.lapTimeMs < group.bestLap.lapTimeMs) {
+      // ベストラップ更新（アウトラップ0はタイムなしのため除外）
+      if (lap.lapTimeMs > 0 && (!group.bestLap || lap.lapTimeMs < group.bestLap.lapTimeMs)) {
         group.bestLap = {
           lapTimeMs: lap.lapTimeMs,
           lapTimeStr: lap.lapTimeStr
@@ -566,7 +572,8 @@ router.get('/best/:eventId', async (req: Request, res: Response) => {
     const eventId = Array.isArray(req.params.eventId) ? req.params.eventId[0] : req.params.eventId;
 
     const bestLap = await prisma.lap.findFirst({
-      where: { eventId },
+      // アウトラップ(0)を除外し、実タイムの中での最速ラップを返す
+      where: { eventId, lapTimeMs: { gt: 0 } },
       orderBy: { lapTimeMs: 'asc' }
     });
 

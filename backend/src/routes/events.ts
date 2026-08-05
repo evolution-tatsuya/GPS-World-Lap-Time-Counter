@@ -343,7 +343,8 @@ router.get('/:id/stats', async (req: Request, res: Response) => {
     });
 
     const fastestLap = await prisma.lap.findFirst({
-      where: { eventId: id },
+      // アウトラップ(0)を除外し、実タイムの中での最速ラップを集計する
+      where: { eventId: id, lapTimeMs: { gt: 0 } },
       orderBy: { lapTimeMs: 'asc' }
     });
 
