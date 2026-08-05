@@ -16,7 +16,12 @@ export default function Home() {
         <LanguageSwitcher />
       </Box>
 
-      <Typography variant="h3" component="h1" gutterBottom>
+      <Typography
+        variant="h3"
+        component="h1"
+        gutterBottom
+        sx={{ color: 'text.primary', fontWeight: 700 }}
+      >
         {t('app.name')}
       </Typography>
       <Typography variant="h6" color="text.secondary" sx={{ mb: 2 }}>
