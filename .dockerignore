@@ -1,0 +1,30 @@
+# 依存やビルド成果物・ローカル設定はイメージに含めない（Docker内で再生成する）
+**/node_modules
+**/dist
+**/frontend-dist
+
+# 環境変数（本番はCloud Runの環境変数/シークレットで注入する）
+**/.env
+**/.env.local
+**/.env.bak
+**/.env.*.local
+
+# git・エディタ・OS
+.git
+.gitignore
+**/.DS_Store
+.claude
+.appgenius_temp
+
+# 単体HTML版・ドキュメント・モック（本番アプリのビルドに不要）
+gps/
+stable/
+prototype/
+mockups/
+gas/
+docs/
+lap_timer.html
+README.md
+
+# スクラッチ・ログ
+**/*.log
