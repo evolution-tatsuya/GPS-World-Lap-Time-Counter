@@ -15,6 +15,7 @@
   "home": {
     "tagline": "モータースポーツイベントのラップタイム計測プラットフォーム",
     "participant": "イベント参加者",
+    "personal": "個人で計測",
     "organizer": "運営者ログイン"
   },
   "language": {

@@ -1,7 +1,7 @@
 // 運営者ログインページ
 
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import {
   Container,
@@ -19,8 +19,14 @@ import type { User } from '../types';
 
 export default function Login() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { t } = useTranslation();
   const setUser = useAuthStore((state) => state.setUser);
+
+  // ログイン後の遷移先。トップの「個人で計測」から来た場合は /personal、
+  // 通常（運営者ログイン）は /dashboard。許可リストで外部/不正遷移を防ぐ。
+  const requested = (location.state as { redirect?: string } | null)?.redirect;
+  const redirectTo = requested === '/personal' ? '/personal' : '/dashboard';
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -39,7 +45,7 @@ export default function Login() {
       });
 
       setUser(response.user);
-      navigate('/dashboard');
+      navigate(redirectTo);
     } catch (err) {
       setError(err instanceof Error ? err.message : t('login.failed'));
     } finally {

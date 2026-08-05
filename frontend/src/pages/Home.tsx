@@ -28,7 +28,18 @@ export default function Home() {
         {t('home.tagline')}
       </Typography>
 
-      <Box sx={{ mt: 6, display: 'flex', gap: 2, justifyContent: 'center' }}>
+      <Box
+        sx={{
+          mt: 6,
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 2,
+          alignItems: 'stretch',
+          maxWidth: 360,
+          mx: 'auto',
+        }}
+      >
+        {/* イベントに参加（無料・イベントコード） */}
         <Button
           variant="contained"
           size="large"
@@ -36,6 +47,16 @@ export default function Home() {
         >
           {t('home.participant')}
         </Button>
+        {/* 個人で計測（課金者向け。ログイン後 /personal へ直行） */}
+        <Button
+          variant="contained"
+          color="secondary"
+          size="large"
+          onClick={() => navigate('/login', { state: { redirect: '/personal' } })}
+        >
+          {t('home.personal')}
+        </Button>
+        {/* 運営者・統括ログイン */}
         <Button
           variant="outlined"
           size="large"

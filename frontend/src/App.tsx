@@ -39,6 +39,11 @@ const theme = createTheme({
     primary: {
       main: '#E10600', // T-EVOLUTION Red
     },
+    secondary: {
+      // 個人計測ボタン等に使う。赤(primary)と区別できる明るいニュートラル。
+      main: '#E0E0E0',
+      contrastText: '#131313',
+    },
     background: {
       default: '#131313',
       paper: '#1E1E1E',
