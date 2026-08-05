@@ -330,7 +330,8 @@
     "personalUse": "个人计时",
     "courseInfo": "在所选赛道的GPS线上计时。仅可选择已批准的赛道。",
     "pending": "有 {{count}} 条未发送（将在信号良好处自动发送）",
-    "sendNow": "立即发送"
+    "sendNow": "立即发送",
+    "subRequired": "个人计时需要订阅（付费方案）。您的记录已保存在手机中。"
   },
   "monitor": {
     "title": "实时监控",

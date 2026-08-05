@@ -52,8 +52,9 @@ export default function PersonalMeasurement() {
   // 未送信の自動再送: 起動時＋15秒毎＋画面復帰時。電波復帰でまとめて届く。
   useEffect(() => {
     const tryFlush = async () => {
-      const remain = await flushQueue();
+      const { pending: remain, needsSubscription } = await flushQueue();
       setPending(remain);
+      if (needsSubscription) setError(t('personal.subRequired'));
       if (remain === 0 && courseId) reloadPersonal(courseId);
     };
     setPending(pendingCount());
@@ -85,8 +86,9 @@ export default function PersonalMeasurement() {
         sessionId: lap.sessionId,
         sessionName: lap.sessionName,
       }, vehicle || undefined);
-      const remain = await flushQueue();
+      const { pending: remain, needsSubscription } = await flushQueue();
       setPending(remain);
+      if (needsSubscription) setError(t('personal.subRequired'));
       reloadPersonal(courseId); // ベスト/履歴を更新
     },
   });
@@ -144,7 +146,7 @@ export default function PersonalMeasurement() {
           severity="warning"
           sx={{ mb: 2 }}
           action={
-            <Button color="inherit" size="small" onClick={async () => setPending(await flushQueue())}>
+            <Button color="inherit" size="small" onClick={async () => setPending((await flushQueue()).pending)}>
               {t('personal.sendNow')}
             </Button>
           }

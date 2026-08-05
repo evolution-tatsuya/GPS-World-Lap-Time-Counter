@@ -7,6 +7,16 @@ export interface ApiError {
   code?: string;
 }
 
+// HTTPステータスを保持するエラー。呼び出し側が402(課金必要)等を判別できる。
+export class ApiRequestError extends Error {
+  status: number;
+  constructor(message: string, status: number) {
+    super(message);
+    this.name = 'ApiRequestError';
+    this.status = status;
+  }
+}
+
 class ApiClient {
   private baseURL: string;
 
@@ -33,8 +43,12 @@ class ApiClient {
       const response = await fetch(url, config);
 
       if (!response.ok) {
-        const error: ApiError = await response.json();
-        throw new Error(error.error || `HTTP ${response.status}`);
+        let msg = `HTTP ${response.status}`;
+        try {
+          const error: ApiError = await response.json();
+          msg = error.error || msg;
+        } catch { /* ボディがJSONでない場合はステータスのみ */ }
+        throw new ApiRequestError(msg, response.status);
       }
 
       return await response.json();

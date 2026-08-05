@@ -8,6 +8,7 @@
 // 送信先は createPersonalLap（POST /api/laps/personal）。
 
 import { createPersonalLap } from '../api/laps';
+import { ApiRequestError } from '../api/client';
 import type { LapCreateInput } from '../types';
 
 const STORAGE_KEY = 'personalLapQueue';
@@ -41,11 +42,18 @@ export function enqueuePersonalLap(courseId: string, lap: LapCreateInput, vehicl
 
 let flushing = false;
 
+export interface FlushResult {
+  pending: number;
+  needsSubscription: boolean; // 402が返った=課金が必要（再送しても無駄なので呼び出し側に通知）
+}
+
 // 未送信を先頭から順に送る。成功した分だけキューから除く。
-// 1件でも失敗したらそこで中断（順序保持）。戻り値: 残った未送信件数。
-export async function flushQueue(): Promise<number> {
-  if (flushing) return pendingCount();
+// - ネットワーク断など一時失敗: 中断して次回再送（記録は保全）。
+// - 402(課金必要): 再送しても無駄なので中断し、needsSubscription=true で通知（記録は保全）。
+export async function flushQueue(): Promise<FlushResult> {
+  if (flushing) return { pending: pendingCount(), needsSubscription: false };
   flushing = true;
+  let needsSubscription = false;
   try {
     while (true) {
       const q = load();
@@ -54,18 +62,19 @@ export async function flushQueue(): Promise<number> {
       try {
         const { queuedAt: _t, ...payload } = item;
         await createPersonalLap(payload);
-        // 成功: 最新状態から同じ項目を除去
         const q2 = load();
         const idx = q2.findIndex(
           (l) => l.queuedAt === item.queuedAt && l.lapNumber === item.lapNumber && l.courseId === item.courseId
         );
         if (idx !== -1) { q2.splice(idx, 1); save(q2); }
-      } catch {
-        break; // 失敗（電波不良/402等）→ 残して次回再送
+      } catch (e) {
+        // 402=課金必要は電波の問題ではないので、通知して中断（記録は残す）
+        if (e instanceof ApiRequestError && e.status === 402) needsSubscription = true;
+        break;
       }
     }
   } finally {
     flushing = false;
   }
-  return pendingCount();
+  return { pending: pendingCount(), needsSubscription };
 }
