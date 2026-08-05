@@ -352,5 +352,17 @@
     "autoUpdating": "自动更新中",
     "backToEvent": "返回活动",
     "openMonitor": "实时监控"
+  },
+  "register": {
+    "title": "注册账号",
+    "name": "姓名",
+    "email": "电子邮箱",
+    "password": "密码",
+    "passwordHint": "至少8个字符",
+    "passwordTooShort": "密码至少需要8个字符",
+    "submit": "注册",
+    "submitting": "注册中...",
+    "failed": "注册失败",
+    "haveAccount": "已有账号？点此登录"
   }
 }

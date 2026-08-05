@@ -10,6 +10,7 @@ import { useAuthStore } from './stores/authStore';
 import Home from './pages/Home';
 import EventLogin from './pages/EventLogin';
 import Login from './pages/Login';
+import Register from './pages/Register';
 import Measurement from './pages/Measurement';
 import Ranking from './pages/Ranking';
 import Dashboard from './pages/Dashboard';
@@ -84,6 +85,7 @@ function App() {
             <Route path="/" element={<Home />} />
             <Route path="/event-login" element={<EventLogin />} />
             <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
             <Route path="/measurement" element={<Measurement />} />
             <Route path="/ranking" element={<Ranking />} />
             <Route path="/dashboard" element={<Dashboard />} />

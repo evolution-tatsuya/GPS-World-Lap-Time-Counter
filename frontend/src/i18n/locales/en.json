@@ -352,5 +352,17 @@
     "autoUpdating": "Auto-updating",
     "backToEvent": "Back to event",
     "openMonitor": "Live Monitor"
+  },
+  "register": {
+    "title": "Create Account",
+    "name": "Name",
+    "email": "Email",
+    "password": "Password",
+    "passwordHint": "At least 8 characters",
+    "passwordTooShort": "Password must be at least 8 characters",
+    "submit": "Sign up",
+    "submitting": "Signing up...",
+    "failed": "Registration failed",
+    "haveAccount": "Already have an account? Log in"
   }
 }

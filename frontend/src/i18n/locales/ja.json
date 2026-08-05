@@ -352,5 +352,17 @@
     "autoUpdating": "自動更新中",
     "backToEvent": "イベントに戻る",
     "openMonitor": "ライブモニター"
+  },
+  "register": {
+    "title": "アカウント登録",
+    "name": "お名前",
+    "email": "メールアドレス",
+    "password": "パスワード",
+    "passwordHint": "8文字以上",
+    "passwordTooShort": "パスワードは8文字以上にしてください",
+    "submit": "登録する",
+    "submitting": "登録中...",
+    "failed": "登録に失敗しました",
+    "haveAccount": "すでにアカウントをお持ちの方はこちら"
   }
 }
