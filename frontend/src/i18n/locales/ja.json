@@ -328,7 +328,9 @@
     "gpsStatus": "GPS状態",
     "backToDashboard": "ダッシュボードに戻る",
     "personalUse": "個人計測",
-    "courseInfo": "選択したコースのGPSラインで計測します。承認済みコースのみ選べます。"
+    "courseInfo": "選択したコースのGPSラインで計測します。承認済みコースのみ選べます。",
+    "pending": "未送信 {{count}} 件（電波の良い場所で自動送信されます）",
+    "sendNow": "今すぐ送信"
   },
   "monitor": {
     "title": "ライブモニター",

@@ -328,7 +328,9 @@
     "gpsStatus": "GPS status",
     "backToDashboard": "Back to dashboard",
     "personalUse": "Personal",
-    "courseInfo": "Measures on the selected course's GPS line. Only approved courses are available."
+    "courseInfo": "Measures on the selected course's GPS line. Only approved courses are available.",
+    "pending": "{{count}} unsent (will auto-send where signal is good)",
+    "sendNow": "Send now"
   },
   "monitor": {
     "title": "Live Monitor",

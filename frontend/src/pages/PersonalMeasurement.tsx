@@ -13,7 +13,8 @@ import { useAuthStore } from '../stores/authStore';
 import { useGPS } from '../hooks/useGPS';
 import { formatLapTime } from '../utils/gpsUtils';
 import { getCircuits } from '../api/circuits';
-import { createPersonalLap, getPersonalLaps, type PersonalLapsResult } from '../api/laps';
+import { getPersonalLaps, type PersonalLapsResult } from '../api/laps';
+import { enqueuePersonalLap, flushQueue, pendingCount } from '../utils/personalLapQueue';
 import type { Circuit, LapData } from '../types';
 
 const DEFAULT_SIMULATION = import.meta.env.VITE_GPS_SIMULATION === 'true';
@@ -29,6 +30,7 @@ export default function PersonalMeasurement() {
   const [simulationMode, setSimulationMode] = useState(DEFAULT_SIMULATION);
   const [error, setError] = useState('');
   const [personal, setPersonal] = useState<PersonalLapsResult>({ best: null, laps: [] });
+  const [pending, setPending] = useState(0);
 
   // ログイン必須（未ログインはログインへ）
   useEffect(() => {
@@ -47,6 +49,22 @@ export default function PersonalMeasurement() {
   };
   useEffect(() => { reloadPersonal(courseId); }, [courseId]);
 
+  // 未送信の自動再送: 起動時＋15秒毎＋画面復帰時。電波復帰でまとめて届く。
+  useEffect(() => {
+    const tryFlush = async () => {
+      const remain = await flushQueue();
+      setPending(remain);
+      if (remain === 0 && courseId) reloadPersonal(courseId);
+    };
+    setPending(pendingCount());
+    tryFlush();
+    const iv = window.setInterval(tryFlush, 15000);
+    const onVisible = () => { if (document.visibilityState === 'visible') tryFlush(); };
+    document.addEventListener('visibilitychange', onVisible);
+    return () => { clearInterval(iv); document.removeEventListener('visibilitychange', onVisible); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [courseId]);
+
   const course = courses.find((c) => c.id === courseId);
 
   const gps = useGPS({
@@ -59,20 +77,17 @@ export default function PersonalMeasurement() {
     simulationMode,
     onLap: async (lap: LapData) => {
       if (!courseId) return;
-      try {
-        await createPersonalLap({
-          courseId,
-          lapNumber: lap.lapNumber,
-          lapTimeMs: lap.lapTimeMs,
-          lapTimeStr: lap.lapTimeStr,
-          sessionId: lap.sessionId,
-          sessionName: lap.sessionName,
-          vehicle: vehicle || undefined,
-        });
-        reloadPersonal(courseId); // ベスト/履歴を更新
-      } catch {
-        setError(t('personal.saveFailed'));
-      }
+      // 堅牢送信: まずキューに保存してから送信を試みる（電波弱でも失わない）
+      enqueuePersonalLap(courseId, {
+        lapNumber: lap.lapNumber,
+        lapTimeMs: lap.lapTimeMs,
+        lapTimeStr: lap.lapTimeStr,
+        sessionId: lap.sessionId,
+        sessionName: lap.sessionName,
+      }, vehicle || undefined);
+      const remain = await flushQueue();
+      setPending(remain);
+      reloadPersonal(courseId); // ベスト/履歴を更新
     },
   });
 
@@ -122,6 +137,21 @@ export default function PersonalMeasurement() {
       <Alert severity={gps.gpsAccuracy && gps.gpsAccuracy <= 50 ? 'success' : 'warning'} sx={{ mb: 2 }}>
         {gps.gpsStatus}
       </Alert>
+
+      {/* 未送信ラップ（電波弱で送れなかった分の手動再送） */}
+      {pending > 0 && (
+        <Alert
+          severity="warning"
+          sx={{ mb: 2 }}
+          action={
+            <Button color="inherit" size="small" onClick={async () => setPending(await flushQueue())}>
+              {t('personal.sendNow')}
+            </Button>
+          }
+        >
+          {t('personal.pending', { count: pending })}
+        </Alert>
+      )}
 
       <Paper sx={{ p: 3, textAlign: 'center', mb: 2 }}>
         <Typography variant="caption" color="text.secondary">CURRENT LAP</Typography>
