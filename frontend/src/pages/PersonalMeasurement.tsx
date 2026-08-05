@@ -27,6 +27,10 @@ export default function PersonalMeasurement() {
   const [courses, setCourses] = useState<Circuit[]>([]);
   const [courseId, setCourseId] = useState('');
   const [vehicle, setVehicle] = useState('');
+  // 走行条件の任意メモ（個人記録用）
+  const [sessionName, setSessionName] = useState('');
+  const [tire, setTire] = useState('');
+  const [note, setNote] = useState('');
   const [simulationMode, setSimulationMode] = useState(DEFAULT_SIMULATION);
   const [error, setError] = useState('');
   const [personal, setPersonal] = useState<PersonalLapsResult>({ best: null, laps: [] });
@@ -84,7 +88,9 @@ export default function PersonalMeasurement() {
         lapTimeMs: lap.lapTimeMs,
         lapTimeStr: lap.lapTimeStr,
         sessionId: lap.sessionId,
-        sessionName: lap.sessionName,
+        sessionName: sessionName || lap.sessionName,
+        tire: tire || undefined,
+        note: note || undefined,
       }, vehicle || undefined);
       const { pending: remain, needsSubscription } = await flushQueue();
       setPending(remain);
@@ -118,10 +124,28 @@ export default function PersonalMeasurement() {
               </MenuItem>
             ))}
           </TextField>
-          <TextField
-            fullWidth size="small" label={t('personal.vehicle')}
-            value={vehicle} onChange={(e) => setVehicle(e.target.value)}
-          />
+          <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+            <TextField
+              size="small" label={t('personal.vehicle')}
+              value={vehicle} onChange={(e) => setVehicle(e.target.value)}
+              sx={{ flex: '1 1 45%' }}
+            />
+            <TextField
+              size="small" label={t('personal.sessionName')}
+              value={sessionName} onChange={(e) => setSessionName(e.target.value)}
+              sx={{ flex: '1 1 45%' }}
+            />
+            <TextField
+              size="small" label={t('personal.tire')}
+              value={tire} onChange={(e) => setTire(e.target.value)}
+              sx={{ flex: '1 1 45%' }}
+            />
+            <TextField
+              size="small" label={t('personal.note')}
+              value={note} onChange={(e) => setNote(e.target.value)}
+              sx={{ flex: '1 1 45%' }}
+            />
+          </Box>
           <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1 }}>
             {t('personal.courseInfo')}
           </Typography>

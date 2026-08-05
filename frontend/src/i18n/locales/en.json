@@ -331,7 +331,10 @@
     "courseInfo": "Measures on the selected course's GPS line. Only approved courses are available.",
     "pending": "{{count}} unsent (will auto-send where signal is good)",
     "sendNow": "Send now",
-    "subRequired": "A subscription is required for personal measurement. Your laps are saved on your device."
+    "subRequired": "A subscription is required for personal measurement. Your laps are saved on your device.",
+    "sessionName": "Session name",
+    "tire": "Tire / Weather",
+    "note": "Note"
   },
   "monitor": {
     "title": "Live Monitor",
