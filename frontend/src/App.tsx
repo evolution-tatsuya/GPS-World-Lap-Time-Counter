@@ -11,6 +11,7 @@ import Home from './pages/Home';
 import EventLogin from './pages/EventLogin';
 import Login from './pages/Login';
 import Register from './pages/Register';
+import Subscribe from './pages/Subscribe';
 import Measurement from './pages/Measurement';
 import Ranking from './pages/Ranking';
 import Dashboard from './pages/Dashboard';
@@ -91,6 +92,7 @@ function App() {
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/admin" element={<Admin />} />
             <Route path="/personal" element={<PersonalMeasurement />} />
+            <Route path="/subscribe" element={<Subscribe />} />
 
             {/* 詳細ページ */}
             <Route path="/events/:id" element={<EventDetail />} />

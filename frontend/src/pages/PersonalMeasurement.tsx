@@ -22,7 +22,7 @@ const DEFAULT_SIMULATION = import.meta.env.VITE_GPS_SIMULATION === 'true';
 export default function PersonalMeasurement() {
   const navigate = useNavigate();
   const { t } = useTranslation();
-  const { user, isOrganizer } = useAuthStore();
+  const { user, isOrganizer, canUsePaid } = useAuthStore();
 
   const [courses, setCourses] = useState<Circuit[]>([]);
   const [courseId, setCourseId] = useState('');
@@ -36,10 +36,16 @@ export default function PersonalMeasurement() {
   const [personal, setPersonal] = useState<PersonalLapsResult>({ best: null, laps: [] });
   const [pending, setPending] = useState(0);
 
-  // ログイン必須（未ログインはログインへ）
+  // ログイン必須（未ログインはログインへ）。
+  // さらに未加入（有料機能を使えない）ユーザーは入口でブロックし、サブスク案内へ。
+  // → 走ってから402で弾かれる体験を無くす。
   useEffect(() => {
-    if (!isOrganizer()) navigate('/login');
-  }, [isOrganizer, navigate]);
+    if (!isOrganizer()) {
+      navigate('/login', { state: { redirect: '/personal' } });
+    } else if (!canUsePaid()) {
+      navigate('/subscribe');
+    }
+  }, [isOrganizer, canUsePaid, navigate]);
 
   // 承認済み・公開コース一覧を取得
   useEffect(() => {

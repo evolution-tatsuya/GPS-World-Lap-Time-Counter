@@ -364,5 +364,21 @@
     "submitting": "Signing up...",
     "failed": "Registration failed",
     "haveAccount": "Already have an account? Log in"
+  },
+  "subscribe": {
+    "title": "Subscription Required",
+    "lead": "A paid subscription is required to use personal measurement.",
+    "benefit1": "Personal measurement on approved courses (no event needed)",
+    "benefit2": "Record and save your best laps and history",
+    "benefit3": "Robust upload (never lose laps on weak signal)",
+    "priceNote": "Pricing plans are being prepared. For now, an organizer activates each account.",
+    "contactTitle": "Want to start now?",
+    "contactBody": "Please contact an organizer and we will activate your account.",
+    "comingSoon": "Online payment (Stripe) is coming soon",
+    "backHome": "Back to Home",
+    "backDashboard": "Back to Dashboard",
+    "status": "Your current status",
+    "statusInactive": "Not subscribed (paid features unavailable)",
+    "statusActive": "Subscribed (paid features available)"
   }
 }

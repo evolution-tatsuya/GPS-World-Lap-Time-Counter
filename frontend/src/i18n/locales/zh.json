@@ -364,5 +364,21 @@
     "submitting": "注册中...",
     "failed": "注册失败",
     "haveAccount": "已有账号？点此登录"
+  },
+  "subscribe": {
+    "title": "需要订阅",
+    "lead": "使用个人计时需要付费订阅。",
+    "benefit1": "在已批准的赛道进行个人计时（无需活动）",
+    "benefit2": "记录并保存您的最佳圈速和历史",
+    "benefit3": "稳健上传（信号弱也不丢失记录）",
+    "priceNote": "价格方案正在准备中。目前由主办方逐个激活账号。",
+    "contactTitle": "想立即使用？",
+    "contactBody": "请联系主办方，我们将为您激活账号。",
+    "comingSoon": "在线支付（Stripe）即将推出",
+    "backHome": "返回首页",
+    "backDashboard": "返回仪表板",
+    "status": "您当前的状态",
+    "statusInactive": "未订阅（无法使用付费功能）",
+    "statusActive": "已订阅（可使用付费功能）"
   }
 }

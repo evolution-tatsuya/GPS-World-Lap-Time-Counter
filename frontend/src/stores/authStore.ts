@@ -27,6 +27,7 @@ interface AuthState {
   isOrganizer: () => boolean;
   isAdmin: () => boolean;
   isParticipant: () => boolean;
+  canUsePaid: () => boolean;
 }
 
 // /api/auth/session のレスポンス型
@@ -91,5 +92,12 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   isParticipant: () => {
     const state = get();
     return !!state.event;
+  },
+
+  // 有料機能（個人計測など）を使えるか。バックエンドの canUsePaidFeatures と同義の
+  // 判定結果 canUsePaid をサーバーが返すので、それをそのまま使う。
+  canUsePaid: () => {
+    const state = get();
+    return state.user?.canUsePaid === true;
   },
 }));

@@ -12,6 +12,12 @@ export interface User {
   role: UserRole;
   createdAt: Date;
   updatedAt: Date;
+  // 課金状態（/auth/login・/auth/session が返す。有料機能ゲートの判定に使う）
+  isPromo?: boolean;
+  subscriptionPlan?: 'NONE' | 'PERSONAL' | 'ORGANIZER';
+  subscriptionStatus?: 'INACTIVE' | 'ACTIVE' | 'EXPIRED';
+  subscriptionUntil?: string | null;
+  canUsePaid?: boolean;
 }
 
 // ========== コース関連（マルチスポーツ対応） ==========

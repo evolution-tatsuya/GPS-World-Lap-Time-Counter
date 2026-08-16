@@ -6,6 +6,7 @@ import { prisma } from '../index';
 import { LoginRequest, EventLoginRequest } from '../types';
 import { formatCourseLines } from '../utils/formatCourse';
 import { isJoinWindowOpen } from '../utils/eventWindow';
+import { canUsePaidFeatures } from '../utils/subscription';
 
 const router = Router();
 
@@ -116,7 +117,12 @@ router.post('/login', async (req: Request, res: Response) => {
         id: user.id,
         email: user.email,
         name: user.name,
-        role: user.role
+        role: user.role,
+        isPromo: user.isPromo,
+        subscriptionPlan: user.subscriptionPlan,
+        subscriptionStatus: user.subscriptionStatus,
+        subscriptionUntil: user.subscriptionUntil,
+        canUsePaid: canUsePaidFeatures(user)
       }
     });
   } catch (error) {
@@ -225,7 +231,13 @@ router.get('/session', async (req: Request, res: Response) => {
           id: user.id,
           email: user.email,
           name: user.name,
-          role: user.role
+          role: user.role,
+          // 課金状態（フロントの個人計測ゲート判定に使う）
+          isPromo: user.isPromo,
+          subscriptionPlan: user.subscriptionPlan,
+          subscriptionStatus: user.subscriptionStatus,
+          subscriptionUntil: user.subscriptionUntil,
+          canUsePaid: canUsePaidFeatures(user)
         }
       });
     } else if (req.session.eventId) {
