@@ -141,7 +141,15 @@
   </div>
 
   <div class="field">
-    <label id="lblStart">コントロールライン（コースを横切る2点）</label>
+    <label>コースプリセット（MoTeC座標。選ぶと現地取得なしでOK）</label>
+    <select id="cfgPreset" onchange="onPresetChange()" style="width:100%;padding:10px;background:#0d0d0d;border:1px solid var(--line);border-radius:6px;color:var(--white);font-size:15px">
+      <option value="">— 使わない（下で手動設定）—</option>
+    </select>
+    <div class="note">プリセットを選ぶと、そのサーキットの基準点がセットされます。コントロールラインの<b>向きは走行中に自動学習</b>（最初にライン付近を通過したときの進行方向から自動でライン化）。当日の現地取得は不要です。</div>
+  </div>
+
+  <div class="field">
+    <label id="lblStart">コントロールライン（コースを横切る2点。プリセット使用時は自動）</label>
     <div class="lineRow">
       <input type="text" id="ptA" placeholder="A点 lat,lng" readonly>
       <button class="miniBtn" onclick="capture('A')">A点=現在地</button>
@@ -219,7 +227,7 @@
    計測ロジック: 連続する2つのGPS点の線分と、コントロール
    ラインAB線分の交差判定 + 時刻線形補間でライン通過時刻を算出
 ============================================================ */
-let cfg = {name:'', car:'', no:'', klass:'', tire:'', note:'', gas:'', session:'', mode:'lap', A:null, B:null, GA:null, GB:null, minLap:30, oneWay:true};
+let cfg = {name:'', car:'', no:'', klass:'', tire:'', note:'', gas:'', session:'', mode:'lap', A:null, B:null, GA:null, GB:null, center:null, minLap:30, oneWay:true};
 let running=false, watchId=null, wakeLock=null;
 let prevPt=null, lastCrossT=null, lapNo=0, bestMs=null, firstSign=null;
 let rafId=null;
@@ -237,6 +245,31 @@ function showTab(i,btn){
   if(i===3) initTelemetryTab(); // 走行ラインタブを開いたら初期化
 }
 
+/* ---------- コースプリセット UI ---------- */
+function fillPresetOptions(){
+  var sel=document.getElementById('cfgPreset');
+  if(!sel) return;
+  COURSE_PRESETS.forEach(function(p,i){
+    var o=document.createElement('option');
+    o.value=String(i);
+    o.textContent=p.name+(p.lenKm?'（'+p.lenKm+'km）':'');
+    sel.appendChild(o);
+  });
+}
+function onPresetChange(){
+  var sel=document.getElementById('cfgPreset');
+  var i=sel.value;
+  if(i===''){ cfg.center=null; return; }
+  var p=COURSE_PRESETS[parseInt(i,10)];
+  if(!p) return;
+  // 基準点(1点)をセット。向きは走行中に自動学習するので A/B はここでは空にする。
+  cfg.center=[p.lat,p.lng];
+  cfg.A=null; cfg.B=null;
+  ptA.value=''; ptB.value='';
+  ptA.placeholder='走行中に自動設定されます';
+  ptB.placeholder='走行中に自動設定されます';
+}
+
 /* ---------- 設定の保存/読込 ---------- */
 function loadCfg(){
   try{
@@ -251,6 +284,15 @@ function loadCfg(){
   cfgMinLap.value=cfg.minLap||30; cfgOneWay.checked=cfg.oneWay!==false;
   cfgMode.value=cfg.mode||'lap';
   ptA.readOnly=false; ptB.readOnly=false; ptGA.readOnly=false; ptGB.readOnly=false;
+  // プリセット選択の復元（center座標が一致するものを選ぶ）
+  var sel=document.getElementById('cfgPreset');
+  if(sel && cfg.center){
+    var idx=COURSE_PRESETS.findIndex(function(p){
+      return Math.abs(p.lat-cfg.center[0])<1e-6 && Math.abs(p.lng-cfg.center[1])<1e-6;
+    });
+    sel.value=idx>=0?String(idx):'';
+    if(idx>=0){ ptA.placeholder='走行中に自動設定されます'; ptB.placeholder='走行中に自動設定されます'; }
+  }
   onModeChange();
 }
 function saveCfg(){
@@ -258,7 +300,14 @@ function saveCfg(){
   cfg.no=cfgNo.value.trim(); cfg.klass=cfgClass.value.trim(); cfg.tire=cfgTire.value.trim(); cfg.note=cfgNote.value.trim();
   cfg.session=cfgSession.value.trim();
   cfg.mode=cfgMode.value;
-  cfg.A=parsePt(ptA.value); cfg.B=parsePt(ptB.value);
+  // プリセット未選択のときだけ手入力A/Bを採用（プリセット時はcfg.centerを維持）
+  var presetSel=document.getElementById('cfgPreset');
+  if(presetSel && presetSel.value!==''){
+    // プリセット使用中: A/Bは走行中に自動生成するので手入力値は取り込まない
+  }else{
+    cfg.A=parsePt(ptA.value); cfg.B=parsePt(ptB.value);
+    cfg.center=null;
+  }
   cfg.GA=parsePt(ptGA.value); cfg.GB=parsePt(ptGB.value);
   cfg.minLap=parseFloat(cfgMinLap.value)||30; cfg.oneWay=cfgOneWay.checked;
   try{localStorage.setItem('lapCfg',JSON.stringify(cfg));}catch(e){}
@@ -289,10 +338,17 @@ function capture(which){
 /* ---------- 計測開始/停止 ---------- */
 async function toggleRun(){
   if(!running){
-    if(!cfg.name||!cfg.A||!cfg.B){alert('設定タブでドライバー名とコントロールライン（スタートライン）を設定してください');return;}
+    if(!cfg.name||(!cfg.center&&(!cfg.A||!cfg.B))){alert('設定タブでドライバー名と、コントロールライン（プリセット選択 または スタートライン2点）を設定してください');return;}
     if(cfg.mode==='oneway' && (!cfg.GA||!cfg.GB)){alert('片道モードではゴールラインも設定してください');return;}
     running=true; prevPt=null; lastCrossT=null; lapNo=0; firstSign=null;
     owState='idle'; owStartT=null; // 片道モードの状態リセット
+    // プリセット使用時は毎回ラインを再学習する（各走行の実ラインから向きを取り直す＝確実）。
+    // 選択中プリセットの基準点を center に戻し、A/B を空にして tryAutoLine に委ねる。
+    var _psel=document.getElementById('cfgPreset');
+    if(_psel && _psel.value!==''){
+      var _pp=COURSE_PRESETS[parseInt(_psel.value,10)];
+      if(_pp){ cfg.center=[_pp.lat,_pp.lng]; cfg.A=null; cfg.B=null; }
+    }
     // セッションIDを発行（計測スタート毎に一意）。セッション名があれば併記。
     sessionId=makeSessionId();
     lapBody.innerHTML=''; bestMs=null; // 画面のラップ一覧・ベストをリセット
@@ -325,6 +381,72 @@ function distM(a,b){
   return 2*R*Math.asin(Math.sqrt(h));
 }
 
+/* ---------- コースプリセット（MoTeC Dash Manager の Venue 座標）----------
+   各サーキットのスタート/フィニッシュ基準点（1点）。コントロールラインの向きは
+   走行中に自動学習する（最初に基準点付近を通過したときの進行方向に直交させる）ので、
+   ここは1点だけ持てばよい。lenKm は参考情報。 */
+var COURSE_PRESETS=[
+  {name:'Suzuka（鈴鹿）',        lat:34.8432100, lng:136.5404439, lenKm:5.807},
+  {name:'Fuji（富士）',          lat:35.3738250, lng:138.9297369, lenKm:4.560},
+  {name:'Okayama（岡山）',       lat:34.9142940, lng:134.2189420, lenKm:3.703},
+  {name:'Sugo（スポーツランドSUGO）',lat:38.1425139, lng:140.7746030, lenKm:3.700},
+  {name:'Sendai（仙台ハイランド）',lat:38.2860940, lng:140.6218910, lenKm:4.000},
+  {name:'Autopolis（オートポリス）',lat:33.0374520, lng:130.9751660, lenKm:4.674},
+  {name:'Tsukuba（筑波）',       lat:36.1500820, lng:139.9193620, lenKm:2.000},
+  {name:'Tokachi（十勝）',       lat:42.6306340, lng:143.2922850, lenKm:5.100},
+  {name:'Twin Ring Motegi（もてぎ）',lat:36.5330320, lng:140.2267130, lenKm:4.801},
+  {name:'Sepang（セパン）',      lat:2.7607436,  lng:101.7380675, lenKm:5.542},
+  {name:'Dubai（ドバイ）',       lat:25.0474250, lng:55.2395810,  lenKm:5.390},
+  {name:'Qatar（カタール）',     lat:25.4891830, lng:51.4495490,  lenKm:5.400},
+  {name:'Zhuhai（珠海）',        lat:22.3668940, lng:113.5600980, lenKm:4.300},
+  {name:'Macau（マカオ）',       lat:22.1986550, lng:113.5585940, lenKm:0},
+  {name:'Johor（ジョホール）',   lat:1.4800850,  lng:103.9083349, lenKm:3.860},
+  {name:'Sentul（セントゥール）',lat:-6.5364540, lng:106.8563530, lenKm:0},
+  {name:'Golden Port',           lat:-36.5197486,lng:146.0879094, lenKm:2.400},
+  {name:'Bira',                  lat:12.9207095, lng:101.0085273, lenKm:0},
+  {name:'Kaeng Krachan',         lat:12.9453232, lng:99.7061944,  lenKm:0},
+  {name:'NakornChaisri',         lat:13.9108890, lng:100.1676640, lenKm:0}
+];
+
+/* 方位角(度): a→b の進行方向。北=0, 東=90。 */
+function bearingDeg(a,b){
+  const toR=x=>x*Math.PI/180, toD=x=>x*180/Math.PI;
+  const φ1=toR(a.lat),φ2=toR(b.lat),dλ=toR(b.lng-a.lng);
+  const y=Math.sin(dλ)*Math.cos(φ2);
+  const x=Math.cos(φ1)*Math.sin(φ2)-Math.sin(φ1)*Math.cos(φ2)*Math.cos(dλ);
+  return (toD(Math.atan2(y,x))+360)%360;
+}
+
+/* 起点から 方位brg 度・距離distM メートル 先の座標を返す。 */
+function destPoint(lat,lng,brg,dist){
+  const R=6371e3,toR=x=>x*Math.PI/180,toD=x=>x*180/Math.PI;
+  const δ=dist/R,θ=toR(brg),φ1=toR(lat),λ1=toR(lng);
+  const φ2=Math.asin(Math.sin(φ1)*Math.cos(δ)+Math.cos(φ1)*Math.sin(δ)*Math.cos(θ));
+  const λ2=λ1+Math.atan2(Math.sin(θ)*Math.sin(δ)*Math.cos(φ1),Math.cos(δ)-Math.sin(φ1)*Math.sin(φ2));
+  return [toD(φ2), ((toD(λ2)+540)%360)-180];
+}
+
+/* 走行中の自動向き学習:
+   プリセット(cfg.center)がセットされ、まだライン(cfg.A/B)が未確定のとき、
+   基準点の近く(半径 CENTER_R m 以内)を通過した瞬間の進行方向を取り、
+   それに直交する向きに ±HALF_W m のコントロールラインを自動生成する。 */
+var CENTER_R=45;   // 基準点をこの半径以内に近づいたら向き確定を試みる(m)
+var HALF_W=60;     // 生成するラインの片側幅(m)。富士79m実績を踏まえ広め(全幅120m)。
+function tryAutoLine(prev,cur){
+  if(!cfg.center) return;            // プリセット未使用
+  if(cfg.A&&cfg.B) return;           // 既にライン確定済み
+  const c={lat:cfg.center[0],lng:cfg.center[1]};
+  if(distM(cur,c)>CENTER_R) return;  // まだ基準点に近づいていない
+  const brg=bearingDeg(prev,cur);    // 車の進行方向
+  const perp=(brg+90)%360;           // それに直交（ライン方向）
+  cfg.A=destPoint(c.lat,c.lng,perp,HALF_W);
+  cfg.B=destPoint(c.lat,c.lng,(perp+180)%360,HALF_W);
+  cfg.center=null;                   // 学習完了。以降は通常の交差判定
+  if(typeof gpsStatus!=='undefined'){
+    gpsStatus.textContent='コントロールライン確定（向き自動設定）';
+  }
+}
+
 /* ---------- GPS点の処理 ---------- */
 function onPos(p){
   const pt={lat:p.coords.latitude,lng:p.coords.longitude,t:p.timestamp};
@@ -345,6 +467,8 @@ function onPos(p){
   }
 
   if(prevPt){
+    // プリセット使用時: 基準点通過の進行方向からコントロールラインの向きを自動確定
+    tryAutoLine(prevPt,pt);
     if(cfg.mode==='oneway'){
       onewayDetect(pt);
     }else{
@@ -853,6 +977,7 @@ function deleteCurrentTrack(){
   populateSessions();
 }
 
+fillPresetOptions(); // コースプリセットのプルダウンを生成（loadCfgの前に）
 loadCfg();
 updatePendingUI();
 flushQueue(); // 起動時、前回の未送信が残っていれば送る
