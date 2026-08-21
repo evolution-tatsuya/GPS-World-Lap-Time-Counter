@@ -433,15 +433,32 @@ function destPoint(lat,lng,brg,dist){
    プリセット(cfg.center)がセットされ、まだライン(cfg.A/B)が未確定のとき、
    基準点の近く(半径 CENTER_R m 以内)を通過した瞬間の進行方向を取り、
    それに直交する向きに ±HALF_W m のコントロールラインを自動生成する。 */
-var CENTER_R=45;   // 基準点をこの半径以内に近づいたら向き確定を試みる(m)
+var CENTER_R=80;   // 走行区間が基準点にこの距離以内まで近づいたら向き確定(m)。
+                   // 高速(250km/h≒69m/s・GPS1Hz)でも区間が基準点近傍を必ず通るよう広め。
 var HALF_W=60;     // 生成するラインの片側幅(m)。富士79m実績を踏まえ広め(全幅120m)。
 var ACC_MAX_DEFAULT=30; // これより精度が悪い(±m大)GPS点はライン検出に使わない
 var COOLDOWN_MS=5000;   // ライン通過検出後、この時間は再検出を抑止(二重カウント防止の保険)
+
+/* 点Pから線分AB(いずれも{lat,lng})への最短距離(m)。ローカル平面近似。 */
+function pointSegDistM(P,segA,segB){
+  const lat0=segA.lat*Math.PI/180, kx=111320*Math.cos(lat0), ky=110540;
+  const ax=0, ay=0;
+  const bx=(segB.lng-segA.lng)*kx, by=(segB.lat-segA.lat)*ky;
+  const px=(P.lng-segA.lng)*kx,   py=(P.lat-segA.lat)*ky;
+  const dx=bx-ax, dy=by-ay, L2=dx*dx+dy*dy;
+  let t = L2>0 ? ((px-ax)*dx+(py-ay)*dy)/L2 : 0;
+  t=Math.max(0,Math.min(1,t));
+  const cx=ax+t*dx, cy=ay+t*dy;
+  return Math.hypot(px-cx,py-cy);
+}
+
 function tryAutoLine(prev,cur){
   if(!cfg.center) return;            // プリセット未使用
   if(cfg.A&&cfg.B) return;           // 既にライン確定済み
   const c={lat:cfg.center[0],lng:cfg.center[1]};
-  if(distM(cur,c)>CENTER_R) return;  // まだ基準点に近づいていない
+  // 点ではなく「走行区間(prev→cur)」と基準点の距離で判定する。
+  // 高速でGPS点が大きく飛んでも、区間が基準点近傍を通れば必ず発火する。
+  if(pointSegDistM(c,prev,cur)>CENTER_R) return;
   const brg=bearingDeg(prev,cur);    // 車の進行方向
   const perp=(brg+90)%360;           // それに直交（ライン方向）
   cfg.A=destPoint(c.lat,c.lng,perp,HALF_W);
