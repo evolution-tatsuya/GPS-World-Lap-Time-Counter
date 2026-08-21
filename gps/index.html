@@ -176,6 +176,7 @@
   </div>
 
   <div class="field"><label id="lblMinLap">最小ラップタイム（秒）※これ未満は誤検知として無視</label><input type="number" id="cfgMinLap" value="30"></div>
+  <div class="field"><label>GPS精度しきい値（m）※±これより悪い点はライン検出に使わない</label><input type="number" id="cfgAccMax" value="30"><div class="note">電波が弱く精度が悪いコースで取りこぼす場合は数値を上げてください（例50）。小さいほど厳格。</div></div>
   <label class="chk"><input type="checkbox" id="cfgOneWay" checked>逆方向の通過を無視する</label>
 
   <button class="saveBtn" onclick="saveCfg()">設定を保存</button>
@@ -227,7 +228,7 @@
    計測ロジック: 連続する2つのGPS点の線分と、コントロール
    ラインAB線分の交差判定 + 時刻線形補間でライン通過時刻を算出
 ============================================================ */
-let cfg = {name:'', car:'', no:'', klass:'', tire:'', note:'', gas:'', session:'', mode:'lap', A:null, B:null, GA:null, GB:null, center:null, minLap:30, oneWay:true};
+let cfg = {name:'', car:'', no:'', klass:'', tire:'', note:'', gas:'', session:'', mode:'lap', A:null, B:null, GA:null, GB:null, center:null, minLap:30, accMax:30, oneWay:true};
 let running=false, watchId=null, wakeLock=null;
 let prevPt=null, lastCrossT=null, lapNo=0, bestMs=null, firstSign=null;
 let rafId=null;
@@ -282,6 +283,7 @@ function loadCfg(){
   ptA.value=cfg.A?cfg.A.join(','):''; ptB.value=cfg.B?cfg.B.join(','):'';
   ptGA.value=cfg.GA?cfg.GA.join(','):''; ptGB.value=cfg.GB?cfg.GB.join(','):'';
   cfgMinLap.value=cfg.minLap||30; cfgOneWay.checked=cfg.oneWay!==false;
+  document.getElementById('cfgAccMax').value=cfg.accMax||ACC_MAX_DEFAULT;
   cfgMode.value=cfg.mode||'lap';
   ptA.readOnly=false; ptB.readOnly=false; ptGA.readOnly=false; ptGB.readOnly=false;
   // プリセット選択の復元（center座標が一致するものを選ぶ）
@@ -310,6 +312,7 @@ function saveCfg(){
   }
   cfg.GA=parsePt(ptGA.value); cfg.GB=parsePt(ptGB.value);
   cfg.minLap=parseFloat(cfgMinLap.value)||30; cfg.oneWay=cfgOneWay.checked;
+  cfg.accMax=parseFloat(document.getElementById('cfgAccMax').value)||ACC_MAX_DEFAULT;
   try{localStorage.setItem('lapCfg',JSON.stringify(cfg));}catch(e){}
   saveMsg.textContent='保存しました';
   setTimeout(()=>saveMsg.textContent='',2000);
@@ -432,6 +435,8 @@ function destPoint(lat,lng,brg,dist){
    それに直交する向きに ±HALF_W m のコントロールラインを自動生成する。 */
 var CENTER_R=45;   // 基準点をこの半径以内に近づいたら向き確定を試みる(m)
 var HALF_W=60;     // 生成するラインの片側幅(m)。富士79m実績を踏まえ広め(全幅120m)。
+var ACC_MAX_DEFAULT=30; // これより精度が悪い(±m大)GPS点はライン検出に使わない
+var COOLDOWN_MS=5000;   // ライン通過検出後、この時間は再検出を抑止(二重カウント防止の保険)
 function tryAutoLine(prev,cur){
   if(!cfg.center) return;            // プリセット未使用
   if(cfg.A&&cfg.B) return;           // 既にライン確定済み
@@ -449,9 +454,12 @@ function tryAutoLine(prev,cur){
 
 /* ---------- GPS点の処理 ---------- */
 function onPos(p){
-  const pt={lat:p.coords.latitude,lng:p.coords.longitude,t:p.timestamp};
-  gpsStatus.textContent=`GPS OK  精度±${Math.round(p.coords.accuracy)}m`;
-  gpsStatus.classList.add('ok');
+  const acc=(typeof p.coords.accuracy==='number')?p.coords.accuracy:999;
+  const pt={lat:p.coords.latitude,lng:p.coords.longitude,t:p.timestamp,acc:acc};
+  // 精度が悪い(閾値超)点はライン検出に使わない。取りこぼし/誤検出の原因になるため。
+  const poor = acc > (cfg.accMax||ACC_MAX_DEFAULT);
+  gpsStatus.textContent=`GPS ${poor?'△':'OK'}  精度±${Math.round(acc)}m`+(poor?'（精度低・検出保留）':'');
+  gpsStatus.classList.toggle('ok',!poor);
 
   // 速度(km/h): 端末のspeed(m/s)を優先、無ければ直前点から算出
   let spd=null;
@@ -466,7 +474,9 @@ function onPos(p){
     if(spd>maxSpeedKmh) maxSpeedKmh=spd;
   }
 
-  if(prevPt){
+  // ライン検出は「精度が良い点どうし」の区間でのみ行う。
+  // 精度が悪い点は prevPt にせず捨てる（次の良い点との区間が悪い点をまたがないように）。
+  if(prevPt && !poor){
     // プリセット使用時: 基準点通過の進行方向からコントロールラインの向きを自動確定
     tryAutoLine(prevPt,pt);
     if(cfg.mode==='oneway'){
@@ -476,16 +486,17 @@ function onPos(p){
     }
   }
 
-  // テレメトリー: GPS点を記録（現在ラップ番号付き）。2秒ごとにlocalStorageへ保存。
+  // テレメトリー: GPS点は精度に関わらず全点記録（軌跡・振り返り用）。2秒ごとにlocalStorageへ。
   trackPts.push({
     lat:pt.lat, lng:pt.lng, t:pt.t,
-    acc:Math.round(p.coords.accuracy||0),
+    acc:Math.round(acc),
     spd:(spd!==null?Math.round(spd*10)/10:null),
     lap:lapNo
   });
   if(pt.t-trackSaveT>2000){ trackSaveT=pt.t; saveTrack(); }
 
-  prevPt=pt;
+  // prevPt は「良い点」だけ更新。悪い点は検出の基準にしない。
+  if(!poor) prevPt=pt;
 }
 
 /* 周回モードの検出（従来ロジック）: 1本のラインを通るたびに1周 */
@@ -498,6 +509,9 @@ function lapDetect(pt){
     else if(hit.sign!==firstSign){ return; }
   }
   const crossT=prevPt.t + hit.u*(pt.t-prevPt.t);
+  // 通過直後クールダウン: 直前の通過から COOLDOWN_MS 以内の再検出は無視
+  //（幅広ライン上でのジグザグ等による1回の通過の二重カウントを防ぐ保険）。
+  if(lastCrossT!==null && (crossT-lastCrossT)<COOLDOWN_MS) return;
   if(lastCrossT===null){
     lastCrossT=crossT; lapNo=1; registerOutLap(1); // アウトラップ=LAP1
   }else{
