@@ -35,8 +35,10 @@ export async function getPersonalLaps(courseId?: string): Promise<PersonalLapsRe
 /**
  * 自分のラップ記録一覧を取得
  */
-export async function getMyLaps(eventId: string): Promise<Lap[]> {
-  return apiClient.get<Lap[]>(`/laps?eventId=${eventId}`);
+export async function getMyLaps(eventId: string, driverName?: string): Promise<Lap[]> {
+  const q = new URLSearchParams({ eventId });
+  if (driverName) q.set('driverName', driverName);
+  return apiClient.get<Lap[]>(`/laps?${q.toString()}`);
 }
 
 // モニター用: イベントの最新ラップを新しい順で取得（時系列モニター）

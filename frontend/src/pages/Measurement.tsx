@@ -30,7 +30,8 @@ import { useGPS } from '../hooks/useGPS';
 import { formatLapTime } from '../utils/gpsUtils';
 import { sendPosition } from '../api/positions';
 import { enqueueLap, flushQueue, pendingCount } from '../utils/lapQueue';
-import type { LapData, GPSPosition } from '../types';
+import { getMyLaps } from '../api/laps';
+import type { LapData, GPSPosition, Lap } from '../types';
 
 // 位置共有の送信間隔（ミリ秒）。GPSは頻繁に更新されるため間引く。
 const POSITION_SEND_INTERVAL_MS = 5000;
@@ -59,6 +60,21 @@ export default function Measurement() {
 
   // 未送信ラップ件数（堅牢送信キュー）
   const [pending, setPending] = useState(0);
+
+  // サーバーに保存済みの、このイベント×このドライバーの過去ラップ。
+  // 終了→再入場してもラップが消えて見えないよう、マウント時にサーバーから復元する。
+  const [pastLaps, setPastLaps] = useState<Lap[]>([]);
+  const refreshPastLaps = () => {
+    if (!event || !driverName) return;
+    getMyLaps(event.id, driverName)
+      .then((rows) => setPastLaps(rows))
+      .catch(() => { /* 取得失敗は握りつぶす（表示できないだけ。再送/計測は継続） */ });
+  };
+  // 入場時に一度、サーバーの既存ラップを読み込む
+  useEffect(() => {
+    refreshPastLaps();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [event?.id, driverName]);
 
   // 現在地を主催者と共有するか（計測とは独立。参加者自身の意思でON/OFF）
   const [sharing, setSharing] = useState(false);
@@ -211,6 +227,8 @@ export default function Measurement() {
       });
       const remain = await flushQueue(event.id);
       setPending(remain);
+      // サーバー保存済みラップを更新（再入場時の復元表示と件数を最新に保つ）
+      refreshPastLaps();
     },
   });
 
@@ -498,6 +516,39 @@ export default function Measurement() {
                     </Box>
                   }
                   secondary={new Date(lap.timestamp).toLocaleTimeString()}
+                />
+              </ListItem>
+            ))
+          )}
+        </List>
+      </Paper>
+
+      {/* 保存済みの記録（サーバー）: 終了→再入場しても消えない、このイベントの自分の全ラップ */}
+      <Typography variant="h6" gutterBottom sx={{ mt: 3 }}>
+        保存済みの記録 ({pastLaps.length})
+      </Typography>
+      <Paper>
+        <List>
+          {pastLaps.length === 0 ? (
+            <ListItem>
+              <ListItemText
+                primary="サーバーに保存された記録はまだありません"
+                secondary="計測したラップは自動でサーバーに保存され、再入場しても残ります"
+              />
+            </ListItem>
+          ) : (
+            pastLaps.map((lap, index) => (
+              <ListItem key={lap.id} divider={index !== pastLaps.length - 1}>
+                <ListItemText
+                  primary={
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <Chip label={`LAP ${lap.lapNumber}`} size="small" />
+                      <Typography variant="h6" sx={{ fontFamily: 'monospace' }}>
+                        {lap.lapTimeStr}
+                      </Typography>
+                    </Box>
+                  }
+                  secondary={lap.sessionName || undefined}
                 />
               </ListItem>
             ))
