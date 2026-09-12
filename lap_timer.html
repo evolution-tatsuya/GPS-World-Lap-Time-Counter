@@ -39,6 +39,11 @@
   #camStatus.ok{color:var(--green)}
   #camPreviewWrap{margin-top:10px;display:none}
   #camPreview{width:100%;border-radius:6px;background:#000;display:block;aspect-ratio:16/9;object-fit:cover}
+  /* ズーム（対応端末のみ表示。最小=広角寄り） */
+  #camZoomRow{display:none;align-items:center;gap:8px;margin-top:8px}
+  #camZoomRow .zlbl{font-size:11px;color:var(--gray);white-space:nowrap}
+  #camZoom{flex:1}
+  #camZoomVal{font-size:11px;color:var(--gray);width:38px;text-align:right;font-variant-numeric:tabular-nums}
   .timerBox{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:18px 10px;text-align:center;margin-bottom:12px}
   #curLap{font-size:15vw;font-weight:bold;font-variant-numeric:tabular-nums;line-height:1.1}
   .timerBox .lbl{font-size:11px;color:var(--gray);letter-spacing:2px}
@@ -120,6 +125,12 @@
     <div id="camStatus">カメラ 未許可</div>
     <div id="camPreviewWrap">
       <video id="camPreview" autoplay muted playsinline></video>
+      <div id="camZoomRow">
+        <span class="zlbl">広角</span>
+        <input type="range" id="camZoom" oninput="onZoom(this.value)">
+        <span class="zlbl">望遠</span>
+        <span id="camZoomVal">--</span>
+      </div>
     </div>
   </div>
   <div class="timerBox">
@@ -415,6 +426,29 @@ function updateCamUI(){
   camPreviewWrap.style.display=on?'block':'none';
   camStatus.classList.toggle('ok',on);
 }
+/* 背面の複数レンズから「広角/超広角」らしきもののdeviceIdを返す（無ければnull）。
+   ※ deviceLabelは一度カメラ許可を得るまで空。初回は選べずfacingModeに委ねる（許可後の再起動で効く）。
+   ※ 「超広角(ultra/0.5)」よりまず「広角(wide)」を優先。狭角(tele/望遠)は除外。 */
+async function pickBackWideDeviceId(){
+  try{
+    if(!navigator.mediaDevices.enumerateDevices) return null;
+    var devs=await navigator.mediaDevices.enumerateDevices();
+    var cams=devs.filter(function(d){return d.kind==='videoinput';});
+    if(cams.length<2) return null; // レンズが1つなら選ぶ余地なし
+    var labeled=cams.filter(function(c){return c.label;});
+    if(!labeled.length) return null; // ラベル未取得（初回）
+    // 背面(back/rear/environment)を優先。ラベルに手掛かりが無ければ全体から探す。
+    var back=labeled.filter(function(c){return /back|rear|environment|背面/i.test(c.label);});
+    var pool=back.length?back:labeled;
+    // 望遠は除外し、広角>超広角の順で採用。
+    var notTele=pool.filter(function(c){return !/tele|望遠|zoom/i.test(c.label);});
+    var wide=notTele.find(function(c){return /wide|広角/i.test(c.label)&&!/ultra|超広角|0\.5/i.test(c.label);});
+    if(wide) return wide.deviceId;
+    var ultra=notTele.find(function(c){return /ultra|超広角|0\.5/i.test(c.label);});
+    if(ultra) return ultra.deviceId;
+    return null;
+  }catch(e){ return null; }
+}
 async function startCamera(){
   if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){
     camStatus.textContent='この端末/ブラウザはカメラ非対応です'; return;
@@ -423,12 +457,15 @@ async function startCamera(){
     camStatus.textContent='カメラはhttps接続でのみ利用できます'; return;
   }
   camStatus.textContent='カメラ起動中…';
+  // 背面時は「広角レンズ」を優先して選ぶ（対応端末＝主にAndroid）。
+  // 端末が背面の複数レンズを別デバイスとして列挙する場合、そのdeviceIdを狙う。
+  var wideId=(camFacing==='environment')?await pickBackWideDeviceId():null;
   // まず希望のカメラで試し、失敗したら制約を緩めて再試行（端末差の吸収）。
-  var tries=[
-    {video:{facingMode:{ideal:camFacing},width:{ideal:1280},height:{ideal:720}},audio:false},
-    {video:{facingMode:camFacing},audio:false},
-    {video:true,audio:false},
-  ];
+  var tries=[];
+  if(wideId){ tries.push({video:{deviceId:{exact:wideId},width:{ideal:1280},height:{ideal:720}},audio:false}); }
+  tries.push({video:{facingMode:{ideal:camFacing},width:{ideal:1280},height:{ideal:720}},audio:false});
+  tries.push({video:{facingMode:camFacing},audio:false});
+  tries.push({video:true,audio:false});
   for(var i=0;i<tries.length;i++){
     try{
       camStream=await navigator.mediaDevices.getUserMedia(tries[i]);
@@ -442,15 +479,66 @@ async function startCamera(){
   }
   camPreview.srcObject=camStream;
   try{await camPreview.play();}catch(e){}
+  // 初回はラベル未取得で広角を選べていないことがある。許可が下りた今なら選べるので、
+  // 広角レンズが見つかり かつ 今と別デバイスなら一度だけ開き直す（背面時のみ・1回だけ）。
+  if(camFacing==='environment' && !wideId && !startCamera._reopened){
+    var betterId=await pickBackWideDeviceId();
+    var curId=(camStream.getVideoTracks()[0].getSettings&&camStream.getVideoTracks()[0].getSettings().deviceId)||null;
+    if(betterId && betterId!==curId){
+      camStream.getTracks().forEach(function(t){t.stop();});
+      startCamera._reopened=true;      // 無限ループ防止
+      await startCameraWith({video:{deviceId:{exact:betterId},width:{ideal:1280},height:{ideal:720}},audio:false});
+      startCamera._reopened=false;
+      return;
+    }
+  }
   var label=(camStream.getVideoTracks()[0]||{}).label||'';
   camStatus.textContent='カメラOK'+(label?'（'+label+'）':'')+' / '+(camFacing==='environment'?'背面':'前面');
+  setupZoom();
+  updateCamUI();
+}
+/* 指定制約でストリームを開いてプレビュー反映（開き直し用の小ヘルパ）。 */
+async function startCameraWith(constraints){
+  try{ camStream=await navigator.mediaDevices.getUserMedia(constraints); }
+  catch(e){ camStatus.textContent='広角カメラに切替できませんでした'; return; }
+  camPreview.srcObject=camStream;
+  try{await camPreview.play();}catch(e){}
+  var label=(camStream.getVideoTracks()[0]||{}).label||'';
+  camStatus.textContent='カメラOK（広角）'+(label?'（'+label+'）':'');
+  setupZoom();
   updateCamUI();
 }
 function stopCamera(){
   if(camStream){camStream.getTracks().forEach(function(t){t.stop();});camStream=null;}
   camPreview.srcObject=null;
   camStatus.textContent='カメラ 停止';
+  camZoomRow.style.display='none'; // ズームUIを隠す
   updateCamUI();
+}
+/* ---------- ズーム（対応端末のみ。最小=広角寄り） ----------
+   一部のAndroid等は MediaStreamTrack の zoom 制約に対応する。
+   非対応端末ではスライダーを出さない（iPhoneは概ね非対応）。 */
+function camTrack(){ return camStream?camStream.getVideoTracks()[0]:null; }
+function setupZoom(){
+  camZoomRow.style.display='none';
+  var tr=camTrack();
+  if(!tr||!tr.getCapabilities) return;
+  var cap=tr.getCapabilities();
+  if(!cap||cap.zoom===undefined) return; // この端末/レンズはズーム非対応
+  var min=cap.zoom.min, max=cap.zoom.max, step=cap.zoom.step||0.1;
+  if(!(max>min)) return;
+  var cur=(tr.getSettings&&tr.getSettings().zoom)||min;
+  camZoom.min=min; camZoom.max=max; camZoom.step=step; camZoom.value=cur;
+  camZoomVal.textContent=(+cur).toFixed(1)+'x';
+  camZoomRow.style.display='flex';
+}
+function onZoom(v){
+  var tr=camTrack();
+  if(!tr||!tr.applyConstraints) return;
+  var z=parseFloat(v);
+  tr.applyConstraints({advanced:[{zoom:z}]}).then(function(){
+    camZoomVal.textContent=z.toFixed(1)+'x';
+  }).catch(function(){});
 }
 function toggleCamera(){ camStream?stopCamera():startCamera(); }
 async function flipCamera(){
