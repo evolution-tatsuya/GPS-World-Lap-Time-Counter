@@ -1,7 +1,7 @@
 // 参加者位置ライブモニター（主催者専用）— 2ペイン観戦ビュー
 //
 // 左: 車載映像パネル（WebRTC配信の差し込み口。現状はプレースホルダ）。
-// 右: 地図に参加者の現在地を表示。3秒ごとにポーリングし、マーカーは前回→今回位置を
+// 右: 地図に参加者の現在地を表示。1秒ごとにポーリングし、マーカーは前回→今回位置を
 //     補間して滑らかに移動。コース中心線があればコース上に吸着（周回/ラリー両対応）。
 // 下: 車選択リスト。選ぶと左の映像枠に大写し（予定）＋マーカー強調。
 // 開催時間外はサーバーが空を返すため「開催時間外」と表示される。
@@ -28,7 +28,7 @@ import { getEvent } from '../api/events';
 import { getEventPositions, type LiveParticipant } from '../api/positions';
 import type { EventWithCourse } from '../types';
 
-const POLL_MS = 3000;
+const POLL_MS = 1000;
 
 // 参加者の一意キー（表示・選択に使う）
 function keyOf(p: LiveParticipant): string {
@@ -232,7 +232,7 @@ export default function LiveMap() {
       .finally(() => setLoading(false));
   }, [id]);
 
-  // 位置を3秒ごとにポーリング
+  // 位置を1秒ごとにポーリング
   useEffect(() => {
     if (!id) return;
     let cancelled = false;
@@ -427,7 +427,7 @@ export default function LiveMap() {
       </Box>
 
       <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1 }}>
-        3秒ごとに自動更新。マーカーは補間で滑らかに移動します。15分以上更新のない参加者は非表示になります。
+        1秒ごとに自動更新。マーカーは補間で滑らかに移動します。15分以上更新のない参加者は非表示になります。
       </Typography>
     </Container>
   );

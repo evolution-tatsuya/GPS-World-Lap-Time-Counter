@@ -34,7 +34,7 @@ import { getMyLaps } from '../api/laps';
 import type { LapData, GPSPosition, Lap } from '../types';
 
 // 位置共有の送信間隔（ミリ秒）。GPSは頻繁に更新されるため間引く。
-const POSITION_SEND_INTERVAL_MS = 5000;
+const POSITION_SEND_INTERVAL_MS = 1000;
 
 // シミュレーションモードの既定値。
 // 本番では実GPSを使うため false。開発時は VITE_GPS_SIMULATION=true で切替可能。
