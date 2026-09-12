@@ -17,6 +17,10 @@
 
 // 記録先シート名（無ければ自動作成）
 var SHEET_NAME = 'Laps';
+var TRACK_SHEET_NAME = '走行ライン'; // GPS軌跡(テレメトリー)の保存シート
+var TRACK_CHUNK = 40000;            // 1セルあたりの最大文字数(Sheetsのセル上限5万未満に抑える)
+var LIVE_SHEET_NAME = 'ライブ位置';   // 走行中の現在地(1車1行・最新のみ上書き)
+var LIVE_STALE_MS = 30000;         // この時間以上更新が無い車は「走行終了」とみなしfeedから除外(30秒)
 
 // ===== 集計の設定 =====
 // これ以上遅いラップは集計から除外（誤検知・アウトラップ・異常値対策）。ms単位。
@@ -35,6 +39,13 @@ var DRIVER_SHEET_PREFIX = '個別_';
 function doPost(e) {
   try {
     var p = (e && e.parameter) ? e.parameter : {};
+    // 軌跡は本文が大きいのでPOSTで受ける。mode=track を優先判定。
+    if (p.mode === 'track') {
+      return json_(appendTrack_(p));
+    }
+    if (p.mode === 'live') {
+      return json_(updateLive_(p));
+    }
     return json_(appendLap_(p));
   } catch (err) {
     return json_({ ok: false, error: String(err) });
@@ -57,6 +68,16 @@ function doGet(e) {
   // 確実に到達させるための経路（スマホ側は fetch GET で送る）。
   if (mode === 'add') {
     return json_(appendLap_(e && e.parameter ? e.parameter : {}));
+  }
+
+  // ライブ位置: GET経由での送信（電波弱でも確実に届く経路。スマホ側は fetch GET）。
+  if (mode === 'live') {
+    return json_(updateLive_(e && e.parameter ? e.parameter : {}));
+  }
+
+  // ライブ位置: 運営画面が全車の最新位置をまとめて取得する。
+  if (mode === 'livefeed') {
+    return json_(liveFeed_());
   }
 
   return json_({ ok: true, message: 'GPS Lap Timer GAS is running.' });
@@ -84,6 +105,136 @@ function appendLap_(p) {
     String(p.note || ''),          // L列: 自由メモ
   ]);
   return { ok: true };
+}
+
+/**
+ * GPS軌跡(テレメトリー)を1セッション分まとめて保存する（POST mode=track）。
+ * 受け取るパラメータ:
+ *   session      : セッションID（必須。これが行の一意キー）
+ *   session_name : セッション名（任意）
+ *   name, car    : ドライバー・車両（任意）
+ *   points       : 点数（任意。無ければpts JSONから数える）
+ *   pts          : GPS全点のJSON文字列 [{lat,lng,t,acc,spd,lap}, ...]
+ * 列: 記録日時, セッションID, セッション名, ドライバー, 車両, 点数, データ1, データ2, ...
+ *   - pts は長いのでセル上限(約5万字)未満のTRACK_CHUNK単位で複数セルに分割して格納。
+ *   - 同一セッションIDの再送は既存行を上書き（再送で重複しない=冪等）。
+ */
+function appendTrack_(p) {
+  var session = String(p.session || '');
+  if (!session) return { ok: false, error: 'session required' };
+  var pts = String(p.pts || '');
+  var count = Number(p.points || 0);
+  if (!count) {
+    // pts が配列JSONなら要素数を数える（失敗しても致命的でないので0のまま）
+    try { var arr = JSON.parse(pts); if (arr && arr.length != null) count = arr.length; } catch (e) {}
+  }
+
+  // ptsをTRACK_CHUNK文字ずつに分割
+  var chunks = [];
+  for (var i = 0; i < pts.length; i += TRACK_CHUNK) {
+    chunks.push(pts.substring(i, i + TRACK_CHUNK));
+  }
+  if (!chunks.length) chunks.push(''); // 空でも1セルは置く
+
+  var row = [new Date(), session, String(p.session_name || ''),
+             String(p.name || ''), String(p.car || ''), count].concat(chunks);
+
+  var sheet = getTrackSheet_();
+  // 既存の同一セッション行があれば上書き（B列=セッションID）
+  var values = sheet.getDataRange().getValues();
+  var rowIndex = -1;
+  for (var r = 1; r < values.length; r++) {
+    if (String(values[r][1] || '') === session) { rowIndex = r + 1; break; } // 1始まりの行番号
+  }
+  if (rowIndex > 0) {
+    // 旧行を消してから書く（分割数が減ったとき古いチャンクが残らないように）
+    sheet.deleteRow(rowIndex);
+  }
+  sheet.appendRow(row);
+  return { ok: true, session: session, points: count, chunks: chunks.length };
+}
+
+/* ============================================================
+ *  ライブ位置（走行中の現在地）: 1車1行で最新のみ上書き。
+ *  受信: mode=live  / 配信: mode=livefeed
+ * ============================================================ */
+
+/**
+ * 走行中の現在地を1件受け取り、1車1行で上書きする（冪等・軽量）。
+ * 受け取るパラメータ:
+ *   id    : 車の一意キー（ゼッケンno優先。無ければ name+car）※必須
+ *   no    : ゼッケン番号（表示用）
+ *   name  : ドライバー名
+ *   car   : 車両
+ *   lat,lng : 現在地（必須）
+ *   spd   : 速度 km/h（任意）
+ *   hdg   : 進行方向 度(0-359, 任意)
+ *   session : セッションID（任意）
+ * 列: 更新時刻, id, ゼッケン, ドライバー, 車両, lat, lng, 速度, 方位, セッションID
+ */
+function updateLive_(p) {
+  var id = String(p.id || p.no || ((p.name || '') + '|' + (p.car || '')) || '').trim();
+  if (!id) return { ok: false, error: 'id required' };
+  var lat = parseFloat(p.lat), lng = parseFloat(p.lng);
+  if (isNaN(lat) || isNaN(lng)) return { ok: false, error: 'lat/lng required' };
+
+  var row = [
+    new Date(), id, String(p.no || ''), String(p.name || ''), String(p.car || ''),
+    lat, lng, Number(p.spd || 0), Number(p.hdg || 0), String(p.session || ''),
+  ];
+
+  var sheet = getLiveSheet_();
+  // 既存の同一id行を探して上書き（B列=id）。無ければ追記。
+  var values = sheet.getDataRange().getValues();
+  var rowIndex = -1;
+  for (var r = 1; r < values.length; r++) {
+    if (String(values[r][1] || '') === id) { rowIndex = r + 1; break; }
+  }
+  if (rowIndex > 0) {
+    sheet.getRange(rowIndex, 1, 1, row.length).setValues([row]);
+  } else {
+    sheet.appendRow(row);
+  }
+  return { ok: true, id: id };
+}
+
+/**
+ * 全車の最新位置を返す（運営ライブビュー用）。
+ * 一定時間更新の無い車(走行終了)は除外。
+ * 戻り値: { ok, now, cars: [{id,no,name,car,lat,lng,spd,hdg,session,age_ms}, ...] }
+ */
+function liveFeed_() {
+  var sheet = getLiveSheet_();
+  var values = sheet.getDataRange().getValues();
+  var now = Date.now();
+  var cars = [];
+  for (var r = 1; r < values.length; r++) {
+    var v = values[r];
+    if (!v[1]) continue;
+    var t = (v[0] instanceof Date) ? v[0].getTime() : new Date(v[0]).getTime();
+    var age = now - t;
+    if (isNaN(age) || age > LIVE_STALE_MS) continue; // 古い＝走行終了とみなし除外
+    cars.push({
+      id: String(v[1]), no: String(v[2] || ''), name: String(v[3] || ''),
+      car: String(v[4] || ''), lat: Number(v[5]), lng: Number(v[6]),
+      spd: Number(v[7] || 0), hdg: Number(v[8] || 0), session: String(v[9] || ''),
+      age_ms: age,
+    });
+  }
+  return { ok: true, now: now, cars: cars };
+}
+
+/**
+ * ライブ位置シートを取得（無ければ作成してヘッダーを付ける）
+ */
+function getLiveSheet_() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sheet = ss.getSheetByName(LIVE_SHEET_NAME);
+  if (!sheet) {
+    sheet = ss.insertSheet(LIVE_SHEET_NAME);
+    sheet.appendRow(['更新時刻', 'id', 'ゼッケン', 'ドライバー', '車両', 'lat', 'lng', '速度', '方位', 'セッションID']);
+  }
+  return sheet;
 }
 
 /**
@@ -320,6 +471,19 @@ function getSheet_() {
   if (!sheet) {
     sheet = ss.insertSheet(SHEET_NAME);
     sheet.appendRow(['記録日時', 'ドライバー', '車両', 'ラップ', 'タイム(ms)', 'タイム', 'セッションID', 'セッション名', 'ゼッケン', 'クラス', 'タイヤ/天候', 'メモ']);
+  }
+  return sheet;
+}
+
+/**
+ * 走行ライン(テレメトリー)シートを取得（無ければ作成してヘッダーを付ける）
+ */
+function getTrackSheet_() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sheet = ss.getSheetByName(TRACK_SHEET_NAME);
+  if (!sheet) {
+    sheet = ss.insertSheet(TRACK_SHEET_NAME);
+    sheet.appendRow(['記録日時', 'セッションID', 'セッション名', 'ドライバー', '車両', '点数', 'データ']);
   }
   return sheet;
 }

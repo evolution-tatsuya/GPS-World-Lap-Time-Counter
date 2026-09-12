@@ -684,8 +684,37 @@ function onPos(p){
   });
   if(pt.t-trackSaveT>2000){ trackSaveT=pt.t; saveTrack(); }
 
+  // ライブ位置送信: 運営マップ用に現在地を間引いて送る（既定3秒間隔）。
+  // 進行方向は直前点から算出。精度が悪い点は送らない（マップが飛ぶのを防ぐ）。
+  if(!poor){
+    var hdg = (prevPt ? bearingDeg(prevPt, pt) : 0);
+    sendLive(pt, (spd!==null?spd:0), hdg);
+  }
+
   // prevPt は「良い点」だけ更新。悪い点は検出の基準にしない。
   if(!poor) prevPt=pt;
+}
+
+/* ---------- ライブ位置送信（運営マップ用） ----------
+   計測中、現在地を LIVE_SEND_MS ごとにGASへ送る（GET・軽量・順位は問わない）。
+   送信先は既存の送信先URL(cfg.gas)を流用。将来backend移設時はここだけ差し替え。 */
+var LIVE_SEND_MS=3000;   // ライブ位置の送信間隔(ms)。GASの速度に合わせ既定3秒。
+var liveSendT=0;
+function liveCarId(){
+  // 車の一意キー: ゼッケンno優先、無ければ 名前|車両
+  return (cfg.no && cfg.no.trim()) ? cfg.no.trim() : ((cfg.name||'')+'|'+(cfg.car||''));
+}
+function sendLive(pt, spd, hdg){
+  if(!running || !cfg.gas) return;              // 計測中かつ送信先がある時だけ
+  if(pt.t - liveSendT < LIVE_SEND_MS) return;   // 間引き
+  liveSendT = pt.t;
+  var qs = new URLSearchParams({
+    mode:'live', id:liveCarId(), no:cfg.no||'', name:cfg.name||'', car:cfg.car||'',
+    lat:pt.lat.toFixed(6), lng:pt.lng.toFixed(6),
+    spd:Math.round(spd), hdg:Math.round(hdg), session:sessionId||''
+  }).toString();
+  // 失敗しても計測に影響させない（撃ちっぱなし）。
+  fetch(cfg.gas+'?'+qs, {method:'GET', keepalive:true}).catch(function(){});
 }
 
 /* 周回モードの検出（従来ロジック）: 1本のラインを通るたびに1周 */

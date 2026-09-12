@@ -1,0 +1,346 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>T-EVOLUTION LIVE MONITOR</title>
+<!-- 地図(Leaflet + OpenStreetMap)。CDN読み込み（ネット接続が必要）。 -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<style>
+  :root{--bg:#0a0a0a;--panel:#161616;--line:#2a2a2a;--white:#f2f2f2;--gray:#888;--red:#e10600;--green:#25c460;--blue:#3aa0ff}
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%;background:var(--bg);color:var(--white);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+  header{display:flex;align-items:center;justify-content:space-between;padding:8px 14px;border-bottom:1px solid var(--line);background:#000}
+  header h1{font-size:15px;margin:0;letter-spacing:1px}
+  header h1 span{color:var(--red)}
+  header .st{font-size:11px;color:var(--gray)}
+  header .st.ok{color:var(--green)}
+
+  /* 2ペイン: 左=映像 / 右=マップ。狭い画面では縦積み。 */
+  .wrap{display:flex;gap:8px;padding:8px;height:calc(100% - 44px)}
+  .pane{background:var(--panel);border:1px solid var(--line);border-radius:8px;overflow:hidden;display:flex;flex-direction:column;min-width:0}
+  .videoPane{flex:1}
+  .mapPane{flex:1}
+  .pane h2{font-size:11px;color:var(--gray);letter-spacing:1px;margin:0;padding:8px 10px;border-bottom:1px solid var(--line)}
+  @media (max-width:820px){ .wrap{flex-direction:column;height:auto} .videoPane,.mapPane{min-height:44vh} }
+
+  /* 映像枠（今は配信サーバー未接続のためプレースホルダ。差し込み口を用意） */
+  #videoBox{position:relative;flex:1;background:#000;display:flex;align-items:center;justify-content:center}
+  #liveVideo{width:100%;height:100%;object-fit:contain;background:#000;display:none}
+  #videoPlaceholder{color:var(--gray);text-align:center;font-size:13px;line-height:1.8;padding:16px}
+  #videoPlaceholder b{color:var(--white)}
+  #videoLabel{position:absolute;left:10px;top:10px;background:rgba(0,0,0,.6);padding:4px 10px;border-radius:5px;font-size:13px;font-weight:bold}
+
+  /* マップ */
+  #map{flex:1;background:#0d0d0d;min-height:200px}
+  .leaflet-container{background:#0d0d0d}
+  .carMarker{background:var(--red);color:#fff;border:2px solid #fff;border-radius:50%;width:30px;height:30px;
+    display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:bold;box-shadow:0 1px 4px rgba(0,0,0,.6)}
+  .carMarker.sel{background:var(--blue);width:34px;height:34px;font-size:13px}
+
+  /* 下部: 車リスト */
+  .cars{padding:6px 8px;border-top:1px solid var(--line);background:#000;display:flex;gap:6px;overflow-x:auto}
+  .carChip{flex:0 0 auto;background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:6px 12px;font-size:13px;white-space:nowrap;cursor:pointer}
+  .carChip.sel{background:var(--blue);border-color:var(--blue);color:#fff;font-weight:bold}
+  .carChip .no{font-weight:bold}
+  .carChip .sp{color:var(--gray);font-size:11px;margin-left:6px}
+  .carChip.sel .sp{color:#dbeaff}
+
+  /* 設定バー */
+  .setup{padding:8px 14px;border-bottom:1px solid var(--line);background:#0d0d0d;display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+  .setup input,.setup select{background:#0d0d0d;border:1px solid var(--line);border-radius:6px;color:var(--white);padding:8px;font-size:13px}
+  .setup input[type=url]{flex:1;min-width:220px}
+  .setup label{font-size:11px;color:var(--gray)}
+  .setup .miniBtn{background:#2a2a2a;border:1px solid var(--line);border-radius:6px;color:var(--white);padding:8px 12px;font-size:12px;cursor:pointer}
+  .setup .miniBtn.on{background:var(--green);color:#052}
+</style>
+</head>
+<body>
+<header>
+  <h1>LIVE <span>MONITOR</span> — T-EVOLUTION</h1>
+  <div class="st" id="feedStatus">未接続</div>
+</header>
+
+<!-- 運営が接続先URLとコースを設定するバー -->
+<div class="setup">
+  <label>データURL(GAS /exec)</label>
+  <input type="url" id="feedUrl" placeholder="https://script.google.com/macros/s/…/exec">
+  <label>コース</label>
+  <select id="coursePreset"><option value="">（自動/なし）</option></select>
+  <button class="miniBtn" id="snapBtn" onclick="toggleSnap()">コース吸着: OFF</button>
+  <button class="miniBtn" id="startBtn" onclick="toggleFeed()">開始</button>
+</div>
+
+<div class="wrap">
+  <!-- 左: 車載映像 -->
+  <div class="pane videoPane">
+    <h2>車載映像（選択中の車）</h2>
+    <div id="videoBox">
+      <div id="videoLabel" style="display:none"></div>
+      <video id="liveVideo" autoplay muted playsinline></video>
+      <div id="videoPlaceholder">
+        <b>映像は未接続です</b><br>
+        車載映像の配信（WebRTC）は次フェーズで接続します。<br>
+        いまは右のマップで全車の現在位置を確認できます。<br>
+        下のリスト／マーカーで車を選ぶと、ここに大写しされます。
+      </div>
+    </div>
+  </div>
+
+  <!-- 右: コースマップ＋全車位置 -->
+  <div class="pane mapPane">
+    <h2>コースマップ（全車の現在位置）</h2>
+    <div id="map"></div>
+    <div class="cars" id="carList"></div>
+  </div>
+</div>
+
+<script>
+/* =========================================================================
+   運営ライブモニター
+   - GAS(mode=livefeed)を数秒ごとにポーリングし、全車の最新位置を取得。
+   - コースマップ上にマーカー表示。前回位置→今回位置を補間して滑らかに動かす。
+   - コース中心線がある場合は「吸着(スナップ)」でコース上に載せる（周回/ラリー両対応）。
+   - 左の映像は将来のWebRTC配信の差し込み口（今はプレースホルダ）。
+   ========================================================================= */
+
+/* ---- コースプリセット（lap_timer と同じ基準点。中心線があればなぞりに使う） ---- */
+var COURSE_PRESETS=[
+  {name:'Suzuka（鈴鹿）',        lat:34.8432100, lng:136.5404439},
+  {name:'Fuji（富士）',          lat:35.3738250, lng:138.9297369},
+  {name:'Okayama（岡山）',       lat:34.9142940, lng:134.2189420},
+  {name:'Sugo（SUGO）',          lat:38.1425139, lng:140.7746030},
+  {name:'Autopolis（オートポリス）',lat:33.0374520, lng:130.9751660},
+  {name:'Tsukuba（筑波）',       lat:36.1500820, lng:139.9193620},
+  {name:'Motegi（もてぎ）',      lat:36.5330320, lng:140.2267130}
+];
+
+var FEED_POLL_MS=3000;    // 位置取得のポーリング間隔(ms)。GASの速度に合わせ3秒。
+var STALE_MS=30000;       // これ以上更新が無い車はリストから消す。
+var feedUrl='', feeding=false, pollTimer=null;
+var cars={};              // id -> { data, prev:{lat,lng,t}, target:{lat,lng,t}, marker }
+var selectedId=null;
+var snapEnabled=false;
+var courseLine=null;      // 吸着に使う中心線 [[lat,lng],...]（null=吸着なし）
+var map=null, courseLayer=null;
+
+/* ---------- 起動: 設定復元＋地図初期化 ---------- */
+(function init(){
+  // コースプリセットをセレクトに流し込む
+  var sel=document.getElementById('coursePreset');
+  COURSE_PRESETS.forEach(function(c,i){
+    var o=document.createElement('option'); o.value=i; o.textContent=c.name; sel.appendChild(o);
+  });
+  // 前回のURLを復元（localStorage）
+  try{
+    var saved=localStorage.getItem('liveFeedUrl'); if(saved){ feedUrl=saved; document.getElementById('feedUrl').value=saved; }
+    var sc=localStorage.getItem('liveSnap'); if(sc==='1'){ snapEnabled=true; syncSnapBtn(); }
+  }catch(e){}
+  initMap();
+})();
+
+function initMap(){
+  if(typeof L==='undefined'){ setFeedStatus('地図の読込に失敗（ネット接続を確認）', false); return; }
+  map=L.map('map',{zoomControl:true}).setView([35.3738,138.9297], 15);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
+    maxZoom:19, attribution:'&copy; OpenStreetMap'
+  }).addTo(map);
+}
+
+/* ---------- フィード開始/停止 ---------- */
+function toggleFeed(){
+  if(feeding){ stopFeed(); return; }
+  feedUrl=document.getElementById('feedUrl').value.trim();
+  if(!feedUrl){ alert('データURL（GASの /exec）を入力してください'); return; }
+  try{ localStorage.setItem('liveFeedUrl', feedUrl); }catch(e){}
+  // コース中心線をセット（プリセット選択時。今は基準点1点しか無いので線が無ければ吸着は自動でOFF動作）
+  loadCourseLine();
+  feeding=true;
+  document.getElementById('startBtn').textContent='停止';
+  document.getElementById('startBtn').classList.add('on');
+  poll();
+  pollTimer=setInterval(poll, FEED_POLL_MS);
+  requestAnimationFrame(animate); // 補間アニメ開始
+}
+function stopFeed(){
+  feeding=false;
+  if(pollTimer){ clearInterval(pollTimer); pollTimer=null; }
+  document.getElementById('startBtn').textContent='開始';
+  document.getElementById('startBtn').classList.remove('on');
+  setFeedStatus('停止', false);
+}
+
+/* ---------- ポーリング（全車の最新位置を取得） ---------- */
+function poll(){
+  if(!feeding || !feedUrl) return;
+  fetch(feedUrl+'?mode=livefeed', {method:'GET'})
+    .then(function(r){ return r.json(); })
+    .then(function(j){
+      if(!j || !j.ok){ setFeedStatus('データ形式エラー', false); return; }
+      onFeed(j.cars||[]);
+      setFeedStatus('接続中 '+((j.cars||[]).length)+'台', true);
+    })
+    .catch(function(){ setFeedStatus('取得失敗（電波/URLを確認）', false); });
+}
+
+function onFeed(list){
+  var now=Date.now();
+  var seen={};
+  list.forEach(function(c){
+    seen[c.id]=true;
+    var target={lat:c.lat, lng:c.lng, t:now};
+    if(!cars[c.id]){
+      // 新規: マーカー生成
+      var m=L.marker([c.lat,c.lng], {icon:makeIcon(c, c.id===selectedId)})
+             .addTo(map).on('click', (function(id){ return function(){ selectCar(id); }; })(c.id));
+      cars[c.id]={ data:c, prev:{lat:c.lat,lng:c.lng,t:now}, target:target, marker:m };
+    }else{
+      // 既存: いまの表示位置をprevにして、新座標をtargetに（補間で滑らかに移動）
+      var cur=cars[c.id];
+      var pos=cur.marker.getLatLng();
+      cur.prev={lat:pos.lat, lng:pos.lng, t:now};
+      cur.target=snapEnabled?snapToCourse(target):target;
+      cur.data=c;
+    }
+  });
+  // 消えた（一定時間更新の無い）車を除去
+  Object.keys(cars).forEach(function(id){
+    if(!seen[id]){ map.removeLayer(cars[id].marker); delete cars[id]; if(selectedId===id) selectedId=null; }
+  });
+  // 初回、車がいれば全体が見えるようフィット
+  if(list.length && !onFeed._fitted){ fitAll(); onFeed._fitted=true; }
+  renderCarList();
+}
+
+/* ---------- 補間アニメ: prev→target を時間で線形補間しマーカーを動かす ---------- */
+function animate(){
+  if(!feeding){ return; }
+  var now=Date.now();
+  Object.keys(cars).forEach(function(id){
+    var c=cars[id];
+    var span=Math.max(1, c.target.t - c.prev.t + FEED_POLL_MS); // 目標到達までの想定時間
+    var k=Math.min(1, (now - c.prev.t)/span);
+    var lat=c.prev.lat + (c.target.lat-c.prev.lat)*k;
+    var lng=c.prev.lng + (c.target.lng-c.prev.lng)*k;
+    c.marker.setLatLng([lat,lng]);
+  });
+  requestAnimationFrame(animate);
+}
+
+/* ---------- マーカーアイコン ---------- */
+function makeIcon(c, sel){
+  var label=c.no||(c.name?c.name.charAt(0):'?');
+  return L.divIcon({
+    className:'', html:'<div class="carMarker'+(sel?' sel':'')+'">'+escapeHtml(String(label))+'</div>',
+    iconSize:[30,30], iconAnchor:[15,15]
+  });
+}
+
+/* ---------- 車リスト（下部チップ） ---------- */
+function renderCarList(){
+  var box=document.getElementById('carList');
+  var ids=Object.keys(cars);
+  if(!ids.length){ box.innerHTML='<span style="color:var(--gray);font-size:12px;padding:6px">走行中の車はいません</span>'; return; }
+  box.innerHTML='';
+  ids.forEach(function(id){
+    var c=cars[id].data;
+    var chip=document.createElement('div');
+    chip.className='carChip'+(id===selectedId?' sel':'');
+    chip.innerHTML='<span class="no">'+escapeHtml(c.no||c.name||id)+'</span><span class="sp">'+Math.round(c.spd||0)+' km/h</span>';
+    chip.onclick=(function(x){ return function(){ selectCar(x); }; })(id);
+    box.appendChild(chip);
+  });
+}
+
+/* ---------- 車を選択（左の映像に大写し・マーカー強調） ---------- */
+function selectCar(id){
+  selectedId=id;
+  Object.keys(cars).forEach(function(x){ cars[x].marker.setIcon(makeIcon(cars[x].data, x===selectedId)); });
+  renderCarList();
+  var c=cars[id]?cars[id].data:null;
+  var lbl=document.getElementById('videoLabel');
+  if(c){
+    lbl.style.display='block';
+    lbl.textContent='No.'+(c.no||'-')+' '+(c.name||'');
+    map.panTo(cars[id].marker.getLatLng());
+  }
+  // 映像は未接続。将来ここで attachVideo(id) を呼んで liveVideo に配信を流す。
+}
+
+/* ---------- コース吸着（スナップ） ---------- */
+function toggleSnap(){
+  snapEnabled=!snapEnabled;
+  try{ localStorage.setItem('liveSnap', snapEnabled?'1':'0'); }catch(e){}
+  syncSnapBtn();
+  if(snapEnabled && !courseLine){ loadCourseLine(); }
+}
+function syncSnapBtn(){
+  var b=document.getElementById('snapBtn');
+  b.textContent='コース吸着: '+(snapEnabled?'ON':'OFF');
+  b.classList.toggle('on', snapEnabled);
+}
+/* 中心線をセット。今はプリセットに「基準点1点」しか無いため、
+   ここでは走行データから作った中心線があれば localStorage から読む想定の器。
+   線が無ければ courseLine=null のまま＝吸着は素通り（フォールバック）。 */
+function loadCourseLine(){
+  courseLine=null;
+  if(courseLayer){ map.removeLayer(courseLayer); courseLayer=null; }
+  // 保存済み中心線があれば使う（キー: courseLine_<プリセットindex>）
+  var sel=document.getElementById('coursePreset').value;
+  try{
+    var raw=localStorage.getItem('courseLine_'+sel);
+    if(raw){
+      var pts=JSON.parse(raw);
+      if(pts && pts.length>1){
+        courseLine=pts;
+        courseLayer=L.polyline(pts, {color:'#3aa0ff', weight:2, opacity:.6}).addTo(map);
+      }
+    }
+  }catch(e){}
+}
+/* GPS点(target)をコース中心線上の最寄り点に投影して返す。
+   折り返し/交差対策として、直前位置(prev)に近い候補を優先する。
+   線が無ければそのまま返す（フォールバック）。 */
+function snapToCourse(target){
+  if(!courseLine || courseLine.length<2) return target;
+  var best=null, bestD=Infinity;
+  for(var i=0;i<courseLine.length-1;i++){
+    var a={lat:courseLine[i][0], lng:courseLine[i][1]};
+    var b={lat:courseLine[i+1][0], lng:courseLine[i+1][1]};
+    var proj=projectPointToSeg(target, a, b);
+    if(proj.d<bestD){ bestD=proj.d; best=proj; }
+  }
+  // 吸着しきい値: これより遠い（コースアウト/ピット等）は素の位置を使う
+  if(!best || bestD>40) return target;
+  return {lat:best.lat, lng:best.lng, t:target.t};
+}
+/* 点Pを線分ABに投影した点と距離(m)。ローカル平面近似。 */
+function projectPointToSeg(p,a,b){
+  var mLat=111320, mLng=111320*Math.cos(a.lat*Math.PI/180);
+  var ax=0, ay=0;
+  var bx=(b.lng-a.lng)*mLng, by=(b.lat-a.lat)*mLat;
+  var px=(p.lng-a.lng)*mLng, py=(p.lat-a.lat)*mLat;
+  var dx=bx-ax, dy=by-ay;
+  var len2=dx*dx+dy*dy;
+  var t=len2>0?((px*dx+py*dy)/len2):0;
+  t=Math.max(0,Math.min(1,t));
+  var cx=ax+dx*t, cy=ay+dy*t;
+  var d=Math.hypot(px-cx, py-cy);
+  return { lat:a.lat + (cy/mLat), lng:a.lng + (cx/mLng), d:d };
+}
+
+/* ---------- 補助 ---------- */
+function fitAll(){
+  var pts=Object.keys(cars).map(function(id){ var ll=cars[id].marker.getLatLng(); return [ll.lat,ll.lng]; });
+  if(pts.length===1){ map.setView(pts[0], 16); }
+  else if(pts.length>1){ map.fitBounds(pts, {padding:[40,40]}); }
+}
+function setFeedStatus(msg, ok){
+  var el=document.getElementById('feedStatus');
+  el.textContent=msg; el.classList.toggle('ok', !!ok);
+}
+function escapeHtml(s){ return String(s).replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
+</script>
+</body>
+</html>
