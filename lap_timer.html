@@ -27,6 +27,18 @@
   /* ===== 計測タブ ===== */
   #gpsStatus{font-size:12px;color:var(--gray);text-align:center;margin-bottom:8px}
   #gpsStatus.ok{color:var(--green)}
+  /* カメラ許可・プレビュー */
+  .camBox{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:10px;margin-bottom:12px}
+  .camBtns{display:flex;gap:8px}
+  .camBtns button{flex:1;padding:11px;font-size:13px;font-weight:bold;border:none;border-radius:6px;letter-spacing:1px}
+  #camPermitBtn{background:#2a2a2a;border:1px solid var(--line);color:var(--white)}
+  #camPermitBtn.on{background:var(--green);color:#062}
+  #camFlipBtn{background:#2a2a2a;border:1px solid var(--line);color:var(--white)}
+  #camFlipBtn:disabled{opacity:.4}
+  #camStatus{font-size:11px;color:var(--gray);text-align:center;margin-top:8px}
+  #camStatus.ok{color:var(--green)}
+  #camPreviewWrap{margin-top:10px;display:none}
+  #camPreview{width:100%;border-radius:6px;background:#000;display:block;aspect-ratio:16/9;object-fit:cover}
   .timerBox{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:18px 10px;text-align:center;margin-bottom:12px}
   #curLap{font-size:15vw;font-weight:bold;font-variant-numeric:tabular-nums;line-height:1.1}
   .timerBox .lbl{font-size:11px;color:var(--gray);letter-spacing:2px}
@@ -99,6 +111,17 @@
 <!-- ===== 計測 ===== -->
 <div class="tab active" id="tab0">
   <div id="gpsStatus">GPS 未接続</div>
+  <!-- カメラ許可・自映像プレビュー（iOS Safari / Android Chrome 両対応） -->
+  <div class="camBox">
+    <div class="camBtns">
+      <button id="camPermitBtn" onclick="toggleCamera()">カメラ許可</button>
+      <button id="camFlipBtn" onclick="flipCamera()" disabled>前後切替</button>
+    </div>
+    <div id="camStatus">カメラ 未許可</div>
+    <div id="camPreviewWrap">
+      <video id="camPreview" autoplay muted playsinline></video>
+    </div>
+  </div>
   <div class="timerBox">
     <div class="lbl">CURRENT LAP</div>
     <div id="curLap">--:--.-</div>
@@ -217,8 +240,10 @@
   <div class="tlmBtns">
     <button class="miniBtn" onclick="exportTrack('gpx')">GPXエクスポート</button>
     <button class="miniBtn" onclick="exportTrack('json')">JSONエクスポート</button>
+    <button class="miniBtn" onclick="uploadTrack()">スプレッドシートに送信</button>
     <button class="miniBtn" onclick="deleteCurrentTrack()">この走行データを削除</button>
   </div>
+  <div class="note" id="tlmUploadInfo"></div>
   <div class="note">走行中のGPS軌跡をスマホ内に記録します。セッションと周回を選ぶと地図に走行ラインを描画。スライダーやライン上のタップで、その地点の経過タイム・速度が見られます。※地図の背景表示にはネット接続が必要です（軌跡の記録・保存は電波不要）。</div>
 </div>
 
@@ -375,6 +400,65 @@ async function toggleRun(){
   }
 }
 function onErr(e){gpsStatus.textContent='GPSエラー: '+e.message; gpsStatus.classList.remove('ok');}
+
+/* ---------- カメラ（車載映像）許可・プレビュー ----------
+   GPSと同様、ユーザーのタップ（ジェスチャー）を起点に getUserMedia を呼ぶ。
+   iOS Safari / Android Chrome 両対応。既定は背面カメラ(environment)。
+   ※ カメラ/マイクは https 以外では起動できない（localhostは可）。 */
+var camStream=null;           // 現在のMediaStream
+var camFacing='environment';  // 'environment'=背面 / 'user'=前面
+function updateCamUI(){
+  var on=!!camStream;
+  camPermitBtn.textContent=on?'カメラ停止':'カメラ許可';
+  camPermitBtn.classList.toggle('on',on);
+  camFlipBtn.disabled=!on;
+  camPreviewWrap.style.display=on?'block':'none';
+  camStatus.classList.toggle('ok',on);
+}
+async function startCamera(){
+  if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){
+    camStatus.textContent='この端末/ブラウザはカメラ非対応です'; return;
+  }
+  if(location.protocol!=='https:'&&location.hostname!=='localhost'){
+    camStatus.textContent='カメラはhttps接続でのみ利用できます'; return;
+  }
+  camStatus.textContent='カメラ起動中…';
+  // まず希望のカメラで試し、失敗したら制約を緩めて再試行（端末差の吸収）。
+  var tries=[
+    {video:{facingMode:{ideal:camFacing},width:{ideal:1280},height:{ideal:720}},audio:false},
+    {video:{facingMode:camFacing},audio:false},
+    {video:true,audio:false},
+  ];
+  for(var i=0;i<tries.length;i++){
+    try{
+      camStream=await navigator.mediaDevices.getUserMedia(tries[i]);
+      break;
+    }catch(e){
+      if(i===tries.length-1){
+        camStatus.textContent='カメラ許可されませんでした: '+(e.name||e.message);
+        return;
+      }
+    }
+  }
+  camPreview.srcObject=camStream;
+  try{await camPreview.play();}catch(e){}
+  var label=(camStream.getVideoTracks()[0]||{}).label||'';
+  camStatus.textContent='カメラOK'+(label?'（'+label+'）':'')+' / '+(camFacing==='environment'?'背面':'前面');
+  updateCamUI();
+}
+function stopCamera(){
+  if(camStream){camStream.getTracks().forEach(function(t){t.stop();});camStream=null;}
+  camPreview.srcObject=null;
+  camStatus.textContent='カメラ 停止';
+  updateCamUI();
+}
+function toggleCamera(){ camStream?stopCamera():startCamera(); }
+async function flipCamera(){
+  if(!camStream) return;
+  camFacing=(camFacing==='environment')?'user':'environment';
+  stopCamera();
+  await startCamera();
+}
 
 /* 2点間の距離(m)。速度算出用（Haversine） */
 function distM(a,b){
@@ -997,6 +1081,33 @@ function exportTrack(type){
   var a=document.createElement('a');
   a.href=URL.createObjectURL(blob); a.download='track_'+id+'.'+ext;
   document.body.appendChild(a); a.click(); document.body.removeChild(a);
+}
+
+// 表示中の走行データをスプレッドシート(GAS)に送信。
+// 軌跡は大きいのでPOSTで丸ごと1件送る（mode=track）。ラップ送信の再送キューとは別系統。
+// 電波の弱いコースでの走行中送信は想定せず、手動の任意送信（振り返り・バックアップ用）。
+function uploadTrack(){
+  if(!cfg.gas){ alert('先に設定タブで送信先URLを入力してください'); return; }
+  var id=document.getElementById('tlmSession').value;
+  if(!id){ alert('セッションを選んでください'); return; }
+  var pts=(id===sessionId && trackPts.length)?trackPts:loadTrack(id);
+  if(!pts.length){ alert('データがありません'); return; }
+  // 一覧のメタ情報（名前・車両・セッション名）を拾う
+  var meta={}; loadTrackIndex().forEach(function(x){ if(x.id===id) meta=x; });
+  var info=document.getElementById('tlmUploadInfo');
+  if(info) info.textContent='送信中… ('+pts.length+'点)';
+  var body=new URLSearchParams({
+    mode:'track', session:id, session_name:meta.session||'',
+    name:meta.name||cfg.name||'', car:meta.car||cfg.car||'',
+    points:pts.length, pts:JSON.stringify(pts)
+  });
+  fetch(cfg.gas, {method:'POST', body:body})
+    .then(function(r){ return r.ok ? r.json() : null; })
+    .then(function(res){
+      if(res && res.ok){ if(info) info.textContent='送信しました（'+res.points+'点 / '+res.chunks+'セル）'; }
+      else { if(info) info.textContent='送信に失敗しました。時間をおいて再試行してください。'; }
+    })
+    .catch(function(){ if(info) info.textContent='送信に失敗しました（通信エラー）。'; });
 }
 
 // 表示中の走行データを削除
