@@ -25,11 +25,12 @@ export default function EventCreate() {
   const { t } = useTranslation();
   const { user } = useAuthStore();
 
-  const [name, setName] = useState('');
-  // IME（日本語入力・スマホ予測変換）の変換中は onChange が中間状態を
-  // 制御値に反映してしまい、確定文字が二重・累積する端末がある。
-  // 変換中フラグの間は state を書き換えず、compositionEnd で確定値のみ反映する。
-  const composingRef = useRef(false);
+  // イベント名は uncontrolled（value を渡さず defaultValue + ref）にする。
+  // iOS Safari では controlled input に再レンダーが挟まるとカーソルが末尾へ飛び、
+  // 「打ちながら削除できない／文字が累積する」不具合が出るため、DOM に値を保持させる。
+  const nameRef = useRef<HTMLInputElement>(null);
+  // 送信ボタンの活性判定用に、名前が空かどうかだけを軽く追跡する（値そのものは持たない）。
+  const [nameEmpty, setNameEmpty] = useState(true);
   const [courseId, setCourseId] = useState('');
   const [sportCategory, setSportCategory] = useState<'CAR' | 'MOTORCYCLE' | 'RUNNING' | 'BICYCLE'>('CAR');
   const [eventDate, setEventDate] = useState('');
@@ -70,7 +71,7 @@ export default function EventCreate() {
       const endAtIso = endAt ? new Date(endAt).toISOString() : undefined;
 
       const response = await apiClient.post<{ id: string }>('/events', {
-        name,
+        name: nameRef.current?.value.trim() ?? '',
         courseId,
         sportCategory,
         eventDate,
@@ -112,32 +113,12 @@ export default function EventCreate() {
           <TextField
             fullWidth
             label={t('eventCreate.eventName')}
-            value={name}
-            onChange={(e) => {
-              // 変換確定前(composing中)は state を書き換えない＝二重・累積を防ぐ。
-              if (composingRef.current) return;
-              setName(e.target.value);
-            }}
-            onCompositionStart={() => {
-              composingRef.current = true;
-            }}
-            onCompositionEnd={(e) => {
-              // 変換確定。ここで最終的な入力値だけを反映する。
-              composingRef.current = false;
-              setName((e.target as HTMLInputElement).value);
-            }}
+            inputRef={nameRef}
+            defaultValue=""
+            onChange={(e) => setNameEmpty(e.target.value.trim() === '')}
             required
             sx={{ mb: 2 }}
             placeholder="例: Suzuka Test Session 2026"
-            // スマホのブラウザ自動補完/オートフィル/自動大文字化を無効化。
-            autoComplete="off"
-            slotProps={{
-              htmlInput: {
-                autoCapitalize: 'off',
-                autoCorrect: 'off',
-                spellCheck: false,
-              },
-            }}
           />
 
           <TextField
@@ -232,7 +213,7 @@ export default function EventCreate() {
               type="submit"
               variant="contained"
               size="large"
-              disabled={loading || !name || !courseId || !eventDate}
+              disabled={loading || nameEmpty || !courseId || !eventDate}
               fullWidth
             >
               {loading ? t('eventCreate.creating') : t('eventCreate.create')}
