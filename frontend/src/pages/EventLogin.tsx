@@ -1,6 +1,6 @@
 // イベントコードログインページ
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import {
@@ -21,7 +21,12 @@ export default function EventLogin() {
   const { t } = useTranslation();
   const setEventSession = useAuthStore((state) => state.setEventSession);
 
-  const [eventCode, setEventCode] = useState('');
+  // イベントコードは uncontrolled（value を渡さず ref から読む）。
+  // controlled + onChange の toUpperCase 差し替えは、iOSの予測変換と併さって
+  // カーソルが飛び「打ちながら削除できない/累積する」不具合の原因になるため。
+  // 大文字表示は CSS(textTransform)、値の大文字化は送信時に行う。
+  const codeRef = useRef<HTMLInputElement>(null);
+  const [codeEmpty, setCodeEmpty] = useState(true);
   const [driverName, setDriverName] = useState('');
   const [vehicle, setVehicle] = useState('');
   const [error, setError] = useState('');
@@ -34,7 +39,7 @@ export default function EventLogin() {
 
     try {
       const response = await apiClient.post<EventLoginResponse>('/auth/event-login', {
-        eventCode: eventCode.toUpperCase(),
+        eventCode: (codeRef.current?.value ?? '').trim().toUpperCase(),
         driverName,
         vehicle: vehicle || undefined,
       });
@@ -68,8 +73,9 @@ export default function EventLogin() {
         <TextField
           fullWidth
           label={t('eventLogin.eventCode')}
-          value={eventCode}
-          onChange={(e) => setEventCode(e.target.value.toUpperCase())}
+          inputRef={codeRef}
+          defaultValue=""
+          onChange={(e) => setCodeEmpty(e.target.value.trim() === '')}
           placeholder="ABC123"
           required
           sx={{ mb: 2 }}
@@ -77,12 +83,12 @@ export default function EventLogin() {
             htmlInput: {
               maxLength: 6,
               // iOSの予測変換/自動修正で「打ちながら削除できない/累積する」不具合を防ぐ。
-              // one-time-code にすると確認コード用の予測バーが出ないキーボードになる。
               autoCapitalize: 'characters',
               autoComplete: 'one-time-code',
               autoCorrect: 'off',
               spellCheck: false,
               inputMode: 'text',
+              // 大文字は表示のみCSSで行う（値の書き換えはしない＝カーソルが飛ばない）。
               style: { textTransform: 'uppercase' }
             }
           }}
@@ -112,7 +118,7 @@ export default function EventLogin() {
           fullWidth
           variant="contained"
           size="large"
-          disabled={loading || !eventCode || !driverName || !vehicle}
+          disabled={loading || codeEmpty || !driverName || !vehicle}
         >
           {loading ? t('eventLogin.joining') : t('eventLogin.join')}
         </Button>
