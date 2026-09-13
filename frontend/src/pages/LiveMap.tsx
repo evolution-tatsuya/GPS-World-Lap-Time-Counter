@@ -26,7 +26,7 @@ import 'leaflet/dist/leaflet.css';
 import { useAuthStore } from '../stores/authStore';
 import { getEvent } from '../api/events';
 import { getEventPositions, type LiveParticipant } from '../api/positions';
-import CarCameraViewer from '../components/CarCameraViewer';
+import LiveKitMultiView from '../components/LiveKitMultiView';
 import type { EventWithCourse } from '../types';
 
 const POLL_MS = 1000;
@@ -275,7 +275,6 @@ export default function LiveMap() {
     : [35.681236, 139.767125];
 
   const shownPositions = active ? positions : [];
-  const selected = shownPositions.find((p) => keyOf(p) === selectedKey) || null;
 
   return (
     <Container maxWidth="xl" sx={{ mt: 2, mb: 4 }}>
@@ -353,15 +352,11 @@ export default function LiveMap() {
           >
             <Videocam fontSize="small" color="primary" />
             <Typography variant="subtitle2">
-              車載映像{selected ? `：${selected.zekken ? `No.${selected.zekken} ` : ''}${selected.participantName}` : ''}
+              車載映像
             </Typography>
           </Box>
           {id && event?.cameraEnabled ? (
-            <CarCameraViewer
-              eventId={id}
-              participantName={selected ? selected.participantName : null}
-              label={selected ? `${selected.zekken ? `No.${selected.zekken} ` : ''}${selected.participantName}` : ''}
-            />
+            <LiveKitMultiView eventId={id} />
           ) : (
             <Box
               sx={{

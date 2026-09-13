@@ -20,6 +20,7 @@ import eventRoutes from './routes/events';
 import lapRoutes from './routes/laps';
 import positionRoutes from './routes/positions';
 import signalingRoutes from './routes/signaling';
+import livekitRoutes from './routes/livekit';
 import adminRoutes from './routes/admin';
 
 // 環境変数読み込み
@@ -102,6 +103,7 @@ app.use('/api/events', eventRoutes);
 app.use('/api/laps', lapRoutes);
 app.use('/api/positions', positionRoutes);
 app.use('/api/signaling', signalingRoutes);
+app.use('/api/livekit', livekitRoutes);
 app.use('/api/admin', adminRoutes);
 
 // ========== フロントエンド（同一オリジン配信） ==========
