@@ -247,7 +247,7 @@ router.get('/session', async (req: Request, res: Response) => {
       // 参加者セッション
       const event = await prisma.event.findUnique({
         where: { id: req.session.eventId },
-        include: { course: true }
+        include: { course: true, organizer: { select: { cameraEnabled: true } } }
       });
 
       if (!event) {
@@ -281,6 +281,8 @@ router.get('/session', async (req: Request, res: Response) => {
           circuitName: event.course.name,
           course: shapedCourse,
           circuit: shapedCourse, // 後方互換（フロントのcircuitエイリアス）
+          // 車載カメラ機能の許可（リロード後も配信ボタンを出し分けられるように）
+          cameraEnabled: event.organizer.cameraEnabled,
         },
         driverName: req.session.driverName,
         vehicle: req.session.vehicle
