@@ -11,6 +11,7 @@ export interface AdminUser {
   name: string;
   role: 'DRIVER' | 'ORGANIZER' | 'ADMIN';
   isPromo: boolean;
+  cameraEnabled: boolean;
   subscriptionPlan: SubscriptionPlan;
   subscriptionStatus: SubscriptionStatus;
   subscriptionUntil: string | null;
@@ -26,6 +27,11 @@ export async function getAdminUsers(): Promise<AdminUser[]> {
 // プロモ枠（課金免除）の付与/解除
 export async function setUserPromo(id: string, isPromo: boolean): Promise<AdminUser> {
   return apiClient.put<AdminUser>(`/admin/users/${id}/promo`, { isPromo });
+}
+
+// 車載カメラ(ライブ映像)機能の利用可否を切替（ADMINのみ）
+export async function setUserCamera(id: string, cameraEnabled: boolean): Promise<AdminUser> {
+  return apiClient.put<AdminUser>(`/admin/users/${id}/camera`, { cameraEnabled });
 }
 
 // サブスク状態を手動設定（決済連携前の運用）

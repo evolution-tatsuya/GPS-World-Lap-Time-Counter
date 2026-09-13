@@ -22,6 +22,7 @@ router.get('/users', requireAdmin, async (_req: Request, res: Response) => {
         name: true,
         role: true,
         isPromo: true,
+        cameraEnabled: true,
         subscriptionPlan: true,
         subscriptionStatus: true,
         subscriptionUntil: true,
@@ -60,6 +61,33 @@ router.put('/users/:id/promo', requireAdmin, async (req: Request, res: Response)
     res.json(user);
   } catch (error) {
     console.error('Admin set promo error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// ========== 車載カメラ(ライブ映像)機能の利用可否 ==========
+
+/**
+ * PUT /api/admin/users/:id/camera  body: { cameraEnabled: boolean }
+ * 指定運営アカウントの車載カメラ機能を有効/無効にする。
+ * 有効な運営が作るイベントでのみ、ドライバー/運営が車載映像を使える。
+ */
+router.put('/users/:id/camera', requireAdmin, async (req: Request, res: Response) => {
+  try {
+    const id = String(req.params.id);
+    const { cameraEnabled } = req.body as { cameraEnabled?: boolean };
+    if (typeof cameraEnabled !== 'boolean') {
+      res.status(400).json({ error: 'cameraEnabled (boolean) is required' });
+      return;
+    }
+    const user = await prisma.user.update({
+      where: { id },
+      data: { cameraEnabled },
+      select: { id: true, name: true, email: true, role: true, cameraEnabled: true },
+    });
+    res.json(user);
+  } catch (error) {
+    console.error('Admin set camera error:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });

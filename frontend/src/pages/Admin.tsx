@@ -29,7 +29,7 @@ import { useAuthStore } from '../stores/authStore';
 import { getEvents } from '../api/events';
 import { exportEventLapsCsv } from '../api/laps';
 import {
-  getAdminUsers, setUserPromo, setUserSubscription, type AdminUser,
+  getAdminUsers, setUserPromo, setUserCamera, setUserSubscription, type AdminUser,
   getAdminCourses, setCourseApproval, type AdminCourse, type ApprovalStatus,
 } from '../api/admin';
 import LanguageSwitcher from '../components/LanguageSwitcher';
@@ -92,6 +92,18 @@ export default function Admin() {
       setUsers((prev) => prev.map((x) => (x.id === u.id ? { ...x, isPromo: updated.isPromo } : x)));
     } catch (err) {
       setError(err instanceof Error ? err.message : t('admin.promoUpdateFailed'));
+    } finally {
+      setPromoUpdatingId(null);
+    }
+  };
+
+  const handleToggleCamera = async (u: AdminUser) => {
+    setPromoUpdatingId(u.id);
+    try {
+      const updated = await setUserCamera(u.id, !u.cameraEnabled);
+      setUsers((prev) => prev.map((x) => (x.id === u.id ? { ...x, cameraEnabled: updated.cameraEnabled } : x)));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '車載カメラ設定の更新に失敗しました');
     } finally {
       setPromoUpdatingId(null);
     }
@@ -322,12 +334,13 @@ export default function Admin() {
                   <TableCell align="center">{t('admin.userEvents')}</TableCell>
                   <TableCell align="center">{t('admin.subStatus')}</TableCell>
                   <TableCell align="center">{t('admin.userPromo')}</TableCell>
+                  <TableCell align="center">車載カメラ</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
                 {users.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={6}>{t('admin.noUsers')}</TableCell>
+                    <TableCell colSpan={7}>{t('admin.noUsers')}</TableCell>
                   </TableRow>
                 )}
                 {users.map((u) => (
@@ -358,6 +371,14 @@ export default function Admin() {
                         disabled={promoUpdatingId === u.id}
                         onChange={() => handleTogglePromo(u)}
                         color="secondary"
+                      />
+                    </TableCell>
+                    <TableCell align="center">
+                      <Switch
+                        checked={u.cameraEnabled}
+                        disabled={promoUpdatingId === u.id || u.role !== 'ORGANIZER'}
+                        onChange={() => handleToggleCamera(u)}
+                        color="primary"
                       />
                     </TableCell>
                   </TableRow>
