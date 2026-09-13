@@ -119,6 +119,16 @@ export default function EventCreate() {
             required
             sx={{ mb: 2 }}
             placeholder="例: Suzuka Test Session 2026"
+            // iOS Safariの英字入力で自動大文字化/自動修正が文字を差し替え、
+            // 「打ちながら削除できない/累積する」不具合になるため無効化する。
+            autoComplete="off"
+            slotProps={{
+              htmlInput: {
+                autoCapitalize: 'none',
+                autoCorrect: 'off',
+                spellCheck: false,
+              },
+            }}
           />
 
           <TextField
