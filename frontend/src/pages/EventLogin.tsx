@@ -76,8 +76,13 @@ export default function EventLogin() {
           slotProps={{
             htmlInput: {
               maxLength: 6,
+              // iOSの予測変換/自動修正で「打ちながら削除できない/累積する」不具合を防ぐ。
+              // one-time-code にすると確認コード用の予測バーが出ないキーボードになる。
               autoCapitalize: 'characters',
-              autoComplete: 'off',
+              autoComplete: 'one-time-code',
+              autoCorrect: 'off',
+              spellCheck: false,
+              inputMode: 'text',
               style: { textTransform: 'uppercase' }
             }
           }}
