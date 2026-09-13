@@ -75,7 +75,8 @@ router.get('/:idOrCode', async (req: Request, res: Response) => {
           organizer: {
             select: {
               id: true,
-              name: true
+              name: true,
+              cameraEnabled: true
             }
           }
         }
@@ -90,7 +91,8 @@ router.get('/:idOrCode', async (req: Request, res: Response) => {
           organizer: {
             select: {
               id: true,
-              name: true
+              name: true,
+              cameraEnabled: true
             }
           }
         }
@@ -107,6 +109,8 @@ router.get('/:idOrCode', async (req: Request, res: Response) => {
     // コース座標をnumberに変換してcircuitとして返す（フロントエンド互換性）
     const formattedEvent = {
       ...event,
+      // 主催者の車載カメラ許可をトップレベルにも出す（フロントの出し分け用）
+      cameraEnabled: event.organizer.cameraEnabled,
       circuit: {
         ...event.course,
         ...formatCourseLines(event.course),

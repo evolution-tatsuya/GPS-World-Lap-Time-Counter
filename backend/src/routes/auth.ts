@@ -30,7 +30,8 @@ router.post('/event-login', async (req: Request, res: Response) => {
     const event = await prisma.event.findUnique({
       where: { eventCode: eventCode.toUpperCase() },
       include: {
-        course: true
+        course: true,
+        organizer: { select: { cameraEnabled: true } }
       }
     });
 
@@ -65,7 +66,9 @@ router.post('/event-login', async (req: Request, res: Response) => {
           state: event.course.state,
           ...formatCourseLines(event.course),
           referenceLapTime: event.course.referenceTime
-        }
+        },
+        // 主催者に車載カメラ機能が許可されているか（ドライバー側の配信ボタン出し分け用）
+        cameraEnabled: event.organizer.cameraEnabled
       },
       sessionId: req.sessionID
     });

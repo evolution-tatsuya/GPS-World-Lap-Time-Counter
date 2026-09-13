@@ -137,6 +137,8 @@ export interface Event {
   // 一覧/詳細レスポンスに含まれるコース情報（任意）
   course?: { id: string; name: string };
   circuit?: { id: string; name: string }; // 後方互換エイリアス
+  // 主催者に車載カメラ機能が許可されているか（event-loginレスポンスに含まれる）
+  cameraEnabled?: boolean;
 }
 
 export interface EventWithCourse extends Event {

@@ -26,6 +26,7 @@ import {
   MyLocation,
 } from '@mui/icons-material';
 import { useAuthStore } from '../stores/authStore';
+import CarCameraPublisher from '../components/CarCameraPublisher';
 import { useGPS } from '../hooks/useGPS';
 import { formatLapTime } from '../utils/gpsUtils';
 import { sendPosition } from '../api/positions';
@@ -324,6 +325,9 @@ export default function Measurement() {
           </Typography>
         )}
       </Paper>
+
+      {/* 車載映像の配信（主催者に車載カメラ機能が許可されている場合のみ表示） */}
+      {event?.cameraEnabled && <CarCameraPublisher />}
 
       {/* 計測モード切替 */}
       <Box

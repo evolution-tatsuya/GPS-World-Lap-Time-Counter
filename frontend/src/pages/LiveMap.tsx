@@ -26,6 +26,7 @@ import 'leaflet/dist/leaflet.css';
 import { useAuthStore } from '../stores/authStore';
 import { getEvent } from '../api/events';
 import { getEventPositions, type LiveParticipant } from '../api/positions';
+import CarCameraViewer from '../components/CarCameraViewer';
 import type { EventWithCourse } from '../types';
 
 const POLL_MS = 1000;
@@ -354,30 +355,38 @@ export default function LiveMap() {
               車載映像{selected ? `：${selected.participantName}` : ''}
             </Typography>
           </Box>
-          <Box
-            sx={{
-              flex: 1,
-              minHeight: { xs: '32vh', md: '65vh' },
-              bgcolor: '#000',
-              color: 'grey.500',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              textAlign: 'center',
-              p: 2,
-            }}
-          >
-            <Box>
-              <Typography variant="body2" sx={{ color: 'grey.300', mb: 1 }}>
-                {selected ? `No.${selected.vehicle || '-'} を選択中` : '車を選択してください'}
-              </Typography>
-              <Typography variant="caption">
-                車載映像（WebRTC配信）は次フェーズで接続します。
-                <br />
-                いまは右のマップで現在位置を確認できます。
-              </Typography>
+          {id && event?.cameraEnabled ? (
+            <CarCameraViewer
+              eventId={id}
+              participantName={selected ? selected.participantName : null}
+              label={selected ? `No.${selected.vehicle || '-'} ${selected.participantName}` : ''}
+            />
+          ) : (
+            <Box
+              sx={{
+                flex: 1,
+                minHeight: { xs: '32vh', md: '65vh' },
+                bgcolor: '#000',
+                color: 'grey.500',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                textAlign: 'center',
+                p: 2,
+              }}
+            >
+              <Box>
+                <Typography variant="body2" sx={{ color: 'grey.300', mb: 1 }}>
+                  {event?.cameraEnabled ? '車を選択してください' : '車載カメラ機能は無効です'}
+                </Typography>
+                <Typography variant="caption">
+                  {event?.cameraEnabled
+                    ? '下のリストまたはマーカーで車を選ぶと映像が表示されます。'
+                    : '統括アカウントで車載カメラ機能を有効にすると利用できます。'}
+                </Typography>
+              </Box>
             </Box>
-          </Box>
+          )}
         </Paper>
 
         {/* 右: 地図 */}
