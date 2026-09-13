@@ -19,6 +19,7 @@ const router = Router();
 interface LivePosition {
   participantName: string;
   vehicle: string | null;
+  zekken: string | null;
   lat: number;
   lng: number;
   accuracy: number | null;
@@ -90,6 +91,7 @@ router.post('/', requireSession, async (req: Request, res: Response) => {
     eventMap.set(key, {
       participantName,
       vehicle: req.session.vehicle || null,
+      zekken: req.session.zekken || null,
       lat,
       lng,
       accuracy: typeof accuracy === 'number' ? accuracy : null,
@@ -151,6 +153,7 @@ router.get('/:eventId', requireOrganizer, async (req: Request, res: Response) =>
           .map((p) => ({
             participantName: p.participantName,
             vehicle: p.vehicle,
+            zekken: p.zekken,
             lat: p.lat,
             lng: p.lng,
             accuracy: p.accuracy,

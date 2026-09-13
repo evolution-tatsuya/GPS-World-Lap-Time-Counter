@@ -18,11 +18,11 @@ const router = Router();
  */
 router.post('/event-login', async (req: Request, res: Response) => {
   try {
-    const { eventCode, driverName, vehicle } = req.body as EventLoginRequest;
+    const { eventCode, driverName, vehicle, zekken } = req.body as EventLoginRequest & { zekken?: string };
 
-    // バリデーション
-    if (!eventCode || !driverName || !vehicle) {
-      res.status(400).json({ error: 'Event code, driver name, and vehicle are required' });
+    // バリデーション（ゼッケンも必須）
+    if (!eventCode || !driverName || !vehicle || !zekken) {
+      res.status(400).json({ error: 'Event code, driver name, vehicle, and zekken are required' });
       return;
     }
 
@@ -51,6 +51,7 @@ router.post('/event-login', async (req: Request, res: Response) => {
     req.session.eventId = event.id;
     req.session.driverName = driverName;
     req.session.vehicle = vehicle;
+    req.session.zekken = zekken;
 
     // レスポンス（コース情報を整形して circuit として返す - フロントエンドとの互換性維持）
     res.json({

@@ -129,7 +129,8 @@ function SmoothMarkers({
       const k = keyOf(p);
       seen.add(k);
       const snapped = snapToCourse({ lat: p.lat, lng: p.lng }, courseLine);
-      const label = p.vehicle || p.participantName.slice(0, 2);
+      // マーカーはゼッケン番号を表示（無ければ名前の頭文字）
+      const label = p.zekken || p.participantName.slice(0, 2);
       const existing = store.get(k);
       if (!existing) {
         const marker = L.marker([snapped.lat, snapped.lng], {
@@ -352,14 +353,14 @@ export default function LiveMap() {
           >
             <Videocam fontSize="small" color="primary" />
             <Typography variant="subtitle2">
-              車載映像{selected ? `：${selected.participantName}` : ''}
+              車載映像{selected ? `：${selected.zekken ? `No.${selected.zekken} ` : ''}${selected.participantName}` : ''}
             </Typography>
           </Box>
           {id && event?.cameraEnabled ? (
             <CarCameraViewer
               eventId={id}
               participantName={selected ? selected.participantName : null}
-              label={selected ? `No.${selected.vehicle || '-'} ${selected.participantName}` : ''}
+              label={selected ? `${selected.zekken ? `No.${selected.zekken} ` : ''}${selected.participantName}` : ''}
             />
           ) : (
             <Box
@@ -423,7 +424,7 @@ export default function LiveMap() {
           return (
             <Chip
               key={k}
-              label={`${p.vehicle || p.participantName}${
+              label={`${p.zekken ? `No.${p.zekken} ` : ''}${p.participantName}${
                 p.secondsAgo <= 30 ? '' : ` (${Math.round(p.secondsAgo / 60)}分前)`
               }`}
               color={k === selectedKey ? 'primary' : 'default'}

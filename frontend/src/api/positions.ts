@@ -5,6 +5,7 @@ import { apiClient } from './client';
 export interface LiveParticipant {
   participantName: string;
   vehicle: string | null;
+  zekken: string | null;
   lat: number;
   lng: number;
   accuracy: number | null;

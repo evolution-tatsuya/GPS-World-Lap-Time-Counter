@@ -11,6 +11,7 @@ declare module 'express-session' {
     eventId?: string;
     driverName?: string;
     vehicle?: string;
+    zekken?: string; // ゼッケン番号（参加時必須。マーカー/リスト/映像の表示に使う）
   }
 }
 

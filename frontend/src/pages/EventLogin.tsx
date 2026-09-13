@@ -28,6 +28,7 @@ export default function EventLogin() {
   const codeRef = useRef<HTMLInputElement>(null);
   const [codeEmpty, setCodeEmpty] = useState(true);
   const [driverName, setDriverName] = useState('');
+  const [zekken, setZekken] = useState('');
   const [vehicle, setVehicle] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -42,6 +43,7 @@ export default function EventLogin() {
         eventCode: (codeRef.current?.value ?? '').trim().toUpperCase(),
         driverName,
         vehicle: vehicle || undefined,
+        zekken: zekken.trim(),
       });
 
       setEventSession(response.event, driverName, vehicle);
@@ -110,7 +112,26 @@ export default function EventLogin() {
           onChange={(e) => setVehicle(e.target.value)}
           placeholder="例: FD2 CIVIC TYPE R"
           required
+          sx={{ mb: 2 }}
+        />
+
+        <TextField
+          fullWidth
+          label="ゼッケン番号"
+          value={zekken}
+          onChange={(e) => setZekken(e.target.value)}
+          placeholder="例: 7"
+          required
           sx={{ mb: 3 }}
+          slotProps={{
+            htmlInput: {
+              maxLength: 5,
+              inputMode: 'numeric',
+              autoComplete: 'off',
+              autoCorrect: 'off',
+              spellCheck: false,
+            },
+          }}
         />
 
         <Button
@@ -118,7 +139,7 @@ export default function EventLogin() {
           fullWidth
           variant="contained"
           size="large"
-          disabled={loading || codeEmpty || !driverName || !vehicle}
+          disabled={loading || codeEmpty || !driverName || !vehicle || !zekken.trim()}
         >
           {loading ? t('eventLogin.joining') : t('eventLogin.join')}
         </Button>

@@ -19,6 +19,7 @@ const router = Router();
 interface SignalSlot {
   participantName: string;
   vehicle: string | null;
+  zekken: string | null;
   offer: string | null;                 // publisher(ドライバー)が置くSDP offer(JSON文字列)
   answer: string | null;                // viewer(運営)が置くSDP answer(JSON文字列)
   pubCandidates: string[];              // publisher発のICE候補
@@ -84,6 +85,7 @@ router.post('/offer', requireSession, async (req: Request, res: Response) => {
     m.set(key, {
       participantName,
       vehicle: req.session.vehicle || null,
+      zekken: req.session.zekken || null,
       offer,
       answer: null,
       pubCandidates: [],
@@ -145,7 +147,7 @@ router.get('/:eventId/list', requireOrganizer, async (req: Request, res: Respons
     const m = eventMap(eventId);
     sweep(m);
     const list = Array.from(m.entries()).map(([key, s]) => ({
-      key, participantName: s.participantName, vehicle: s.vehicle,
+      key, participantName: s.participantName, vehicle: s.vehicle, zekken: s.zekken,
     }));
     res.json({ active: isWithinEventWindow(event), publishers: list });
   } catch (error) {
