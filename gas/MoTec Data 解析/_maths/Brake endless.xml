@@ -1,0 +1,24 @@
+<?xml version="1.0"?>
+<Maths Locale="Japanese_Japan.932" DefaultLocale="C" Id="Brake endless">
+ <MathConstants>
+  <MathConstant Name="PI" Value="3.14159265" Unit=""/>
+ </MathConstants>
+ <MathItems>
+  <MathExpression Id="Brake Torque FL" DisplayDPS="2" DisplayColorIndex="4" Interpolate="1" Script="6076*1*170.5*'Brake Pres FL' [bar]/1000000" SampleRate="0" Unit=""/>
+  <MathExpression Id="Brake Torque FR" DisplayDPS="2" DisplayColorIndex="0" Interpolate="1" Script="6076*1*170.5*'Brake Pres FR' [bar]/1000000" SampleRate="0" Unit=""/>
+  <MathExpression Id="Brake Torque RL(T99X)" DisplayDPS="2" DisplayColorIndex="2" Interpolate="1" Script="3318.8*0.92*151.9*'Brake Pres RL' [bar]" SampleRate="0" Unit=""/>
+  <MathExpression Id="Brake Torque RR (T99X)" DisplayDPS="2" DisplayColorIndex="6" Interpolate="1" Script="3318.8*0.92*151.9*'Brake Pres RR' [bar]" SampleRate="0" Unit=""/>
+  <MathExpression Id="Brake Torque Front" DisplayDPS="2" DisplayColorIndex="5" Interpolate="1" Script="'Brake Torque FL'+'Brake Torque FR'" SampleRate="0" Unit=""/>
+  <MathExpression Id="Brake Torque Rear" DisplayDPS="2" DisplayColorIndex="6" Interpolate="1" Script="'Brake Torque RL'+'Brake Torque RR'" SampleRate="0" Unit=""/>
+  <MathExpression Id="Brake Torque Percent" DisplayDPS="2" DisplayColorIndex="1" Interpolate="1" Script="('Brake Torque FL'+'Brake Torque FR')/('Brake Torque FL'+'Brake Torque FR'+'Brake Torque RL'+'Brake Torque RR')*100" SampleRate="0" Unit=""/>
+  <MathExpression Id="Brake Force FL" DisplayDPS="2" DisplayColorIndex="1" Interpolate="1" Script="'Brake Pres FL' [bar]*300*21.2*100/(395*707)" SampleRate="0" Unit=""/>
+  <MathExpression Id="Brake Force FR" DisplayDPS="2" DisplayColorIndex="2" Interpolate="1" Script="'Brake Pres FR' [bar]*300*21.2*100/(395*707)" SampleRate="0" Unit=""/>
+  <MathExpression Id="Brake Force RL" DisplayDPS="2" DisplayColorIndex="2" Interpolate="1" Script="'Brake Pres RL' [bar]*21.8*300*95/(355*707)" SampleRate="0" Unit=""/>
+  <MathExpression Id="Brake Force RR" DisplayDPS="2" DisplayColorIndex="6" Interpolate="1" Script="'Brake Pres RR' [bar]*21.8*300*95/(355*707)" SampleRate="0" Unit=""/>
+  <MathExpression Id="Brake Force Percent" DisplayDPS="2" DisplayColorIndex="0" Interpolate="1" Script="('Brake Force FL'+'Brake Force FR')/ ('Brake Force FL'+'Brake Force FR'+'Brake Force RL'+'Brake Force RR')*100" SampleRate="0" Unit=""/>
+  <MathExpression Id="Brake Torque RR (T45Q)" DisplayDPS="2" DisplayColorIndex="6" Interpolate="1" Script="3318.8*0.7*151.9*'Brake Pres RR' [bar]/1000000" SampleRate="0" Unit=""/>
+  <MathExpression Id="Brake Torque RL(T45Q)" DisplayDPS="2" DisplayColorIndex="2" Interpolate="1" Script="3318.8*0.7*151.9*'Brake Pres RL' [bar]/1000000" SampleRate="0" Unit=""/>
+  <MathExpression Comment="BTP:Brake torque percent" Id="BTP (V18A15/T45Q)" DisplayUnit="%" DisplayDPS="2" DisplayColorIndex="1" Interpolate="1" Script="('Brake Torque FL'+'Brake Torque FR')/('Brake Torque FL'+'Brake Torque FR'+'Brake Torque RL(T99X)'+'Brake Torque RR (T99X)')*100*100000
+" SampleRate="0" Unit="%"/>
+ </MathItems>
+</Maths>

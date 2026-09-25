@@ -1,0 +1,14 @@
+# 実ログデータ(大きい・テスト用)。git管理しない
+*.ld
+*.ld.zip
+
+# 検証・一時ファイル
+.playwright-mcp/
+.appgenius_temp/
+motec_analyzer.backup-*.html
+*.png
+*.jpg
+*.jpeg
+
+# OS
+.DS_Store
