@@ -18,3 +18,8 @@ export async function getPublishToken(): Promise<LiveKitToken> {
 export async function getViewToken(eventId: string): Promise<LiveKitToken> {
   return apiClient.post<LiveKitToken>(`/livekit/token/view/${encodeURIComponent(eventId)}`, {});
 }
+
+// 観客(ギャラリー): イベントコードで誰でも取得できる公開視聴トークン（ログイン不要）
+export async function getPublicViewToken(eventCode: string): Promise<LiveKitToken> {
+  return apiClient.post<LiveKitToken>('/livekit/token/view-public', { eventCode });
+}

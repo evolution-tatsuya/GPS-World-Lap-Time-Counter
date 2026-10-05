@@ -570,6 +570,18 @@ export default function Measurement() {
       >
         ランキングを見る
       </Button>
+
+      {/* ライブダッシュボード（別タブ: 配信を止めずに映像/順位/ラップを見る） */}
+      <Button
+        fullWidth
+        variant="contained"
+        color="info"
+        size="large"
+        sx={{ mt: 1.5 }}
+        onClick={() => window.open('/dashboard-live', '_blank', 'noopener')}
+      >
+        ライブダッシュボードを開く（別画面）
+      </Button>
     </Container>
   );
 }

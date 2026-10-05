@@ -116,4 +116,50 @@ router.post('/token/view/:eventId', requireOrganizer, async (req: Request, res: 
   }
 });
 
+// ========== 観客(ギャラリー): 公開視聴用トークン ==========
+
+/**
+ * POST /api/livekit/token/view-public
+ * イベントコードだけで、誰でも（ログイン不要で）配信を購読できるトークンを発行する。
+ * 観客用。配信はできない(canPublish:false)。開催時間内かつcameraEnabledのイベントのみ。
+ * identityは観客ごとにユニーク生成し、複数観客の衝突を防ぐ。
+ * body: { eventCode: string }
+ */
+router.post('/token/view-public', async (req: Request, res: Response) => {
+  try {
+    const cfg = lkConfig();
+    if (!cfg) { res.status(503).json({ error: 'LiveKit is not configured' }); return; }
+
+    const rawCode = (req.body?.eventCode ?? '') as string;
+    const eventCode = String(rawCode).trim().toUpperCase();
+    if (!eventCode) { res.status(400).json({ error: 'eventCode is required' }); return; }
+
+    const event = await prisma.event.findUnique({
+      where: { eventCode },
+      select: { id: true, startAt: true, endAt: true, eventDate: true, organizer: { select: { cameraEnabled: true } } },
+    });
+    if (!event) { res.status(404).json({ error: 'Event not found' }); return; }
+    if (!event.organizer.cameraEnabled) { res.status(403).json({ error: 'Camera feature is disabled' }); return; }
+    // 公開面を最小化: 開催時間内のみ視聴可（配信が無い時間に公開しない）
+    if (!isWithinEventWindow(event)) { res.status(403).json({ error: 'Event is not currently active' }); return; }
+
+    // 観客ごとにユニークなidentity（session由来のidが無いため、時刻+ランダムで衝突回避）
+    const guestKey = `guest_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
+    const identity = safeIdentity(guestKey);
+    // NOTE: 将来 eventCode 総当たり対策として、ここに軽いレート制限を入れる余地あり
+    const at = new AccessToken(cfg.apiKey, cfg.apiSecret, { identity, name: 'guest' });
+    at.addGrant({
+      room: event.id,
+      roomJoin: true,
+      canPublish: false, // 観客は配信しない（購読のみ）
+      canSubscribe: true,
+    });
+
+    res.json({ url: cfg.url, token: await at.toJwt(), room: event.id, identity });
+  } catch (error) {
+    console.error('LiveKit public view token error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 export default router;

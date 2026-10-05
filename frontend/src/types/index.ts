@@ -264,3 +264,20 @@ export interface ErrorResponse {
   error: string;
   code?: string;
 }
+
+// ========== ライブダッシュボード（feature/live-dashboard） ==========
+
+// ダッシュボードに並べるパネルの識別子
+export type PanelKey = 'multiview' | 'ranking' | 'laptime' | 'coursemap';
+
+// ダッシュボードのモード（入口）。gallery=観客（公開視聴）, driver=ドライバー（配信継続）
+export type DashboardMode = 'gallery' | 'driver';
+
+// ライブ映像の1フィード（LiveKit remote track + 表示メタ）
+// RemoteVideoTrack 等の track 本体は liveStore 内で保持し、型は livekit-client のものを使う。
+export interface LiveFeed {
+  participantId: string; // LiveKit participant identity
+  zekken?: string | null; // ゼッケン（選択の正準キー）
+  driverName?: string | null;
+  vehicle?: string | null;
+}

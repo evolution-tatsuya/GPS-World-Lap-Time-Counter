@@ -228,5 +228,101 @@ time logging/
 
 ---
 
+## 🆕 機能拡張: ライブダッシュボード（2026-10-05 着手 / feature/live-dashboard）
+
+### 進捗状況
+| Stage | 内容 | 状態 |
+|:-----:|------|:----:|
+| 0 | 要件確認・型設計・計画承認 | ✅ |
+| 1 | 型定義＋公開API＋デッドコード削除 | ✅ |
+| 2 | liveStore（状態持ち上げ） | ✅ |
+| 3 | ダッシュボード器＋4パネル | ✅ |
+| 4 | ギャラリー/ドライバー導線＋実機テスト | 🔶 実装済・実機は現地 |
+| 5 | （任意）観客コースマップの走行位置表示 | ⬜ |
+
+### ファイル変更計画
+
+#### 新規作成ファイル
+| ファイル | 理由 |
+|---------|------|
+| frontend/src/stores/liveStore.ts | 【最重要】Room/feeds/選択車/パネル状態を遷移で切れない場所に保持 |
+| frontend/src/pages/LiveDashboard.tsx | ダッシュボード器。パネルON/OFF・レイアウト・mode分岐 |
+| frontend/src/components/panels/PanelFrame.tsx | パネル共通枠（ヘッダ付きPaper） |
+| frontend/src/components/panels/MultiViewPanel.tsx | 映像表示（storeのfeedsをattach） |
+| frontend/src/components/panels/RankingPanel.tsx | 順位表（5秒ポーリング） |
+| frontend/src/components/panels/LapTimePanel.tsx | 個別ラップ（新規・選択車フィルタ） |
+| frontend/src/components/panels/CourseMapPanel.tsx | leafletコースマップ（LiveMapから抽出） |
+| frontend/src/pages/GalleryLogin.tsx | 観客用: eventCode入力→ダッシュボード（ログイン不要） |
+
+#### 修正ファイル
+| ファイル | 変更内容 |
+|---------|---------|
+| backend/src/routes/livekit.ts | POST /token/view-public 追加（認証なし・eventCode・canSubscribe:true） |
+| frontend/src/api/livekit.ts | getPublicViewToken(eventCode) 追加 |
+| frontend/src/App.tsx | ルート /live/:code（gallery）/ dashboard-live（driver）追加 |
+| frontend/src/components/LiveKitMultiView.tsx | Room接続を liveStore へ移譲 |
+| frontend/src/pages/Home.tsx | 観客ダッシュボード入口ボタン追加 |
+| frontend/src/pages/Measurement.tsx | ドライバー用ダッシュボード導線（配信継続のまま） |
+| frontend/src/types/index.ts | LiveFeed/PanelKey/DashboardMode 型追加 |
+| frontend/src/i18n/locales/*.json | ダッシュボード/パネル文言（4言語） |
+
+#### 削除ファイル
+| ファイル | 理由 | 依存箇所 | 削除条件 |
+|---------|------|---------|---------|
+| backend/src/routes/signaling.ts | 旧P2P配信。LiveKit移行で不要・参照ゼロ確認済 | index.ts:22,105 のマウント行 | 同時にマウント行も削除 |
+
+### 実装チェックリスト
+
+#### Stage 1: 型定義＋公開API＋デッドコード削除 ✅
+- [x] types/index.ts に LiveFeed/PanelKey/DashboardMode 追加
+- [x] livekit.ts に POST /token/view-public 追加（cameraEnabled＋isWithinEventWindow ゲート）
+- [x] api/livekit.ts に getPublicViewToken 追加
+- [x] signaling.ts 削除＋index.ts配線除去
+- [x] 検証: backend/frontend tsc 両方 EXIT=0（API実地検証は実機フェーズで）
+
+#### Stage 2: liveStore（状態持ち上げ）【最重要】 ✅
+- [x] liveStore.ts: Room接続・feeds・selectedCarKey(zekken正準)・panels・mode
+- [x] connectViewer/disconnectViewer/setMain/selectCar/togglePanel
+- [x] LiveKitMultiView のRoom接続を store へ移譲（MultiViewPanelで表示、既存LiveMapは温存）
+- [x] 検証: connectViewerに同一eventId接続中はreturnするガード＋connectSeq競合ガード実装
+
+#### Stage 3: ダッシュボード器＋4パネル ✅
+- [x] LiveDashboard.tsx＋PanelFrame
+- [x] MultiViewPanel（store feeds を attach）
+- [x] RankingPanel（既存API流用・5秒ポーリング）
+- [x] LapTimePanel（新規・selectedCarKeyフィルタ）
+- [x] CourseMapPanel（LiveMapからleaflet抽出。ダッシュボードは形状のみ）
+
+#### Stage 4: 2入口＋実機テスト 🔶
+- [x] GalleryLogin（eventCode→/live/:code、public token）＋GalleryDashboard
+- [x] Home に観戦導線 / Measurement にダッシュボード導線（別タブで配信継続）
+- [x] DriverDashboard（参加者はeventCodeで公開視聴）
+- [ ] 実機2台（配信ドライバー＋観客eventCode視聴）で通し確認 ← 現地/デプロイ環境で実施
+  ※ローカルは .env.local(DATABASE_URL/LIVEKIT) 未設定のため起動検証不可。tsc/build/lint は全緑
+
+#### Stage 5: 観客コースマップ走行位置（任意・後回し可）
+- [ ] 公開 positions API（eventCodeで位置取得）追加
+- [ ] CourseMapPanel 観客モードで位置マーカー表示
+
+#### E2E（docs/e2e-specs/live-dashboard-e2e.md）
+| 状態 | ID | 項目 | 期待結果 |
+|:----:|-----|------|---------|
+| [ ] | E2E-001 | 観客がeventCodeで入場→ダッシュボード表示 | 4パネルが並んで表示される |
+| [ ] | E2E-002 | パネルON/OFF中に映像接続が維持される | 映像が再接続されない・選択車が残る |
+| [ ] | E2E-003 | 選択車連動フロー | 映像/地図/順位で車を選ぶと個別ラップが連動 |
+| [ ] | E2E-004 | ドライバーが配信継続のままタイム閲覧 | 配信が切れずダッシュボードで順位が見える |
+| [ ] | E2E-005 | 順位表のライブ更新 | 新しいラップが数秒で反映される |
+
+### 品質ゲート（merge前）
+- [ ] tsc / lint / 既存E2E再実行（デグレ検知）
+- [ ] 型拡張の影響範囲（LiveKitMultiView の利用元 LiveMap）周辺確認
+- [ ] 全緑を確認してから merge
+
+---
+
+**ライブダッシュボード追補 最終更新**: 2026-10-05
+
+---
+
 **最終更新**: 2026-08-04
 **更新者**: Claude Code + タツヤ
