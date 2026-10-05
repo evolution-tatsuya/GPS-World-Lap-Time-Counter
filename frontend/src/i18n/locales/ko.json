@@ -35,6 +35,7 @@
     "title": "이벤트 참가",
     "description": "주최자가 배포한 이벤트 코드를 입력하세요",
     "eventCode": "이벤트 코드",
+    "codeHint": "이벤트 코드에는 I・L・O 문자를 사용하지 않습니다",
     "driverName": "드라이버 이름",
     "vehicle": "차량",
     "join": "참가",

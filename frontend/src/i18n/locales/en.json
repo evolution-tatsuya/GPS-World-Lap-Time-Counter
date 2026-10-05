@@ -35,6 +35,7 @@
     "title": "Join Event",
     "description": "Enter the event code provided by the organizer",
     "eventCode": "Event Code",
+    "codeHint": "Event codes never contain the letters I, L, or O",
     "driverName": "Driver Name",
     "vehicle": "Vehicle",
     "join": "Join",

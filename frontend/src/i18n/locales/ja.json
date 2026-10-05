@@ -35,6 +35,7 @@
     "title": "イベント参加",
     "description": "運営者から配布されたイベントコードを入力してください",
     "eventCode": "イベントコード",
+    "codeHint": "イベントコードに I・L・O は使用していません",
     "driverName": "ドライバー名",
     "vehicle": "車両",
     "join": "参加する",

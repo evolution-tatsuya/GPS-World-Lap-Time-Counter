@@ -58,6 +58,7 @@ export default function GalleryLogin() {
           autoCapitalize="characters"
           autoComplete="off"
           slotProps={{ htmlInput: { style: { textTransform: 'uppercase', letterSpacing: 2, fontSize: 20, textAlign: 'center' } } }}
+          helperText="イベントコードに I・L・O は使用していません"
           sx={{ mb: 2 }}
         />
         <Button type="submit" variant="contained" size="large" fullWidth disabled={loading}>
