@@ -50,6 +50,16 @@ export async function deleteOrganizer(id: string): Promise<void> {
   return apiClient.delete(`/admin/users/${id}`);
 }
 
+// 運営のパスワードを統括がリセット（ADMINのみ）
+export async function resetUserPassword(id: string, newPassword: string): Promise<{ ok: boolean }> {
+  return apiClient.put(`/admin/users/${id}/password`, { newPassword });
+}
+
+// 運営のメール・名前を統括が編集（ADMINのみ）
+export async function updateUserProfile(id: string, data: { email?: string; name?: string }): Promise<AdminUser> {
+  return apiClient.put<AdminUser>(`/admin/users/${id}/profile`, data);
+}
+
 // プロモ枠（課金免除）の付与/解除
 export async function setUserPromo(id: string, isPromo: boolean): Promise<AdminUser> {
   return apiClient.put<AdminUser>(`/admin/users/${id}/promo`, { isPromo });
