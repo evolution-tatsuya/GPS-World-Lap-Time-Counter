@@ -35,6 +35,7 @@
     "title": "加入活动",
     "description": "请输入主办方提供的活动代码",
     "eventCode": "活动代码",
+    "codeHint": "活动代码不使用字母 I、L、O",
     "driverName": "车手姓名",
     "vehicle": "车辆",
     "join": "加入",

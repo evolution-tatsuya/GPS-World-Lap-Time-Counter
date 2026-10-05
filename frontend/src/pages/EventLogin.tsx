@@ -94,6 +94,7 @@ export default function EventLogin() {
               style: { textTransform: 'uppercase' }
             }
           }}
+          helperText={t('eventLogin.codeHint')}
         />
 
         <TextField
