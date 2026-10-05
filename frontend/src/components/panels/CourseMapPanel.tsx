@@ -181,10 +181,27 @@ export default function CourseMapPanel({ eventId, showPositions }: { eventId: st
     );
   }
 
+  // コース中心からの移動範囲を制限（ズームは自由だが、ドラッグでコースを見失わないように）。
+  // 約2.5km四方（±0.025度）。境界では完全に弾く(viscosity=1)。
+  const BOUND = 0.025;
+  const maxBounds: [[number, number], [number, number]] = [
+    [center[0] - BOUND, center[1] - BOUND],
+    [center[0] + BOUND, center[1] + BOUND],
+  ];
+
   return (
     <Box sx={{ height: '100%', minHeight: 0, display: 'flex', flexDirection: 'column' }}>
       <Box sx={{ flex: 1, minHeight: 200 }}>
-        <MapContainer center={center} zoom={15} style={{ height: '100%', width: '100%' }} scrollWheelZoom>
+        <MapContainer
+          center={center}
+          zoom={15}
+          minZoom={13}
+          maxZoom={19}
+          maxBounds={maxBounds}
+          maxBoundsViscosity={1.0}
+          style={{ height: '100%', width: '100%' }}
+          scrollWheelZoom
+        >
           <TileLayer
             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
