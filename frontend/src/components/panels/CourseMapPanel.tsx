@@ -147,10 +147,24 @@ export default function CourseMapPanel({ eventId, showPositions }: { eventId: st
     return () => { cancelled = true; clearInterval(timer); };
   }, [eventId, showPositions]);
 
-  const course = event?.course || event?.circuit;
-  const center: [number, number] = course?.controlLineA
-    ? [course.controlLineA.lat, course.controlLineA.lng]
-    : [35.681236, 139.767125];
+  // コース中心座標を解決する。APIは course/circuit のどちらか、かつ
+  // ネスト形式(controlLineA)・フラット形式(controlLineALat)のどちらかで返すため、
+  // 両方をフォールバックで見る。取れなければ東京駅。
+  const course = (event?.course || event?.circuit) as
+    | { controlLineA?: { lat: number; lng: number }; controlLineALat?: number | string; controlLineALng?: number | string }
+    | undefined;
+  const resolveCenter = (): [number, number] => {
+    if (course?.controlLineA && typeof course.controlLineA.lat === 'number') {
+      return [course.controlLineA.lat, course.controlLineA.lng];
+    }
+    const flatLat = course?.controlLineALat;
+    const flatLng = course?.controlLineALng;
+    if (flatLat != null && flatLng != null) {
+      return [Number(flatLat), Number(flatLng)];
+    }
+    return [35.681236, 139.767125];
+  };
+  const center = resolveCenter();
 
   const shownPositions = showPositions && active ? positions : [];
 
