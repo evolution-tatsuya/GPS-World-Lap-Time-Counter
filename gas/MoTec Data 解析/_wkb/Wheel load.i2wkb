@@ -1,0 +1,379 @@
+<?xml version="1.0"?>
+<Workbook Locale="Japanese_Japan.932" DefaultLocale="C" Version="200" Name="Wheel load" Profile="Circuit" Active="Worksheets">
+ <Worksheets Version="100" Name="Worksheets" PosPC="0,0,1000,1000" Active="Wheel Load">
+  <Worksheet Version="200" Name="Wheel Load" LinkTo="Laps" DataDomain="1" LockByGPSTime="0">
+   <Controls Active="Time/Distance Graph">
+    <MoTeC.TimeDistance Version="100" Name="Time/Distance Graph" PosPC="0,0,1000,1000" ShowCaption="0" AutoCaption="0" LinkZoom="1" ModeId="0" ShowDataLegend="1" ShowColorLegend="1" TelemetryZoom="0" TraceLineWidth="1" TracePointSize="3" TraceStyle="0" LinkCursor="1" LinkDatum="1" ShowKeyValues="1" ShowKeyStats="1" KeyMode="0" KeyPos="1" ShowGridLines="0" ShowXAxis="1" ShowXAxisScrollBar="0" ShowYAxis="0" ShowYAxisScrollBar="0" ShowMarkers="0" ShowVSP="0" ShowDeviveEvents="1" ShowBands="0" BandGroup="Outings:Laps:Track Sections:Default" BandMode="1" OverlapMode="0" VariancePos="0.25" VarianceAutoScale="1">
+     <Graphs ActivateChild="Group 5">
+      <Graph Name="Group 1" ScaleMode="2" ScaleMin="0" ScaleMax="1">
+       <Edges Mode="0" TopEdge="0" BottomEdge="126"/>
+       <Edges Mode="1" TopEdge="0" BottomEdge="1000"/>
+       <Lines>
+        <Line Index="0" Enabled="1" Value="0" Color="210,210,210"/>
+        <Line Index="1" Enabled="0" Value="0" Color="0,0,248"/>
+        <Line Index="2" Enabled="0" Value="0" Color="248,0,0"/>
+       </Lines>
+       <Traces ActiveTrace="Speed_ecu">
+        <Trace Id="Speed_ecu" DisplayUnit="km/h" DisplayDPS="1" Visible="1"/>
+       </Traces>
+      </Graph>
+      <Graph Name="Group 2" ScaleMode="2" ScaleMin="0" ScaleMax="1">
+       <Edges Mode="0" TopEdge="126" BottomEdge="331"/>
+       <Edges Mode="1" TopEdge="0" BottomEdge="1000"/>
+       <Lines>
+        <Line Index="0" Enabled="1" Value="0" Color="210,210,210"/>
+        <Line Index="1" Enabled="0" Value="0" Color="0,0,248"/>
+        <Line Index="2" Enabled="0" Value="0" Color="248,0,0"/>
+       </Lines>
+       <Traces ActiveTrace="ABS Brake Pres">
+        <Trace Id="ABS Brake Pres" DisplayUnit="bar" DisplayDPS="2" Visible="1"/>
+       </Traces>
+      </Graph>
+      <Graph Name="Group 3" ScaleMode="2" ScaleMin="0" ScaleMax="1">
+       <Edges Mode="0" TopEdge="331" BottomEdge="496"/>
+       <Edges Mode="1" TopEdge="0" BottomEdge="1000"/>
+       <Lines>
+        <Line Index="0" Enabled="1" Value="0" Color="210,210,210"/>
+        <Line Index="1" Enabled="0" Value="0" Color="0,0,248"/>
+        <Line Index="2" Enabled="0" Value="0" Color="248,0,0"/>
+       </Lines>
+       <Traces ActiveTrace="Wheel Load FL">
+        <Trace Id="Wheel Load FL" DisplayUnit="N" DisplayDPS="2" Visible="1"/>
+       </Traces>
+      </Graph>
+      <Graph Name="Group 6" ScaleMode="2" ScaleMin="0" ScaleMax="1">
+       <Edges Mode="0" TopEdge="496" BottomEdge="663"/>
+       <Edges Mode="1" TopEdge="0" BottomEdge="1000"/>
+       <Lines>
+        <Line Index="0" Enabled="1" Value="0" Color="210,210,210"/>
+        <Line Index="1" Enabled="0" Value="0" Color="0,0,248"/>
+        <Line Index="2" Enabled="0" Value="0" Color="248,0,0"/>
+       </Lines>
+       <Traces ActiveTrace="Wheel Load FR">
+        <Trace Id="Wheel Load FR" DisplayUnit="N" DisplayDPS="2" Visible="1"/>
+       </Traces>
+      </Graph>
+      <Graph Name="Group 4" ScaleMode="2" ScaleMin="0" ScaleMax="1">
+       <Edges Mode="0" TopEdge="663" BottomEdge="833"/>
+       <Edges Mode="1" TopEdge="0" BottomEdge="1000"/>
+       <Lines>
+        <Line Index="0" Enabled="1" Value="0" Color="210,210,210"/>
+        <Line Index="1" Enabled="0" Value="0" Color="0,0,248"/>
+        <Line Index="2" Enabled="0" Value="0" Color="248,0,0"/>
+       </Lines>
+       <Traces ActiveTrace="Wheel Load RL">
+        <Trace Id="Wheel Load RL" DisplayUnit="N" DisplayDPS="2" Visible="1"/>
+       </Traces>
+      </Graph>
+      <Graph Name="Group 5" ScaleMode="2" ScaleMin="0" ScaleMax="1">
+       <Edges Mode="0" TopEdge="833" BottomEdge="1000"/>
+       <Edges Mode="1" TopEdge="0" BottomEdge="1000"/>
+       <Lines>
+        <Line Index="0" Enabled="1" Value="0" Color="210,210,210"/>
+        <Line Index="1" Enabled="0" Value="0" Color="0,0,248"/>
+        <Line Index="2" Enabled="0" Value="0" Color="248,0,0"/>
+       </Lines>
+       <Traces ActiveTrace="Wheel Load RR">
+        <Trace Id="Wheel Load RR" DisplayUnit="N" DisplayDPS="2" Visible="1"/>
+       </Traces>
+      </Graph>
+     </Graphs>
+     <Cursor Version="1" Style="1" Snap="1"/>
+    </MoTeC.TimeDistance>
+   </Controls>
+  </Worksheet>
+  <Worksheet Version="200" Name="Wheel load FrRr" LinkTo="Laps" DataDomain="1" LockByGPSTime="0">
+   <Controls Active="Time/Distance Graph">
+    <MoTeC.TimeDistance Version="100" Name="Time/Distance Graph" PosPC="0,0,1000,1000" ShowCaption="0" AutoCaption="0" LinkZoom="1" ModeId="0" ShowDataLegend="1" ShowColorLegend="1" TelemetryZoom="0" TraceLineWidth="1" TracePointSize="3" TraceStyle="0" LinkCursor="1" LinkDatum="1" ShowKeyValues="1" ShowKeyStats="0" KeyMode="0" KeyPos="1" ShowGridLines="1" ShowXAxis="1" ShowXAxisScrollBar="0" ShowYAxis="1" ShowYAxisScrollBar="1" ShowMarkers="1" ShowVSP="0" ShowDeviveEvents="1" ShowBands="1" BandGroup="Outings:Laps:Track Sections:Default" BandMode="1" OverlapMode="0" VariancePos="0.278311" VarianceAutoScale="1">
+     <Graphs ActivateChild="Group 6">
+      <Graph Name="Group 4" ScaleMode="2" ScaleMin="0" ScaleMax="1">
+       <Edges Mode="0" TopEdge="0" BottomEdge="165"/>
+       <Edges Mode="1" TopEdge="0" BottomEdge="1000"/>
+       <Lines>
+        <Line Index="0" Enabled="1" Value="0" Color="210,210,210"/>
+        <Line Index="1" Enabled="0" Value="0" Color="0,0,248"/>
+        <Line Index="2" Enabled="0" Value="0" Color="248,0,0"/>
+       </Lines>
+       <Traces ActiveTrace="Speed_ecu">
+        <Trace Id="Speed_ecu" DisplayUnit="km/h" DisplayDPS="1" Visible="1"/>
+       </Traces>
+      </Graph>
+      <Graph Name="Group 5" ScaleMode="2" ScaleMin="0" ScaleMax="1">
+       <Edges Mode="0" TopEdge="165" BottomEdge="305"/>
+       <Edges Mode="1" TopEdge="0" BottomEdge="1000"/>
+       <Lines>
+        <Line Index="0" Enabled="1" Value="0" Color="210,210,210"/>
+        <Line Index="1" Enabled="0" Value="0" Color="0,0,248"/>
+        <Line Index="2" Enabled="0" Value="0" Color="248,0,0"/>
+       </Lines>
+       <Traces ActiveTrace="aps">
+        <Trace Id="ABS Brake Pres" DisplayUnit="bar" DisplayDPS="2" Visible="1"/>
+        <Trace Id="aps" DisplayUnit="%" DisplayDPS="1" Visible="1"/>
+       </Traces>
+      </Graph>
+      <Graph Name="Group 6" ScaleMode="2" ScaleMin="0" ScaleMax="1">
+       <Edges Mode="0" TopEdge="305" BottomEdge="469"/>
+       <Edges Mode="1" TopEdge="0" BottomEdge="1000"/>
+       <Lines>
+        <Line Index="0" Enabled="1" Value="0" Color="210,210,210"/>
+        <Line Index="1" Enabled="0" Value="0" Color="0,0,248"/>
+        <Line Index="2" Enabled="0" Value="0" Color="248,0,0"/>
+       </Lines>
+       <Traces ActiveTrace="Steering Angle">
+        <Trace Id="Steering Angle" DisplayUnit="deg" DisplayDPS="1" Visible="1"/>
+       </Traces>
+      </Graph>
+      <Graph Name="Group 1" ScaleMode="2" ScaleMin="0" ScaleMax="1">
+       <Edges Mode="0" TopEdge="469" BottomEdge="647"/>
+       <Edges Mode="1" TopEdge="0" BottomEdge="1000"/>
+       <Lines>
+        <Line Index="0" Enabled="1" Value="0" Color="210,210,210"/>
+        <Line Index="1" Enabled="0" Value="0" Color="0,0,248"/>
+        <Line Index="2" Enabled="0" Value="0" Color="248,0,0"/>
+       </Lines>
+       <Traces ActiveTrace="Wheel Load Front">
+        <Trace Id="Wheel Load Front" DisplayUnit="N" DisplayDPS="0" Visible="1"/>
+        <Trace Id="FrWeight7400" DisplayUnit="N" DisplayDPS="0" Visible="1"/>
+       </Traces>
+      </Graph>
+      <Graph Name="Group 2" ScaleMode="2" ScaleMin="0" ScaleMax="1">
+       <Edges Mode="0" TopEdge="647" BottomEdge="819"/>
+       <Edges Mode="1" TopEdge="0" BottomEdge="1000"/>
+       <Lines>
+        <Line Index="0" Enabled="1" Value="0" Color="210,210,210"/>
+        <Line Index="1" Enabled="0" Value="0" Color="0,0,248"/>
+        <Line Index="2" Enabled="0" Value="0" Color="248,0,0"/>
+       </Lines>
+       <Traces ActiveTrace="Wheel Load Rear">
+        <Trace Id="Wheel Load Rear" DisplayUnit="N" DisplayDPS="0" Visible="1"/>
+        <Trace Id="RrWeight6000" DisplayUnit="N" DisplayDPS="0" Visible="1"/>
+       </Traces>
+      </Graph>
+      <Graph Name="Group 3" ScaleMode="2" ScaleMin="0" ScaleMax="1">
+       <Edges Mode="0" TopEdge="819" BottomEdge="1000"/>
+       <Edges Mode="1" TopEdge="0" BottomEdge="1000"/>
+       <Lines>
+        <Line Index="0" Enabled="1" Value="0" Color="210,210,210"/>
+        <Line Index="1" Enabled="0" Value="0" Color="0,0,248"/>
+        <Line Index="2" Enabled="0" Value="0" Color="248,0,0"/>
+       </Lines>
+       <Traces ActiveTrace="Wheel Load Total">
+        <Trace Id="Wheel Load Total" DisplayUnit="" DisplayDPS="0" Visible="1"/>
+       </Traces>
+      </Graph>
+     </Graphs>
+     <Cursor Version="1" Style="4" Snap="1"/>
+    </MoTeC.TimeDistance>
+   </Controls>
+  </Worksheet>
+  <Worksheet Version="200" Name="Damper Force" LinkTo="Laps" LockByGPSTime="0">
+   <Controls Active="Time/Distance Graph">
+    <MoTeC.TimeDistance Version="100" Name="Time/Distance Graph" PosPC="0,0,1000,1000" ShowCaption="0" AutoCaption="0" LinkZoom="1" ModeId="0" ShowDataLegend="1" ShowColorLegend="1" TelemetryZoom="0" TraceLineWidth="1" TracePointSize="3" TraceStyle="0" LinkCursor="1" LinkDatum="1" ShowKeyValues="1" ShowKeyStats="1" KeyMode="0" KeyPos="1" ShowGridLines="0" ShowXAxis="1" ShowXAxisScrollBar="0" ShowYAxis="0" ShowYAxisScrollBar="0" ShowMarkers="0" ShowVSP="0" ShowDeviveEvents="1" ShowBands="0" BandGroup="Outings:Laps:Track Sections:Default" BandMode="1" OverlapMode="0" VariancePos="0.25" VarianceAutoScale="1">
+     <Graphs ActivateChild="Group 3">
+      <Graph Name="Group 1" ScaleMode="2" ScaleMin="0" ScaleMax="1">
+       <Edges Mode="0" TopEdge="0" BottomEdge="125"/>
+       <Edges Mode="1" TopEdge="0" BottomEdge="1000"/>
+       <Lines>
+        <Line Index="0" Enabled="1" Value="0" Color="210,210,210"/>
+        <Line Index="1" Enabled="0" Value="0" Color="0,0,248"/>
+        <Line Index="2" Enabled="0" Value="0" Color="248,0,0"/>
+       </Lines>
+       <Traces ActiveTrace="Ground Speed">
+        <Trace Id="Ground Speed" DisplayUnit="km/h" DisplayDPS="1" Visible="1"/>
+       </Traces>
+      </Graph>
+      <Graph Name="Group 2" ScaleMode="2" ScaleMin="0" ScaleMax="1">
+       <Edges Mode="0" TopEdge="125" BottomEdge="344"/>
+       <Edges Mode="1" TopEdge="0" BottomEdge="1000"/>
+       <Lines>
+        <Line Index="0" Enabled="1" Value="0" Color="210,210,210"/>
+        <Line Index="1" Enabled="0" Value="0" Color="0,0,248"/>
+        <Line Index="2" Enabled="0" Value="0" Color="248,0,0"/>
+       </Lines>
+       <Traces ActiveTrace="ABS Brake Pres">
+        <Trace Id="ABS Brake Pres" DisplayUnit="bar" DisplayDPS="2" Visible="1"/>
+       </Traces>
+      </Graph>
+      <Graph Name="Group 3" ScaleMode="2" ScaleMin="0" ScaleMax="1">
+       <Edges Mode="0" TopEdge="344" BottomEdge="558"/>
+       <Edges Mode="1" TopEdge="0" BottomEdge="1000"/>
+       <Lines>
+        <Line Index="0" Enabled="1" Value="0" Color="210,210,210"/>
+        <Line Index="1" Enabled="0" Value="0" Color="0,0,248"/>
+        <Line Index="2" Enabled="0" Value="0" Color="248,0,0"/>
+       </Lines>
+       <Traces ActiveTrace="Damper ForceFL">
+        <Trace Id="Damper ForceFL" DisplayUnit="N" DisplayDPS="0" Visible="1"/>
+       </Traces>
+      </Graph>
+      <Graph Name="Group 4" ScaleMode="2" ScaleMin="0" ScaleMax="1">
+       <Edges Mode="0" TopEdge="558" BottomEdge="654"/>
+       <Edges Mode="1" TopEdge="0" BottomEdge="1000"/>
+       <Lines>
+        <Line Index="0" Enabled="1" Value="0" Color="210,210,210"/>
+        <Line Index="1" Enabled="0" Value="0" Color="0,0,248"/>
+        <Line Index="2" Enabled="0" Value="0" Color="248,0,0"/>
+       </Lines>
+       <Traces ActiveTrace="Damper ForceFR">
+        <Trace Id="Damper ForceFR" DisplayUnit="N" DisplayDPS="0" Visible="1"/>
+       </Traces>
+      </Graph>
+      <Graph Name="Group 5" ScaleMode="2" ScaleMin="0" ScaleMax="1">
+       <Edges Mode="0" TopEdge="654" BottomEdge="832"/>
+       <Edges Mode="1" TopEdge="0" BottomEdge="1000"/>
+       <Lines>
+        <Line Index="0" Enabled="1" Value="0" Color="210,210,210"/>
+        <Line Index="1" Enabled="0" Value="0" Color="0,0,248"/>
+        <Line Index="2" Enabled="0" Value="0" Color="248,0,0"/>
+       </Lines>
+       <Traces ActiveTrace="Damper ForceRL">
+        <Trace Id="Damper ForceRL" DisplayUnit="N" DisplayDPS="0" Visible="1"/>
+       </Traces>
+      </Graph>
+      <Graph Name="Group 6" ScaleMode="2" ScaleMin="0" ScaleMax="1">
+       <Edges Mode="0" TopEdge="832" BottomEdge="1000"/>
+       <Edges Mode="1" TopEdge="0" BottomEdge="1000"/>
+       <Lines>
+        <Line Index="0" Enabled="1" Value="0" Color="210,210,210"/>
+        <Line Index="1" Enabled="0" Value="0" Color="0,0,248"/>
+        <Line Index="2" Enabled="0" Value="0" Color="248,0,0"/>
+       </Lines>
+       <Traces ActiveTrace="Damper ForceRR">
+        <Trace Id="Damper ForceRR" DisplayUnit="N" DisplayDPS="0" Visible="1"/>
+       </Traces>
+      </Graph>
+     </Graphs>
+     <Cursor Version="1" Style="1" Snap="1"/>
+    </MoTeC.TimeDistance>
+   </Controls>
+  </Worksheet>
+  <Worksheet Version="200" Name="Damper Force2" LinkTo="Laps" LockByGPSTime="0">
+   <Controls Active="Time/Distance Graph">
+    <MoTeC.TimeDistance Version="100" Name="Time/Distance Graph" PosPC="0,0,1000,1000" ShowCaption="0" AutoCaption="0" LinkZoom="1" ModeId="0" ShowDataLegend="1" ShowColorLegend="1" TelemetryZoom="0" TraceLineWidth="1" TracePointSize="3" TraceStyle="0" LinkCursor="1" LinkDatum="1" ShowKeyValues="1" ShowKeyStats="1" KeyMode="0" KeyPos="1" ShowGridLines="0" ShowXAxis="1" ShowXAxisScrollBar="0" ShowYAxis="0" ShowYAxisScrollBar="0" ShowMarkers="0" ShowVSP="0" ShowDeviveEvents="1" ShowBands="0" BandGroup="Outings:Laps:Track Sections:Default" BandMode="1" OverlapMode="0" VariancePos="0.25" VarianceAutoScale="1">
+     <Graphs ActivateChild="Group 2">
+      <Graph Name="Group 1" ScaleMode="2" ScaleMin="0" ScaleMax="1">
+       <Edges Mode="0" TopEdge="0" BottomEdge="189"/>
+       <Edges Mode="1" TopEdge="0" BottomEdge="1000"/>
+       <Lines>
+        <Line Index="0" Enabled="1" Value="0" Color="210,210,210"/>
+        <Line Index="1" Enabled="0" Value="0" Color="0,0,248"/>
+        <Line Index="2" Enabled="0" Value="0" Color="248,0,0"/>
+       </Lines>
+       <Traces ActiveTrace="Ground Speed">
+        <Trace Id="Ground Speed" DisplayUnit="km/h" DisplayDPS="1" Visible="1"/>
+       </Traces>
+      </Graph>
+      <Graph Name="Group 2" ScaleMode="2" ScaleMin="0" ScaleMax="1">
+       <Edges Mode="0" TopEdge="189" BottomEdge="499"/>
+       <Edges Mode="1" TopEdge="0" BottomEdge="1000"/>
+       <Lines>
+        <Line Index="0" Enabled="1" Value="0" Color="210,210,210"/>
+        <Line Index="1" Enabled="0" Value="0" Color="0,0,248"/>
+        <Line Index="2" Enabled="0" Value="0" Color="248,0,0"/>
+       </Lines>
+       <Traces ActiveTrace="ABS Brake Pres">
+        <Trace Id="ABS Brake Pres" DisplayUnit="bar" DisplayDPS="2" Visible="1"/>
+       </Traces>
+      </Graph>
+      <Graph Name="Group 3" ScaleMode="2" ScaleMin="0" ScaleMax="1">
+       <Edges Mode="0" TopEdge="499" BottomEdge="750"/>
+       <Edges Mode="1" TopEdge="0" BottomEdge="1000"/>
+       <Lines>
+        <Line Index="0" Enabled="1" Value="0" Color="210,210,210"/>
+        <Line Index="1" Enabled="0" Value="0" Color="0,0,248"/>
+        <Line Index="2" Enabled="0" Value="0" Color="248,0,0"/>
+       </Lines>
+       <Traces ActiveTrace="Damper ForceFR">
+        <Trace Id="Damper ForceFL" DisplayUnit="N" DisplayDPS="0" Visible="1"/>
+        <Trace Id="Damper ForceFR" DisplayUnit="N" DisplayDPS="0" Visible="1"/>
+       </Traces>
+      </Graph>
+      <Graph Name="Group 4" ScaleMode="2" ScaleMin="0" ScaleMax="1">
+       <Edges Mode="0" TopEdge="750" BottomEdge="1000"/>
+       <Edges Mode="1" TopEdge="0" BottomEdge="1000"/>
+       <Lines>
+        <Line Index="0" Enabled="1" Value="0" Color="210,210,210"/>
+        <Line Index="1" Enabled="0" Value="0" Color="0,0,248"/>
+        <Line Index="2" Enabled="0" Value="0" Color="248,0,0"/>
+       </Lines>
+       <Traces ActiveTrace="Damper ForceRR">
+        <Trace Id="Damper ForceRL" DisplayUnit="N" DisplayDPS="0" Visible="1"/>
+        <Trace Id="Damper ForceRR" DisplayUnit="N" DisplayDPS="0" Visible="1"/>
+       </Traces>
+      </Graph>
+     </Graphs>
+     <Cursor Version="1" Style="1" Snap="1"/>
+    </MoTeC.TimeDistance>
+   </Controls>
+  </Worksheet>
+  <Worksheet Version="200" Name="Damper Force3" LinkTo="Laps" LockByGPSTime="0">
+   <Controls Active="Time/Distance Graph">
+    <MoTeC.TimeDistance Version="100" Name="Time/Distance Graph" PosPC="0,0,1000,1000" ShowCaption="0" AutoCaption="0" LinkZoom="1" ModeId="0" ShowDataLegend="1" ShowColorLegend="1" TelemetryZoom="0" TraceLineWidth="1" TracePointSize="3" TraceStyle="0" LinkCursor="1" LinkDatum="1" ShowKeyValues="1" ShowKeyStats="0" KeyMode="0" KeyPos="1" ShowGridLines="1" ShowXAxis="1" ShowXAxisScrollBar="0" ShowYAxis="1" ShowYAxisScrollBar="1" ShowMarkers="1" ShowVSP="0" ShowDeviveEvents="1" ShowBands="1" BandGroup="Outings:Laps:Track Sections:Default" BandMode="1" OverlapMode="0" VariancePos="0.25" VarianceAutoScale="1">
+     <Graphs ActivateChild="Group 2">
+      <Graph Name="Group 5" ScaleMode="2" ScaleMin="0" ScaleMax="1">
+       <Edges Mode="0" TopEdge="0" BottomEdge="200"/>
+       <Edges Mode="1" TopEdge="0" BottomEdge="1000"/>
+       <Lines>
+        <Line Index="0" Enabled="1" Value="0" Color="210,210,210"/>
+        <Line Index="1" Enabled="0" Value="0" Color="0,0,248"/>
+        <Line Index="2" Enabled="0" Value="0" Color="248,0,0"/>
+       </Lines>
+       <Traces ActiveTrace="Speed_ecu">
+        <Trace Id="Speed_ecu" DisplayUnit="km/h" DisplayDPS="1" Visible="1"/>
+       </Traces>
+      </Graph>
+      <Graph Name="Group 1" ScaleMode="2" ScaleMin="0" ScaleMax="1">
+       <Edges Mode="0" TopEdge="200" BottomEdge="399"/>
+       <Edges Mode="1" TopEdge="0" BottomEdge="1000"/>
+       <Lines>
+        <Line Index="0" Enabled="1" Value="0" Color="210,210,210"/>
+        <Line Index="1" Enabled="0" Value="0" Color="0,0,248"/>
+        <Line Index="2" Enabled="0" Value="0" Color="248,0,0"/>
+       </Lines>
+       <Traces ActiveTrace="Damper ForceFL">
+        <Trace Id="Damper ForceFL" DisplayUnit="N" DisplayDPS="0" Visible="1"/>
+       </Traces>
+      </Graph>
+      <Graph Name="Group 2" ScaleMode="2" ScaleMin="0" ScaleMax="1">
+       <Edges Mode="0" TopEdge="399" BottomEdge="599"/>
+       <Edges Mode="1" TopEdge="0" BottomEdge="1000"/>
+       <Lines>
+        <Line Index="0" Enabled="1" Value="0" Color="210,210,210"/>
+        <Line Index="1" Enabled="0" Value="0" Color="0,0,248"/>
+        <Line Index="2" Enabled="0" Value="0" Color="248,0,0"/>
+       </Lines>
+       <Traces ActiveTrace="Damper ForceFR">
+        <Trace Id="Damper ForceFR" DisplayUnit="N" DisplayDPS="0" Visible="1"/>
+       </Traces>
+      </Graph>
+      <Graph Name="Group 3" ScaleMode="2" ScaleMin="0" ScaleMax="1">
+       <Edges Mode="0" TopEdge="599" BottomEdge="800"/>
+       <Edges Mode="1" TopEdge="0" BottomEdge="1000"/>
+       <Lines>
+        <Line Index="0" Enabled="1" Value="0" Color="210,210,210"/>
+        <Line Index="1" Enabled="0" Value="0" Color="0,0,248"/>
+        <Line Index="2" Enabled="0" Value="0" Color="248,0,0"/>
+       </Lines>
+       <Traces ActiveTrace="Damper ForceRL">
+        <Trace Id="Damper ForceRL" DisplayUnit="N" DisplayDPS="0" Visible="1"/>
+       </Traces>
+      </Graph>
+      <Graph Name="Group 4" ScaleMode="2" ScaleMin="0" ScaleMax="1">
+       <Edges Mode="0" TopEdge="800" BottomEdge="1000"/>
+       <Edges Mode="1" TopEdge="0" BottomEdge="1000"/>
+       <Lines>
+        <Line Index="0" Enabled="1" Value="0" Color="210,210,210"/>
+        <Line Index="1" Enabled="0" Value="0" Color="0,0,248"/>
+        <Line Index="2" Enabled="0" Value="0" Color="248,0,0"/>
+       </Lines>
+       <Traces ActiveTrace="Damper ForceRR">
+        <Trace Id="Damper ForceRR" DisplayUnit="N" DisplayDPS="0" Visible="1"/>
+       </Traces>
+      </Graph>
+     </Graphs>
+     <Cursor Version="1" Style="1" Snap="1"/>
+    </MoTeC.TimeDistance>
+   </Controls>
+  </Worksheet>
+ </Worksheets>
+</Workbook>

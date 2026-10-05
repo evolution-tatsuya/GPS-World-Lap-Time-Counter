@@ -1,0 +1,816 @@
+<?xml version="1.0"?>
+<Workbook Locale="Japanese_Japan.932" DefaultLocale="C" Version="200" Name="PDM" Profile="Circuit" Active="Worksheets">
+ <Worksheets Version="100" Name="Worksheets" PosPC="0,0,1000,1000" Active="Fuel Pump A%">
+  <Worksheet Version="200" Name="PDM SW" LinkTo="Laps" LockByGPSTime="0">
+   <Controls Active="Time/Distance Graph">
+    <MoTeC.TimeDistance Version="100" Name="Time/Distance Graph" EnableOverlays="0" PosPC="0,176,493,1000" ShowCaption="0" AutoCaption="0" LinkZoom="1" ModeId="0" ShowDataLegend="1" ShowColorLegend="1" TelemetryZoom="0" TraceLineWidth="1" TracePointSize="3" TraceStyle="0" LinkCursor="1" LinkDatum="1" ShowKeyValues="1" ShowKeyStats="0" KeyMode="0" KeyPos="1" ShowGridLines="0" ShowXAxis="0" ShowXAxisScrollBar="0" ShowYAxis="0" ShowYAxisScrollBar="0" ShowMarkers="0" ShowVSP="0" ShowDeviveEvents="0" ShowBands="0" BandGroup="Outings:Laps:Track Sections:Default" BandMode="1" OverlapMode="0" VariancePos="0.25" VarianceAutoScale="1">
+     <Graphs ActivateChild="Group 7">
+      <Graph Name="Group 2" ScaleMode="1" ScaleMin="0" ScaleMax="2">
+       <Edges Mode="0" TopEdge="0" BottomEdge="104"/>
+       <Edges Mode="1" TopEdge="0" BottomEdge="1000"/>
+       <Lines>
+        <Line Index="0" Enabled="1" Value="0" Color="210,210,210"/>
+        <Line Index="1" Enabled="0" Value="0" Color="0,0,248"/>
+        <Line Index="2" Enabled="0" Value="0" Color="248,0,0"/>
+       </Lines>
+       <Traces ActiveTrace="PDM Fault">
+        <Trace Id="PDM Fault Flag" DisplayUnit="" DisplayDPS="0" Visible="1"/>
+        <Trace Id="PDM Fault" DisplayUnit="" DisplayDPS="0" Visible="1"/>
+       </Traces>
+      </Graph>
+      <Graph Name="Group 6" ScaleMode="1" ScaleMin="0" ScaleMax="2">
+       <Edges Mode="0" TopEdge="104" BottomEdge="285"/>
+       <Edges Mode="1" TopEdge="0" BottomEdge="1000"/>
+       <Lines>
+        <Line Index="0" Enabled="1" Value="0" Color="210,210,210"/>
+        <Line Index="1" Enabled="0" Value="0" Color="0,0,248"/>
+        <Line Index="2" Enabled="0" Value="0" Color="248,0,0"/>
+       </Lines>
+       <Traces ActiveTrace="PDM S26 Engine1">
+        <Trace Id="PDM S7 ECU" DisplayUnit="" DisplayDPS="0" Visible="1"/>
+        <Trace Id="PDM I5 IGN SW" DisplayUnit="" DisplayDPS="0" Visible="1"/>
+        <Trace Id="PDM I1 MAIN SW" DisplayUnit="" DisplayDPS="0" Visible="1"/>
+        <Trace Id="PDM S26 Engine1" DisplayUnit="" DisplayDPS="0" Visible="1"/>
+        <Trace Id="PDM S27 Engine2" DisplayUnit="" DisplayDPS="0" Visible="1"/>
+       </Traces>
+      </Graph>
+      <Graph Name="Group 7" ScaleMode="1" ScaleMin="0" ScaleMax="2">
+       <Edges Mode="0" TopEdge="285" BottomEdge="481"/>
+       <Edges Mode="1" TopEdge="0" BottomEdge="1000"/>
+       <Lines>
+        <Line Index="0" Enabled="1" Value="0" Color="210,210,210"/>
+        <Line Index="1" Enabled="0" Value="0" Color="0,0,248"/>
+        <Line Index="2" Enabled="0" Value="0" Color="248,0,0"/>
+       </Lines>
+       <Traces ActiveTrace="PDM I4 Stater SW">
+        <Trace Id="PDM S6 Starter" DisplayUnit="" DisplayDPS="0" Visible="1"/>
+        <Trace Id="PDM I4 Stater SW" DisplayUnit="" DisplayDPS="0" Visible="1"/>
+       </Traces>
+      </Graph>
+      <Graph Name="Group 3" ScaleMode="1" ScaleMin="0" ScaleMax="2">
+       <Edges Mode="0" TopEdge="481" BottomEdge="652"/>
+       <Edges Mode="1" TopEdge="0" BottomEdge="1000"/>
+       <Lines>
+        <Line Index="0" Enabled="1" Value="0" Color="210,210,210"/>
+        <Line Index="1" Enabled="0" Value="0" Color="0,0,248"/>
+        <Line Index="2" Enabled="0" Value="0" Color="248,0,0"/>
+       </Lines>
+       <Traces ActiveTrace="PDM S3 ABS Valve">
+        <Trace Id="PDM S3 ABS Valve" DisplayUnit="" DisplayDPS="0" Visible="1"/>
+        <Trace Id="PDM S4 AGS Compressor" DisplayUnit="" DisplayDPS="0" Visible="1"/>
+        <Trace Id="PDM S28 Shift ACT&amp;ALT" DisplayUnit="" DisplayDPS="0" Visible="1"/>
+       </Traces>
+      </Graph>
+      <Graph Name="Group 5" ScaleMode="1" ScaleMin="0" ScaleMax="2">
+       <Edges Mode="0" TopEdge="652" BottomEdge="877"/>
+       <Edges Mode="1" TopEdge="0" BottomEdge="1000"/>
+       <Lines>
+        <Line Index="0" Enabled="1" Value="0" Color="210,210,210"/>
+        <Line Index="1" Enabled="0" Value="0" Color="0,0,248"/>
+        <Line Index="2" Enabled="0" Value="0" Color="248,0,0"/>
+       </Lines>
+       <Traces ActiveTrace="PDM I7 Fuel Pump SW3">
+        <Trace Id="PDM I6 Fuel Pump SW1" DisplayUnit="" DisplayDPS="0" Visible="1"/>
+        <Trace Id="PDM I7 Fuel Pump SW3" DisplayUnit="" DisplayDPS="0" Visible="1"/>
+        <Trace Id="PDM S8 Fuel Pump" DisplayUnit="" DisplayDPS="0" Visible="1"/>
+        <Trace Id="PDM S2 Fuel Pump Sub" DisplayUnit="" DisplayDPS="0" Visible="1"/>
+        <Trace Id="PDM S29 Fuel Pump Lift RH" DisplayUnit="" DisplayDPS="0" Visible="1"/>
+        <Trace Id="PDM S30 Fuel Pump Lift LH" DisplayUnit="" DisplayDPS="0" Visible="1"/>
+       </Traces>
+      </Graph>
+      <Graph Name="Group 1" ScaleMode="2" ScaleMin="0" ScaleMax="1">
+       <Edges Mode="0" TopEdge="877" BottomEdge="939"/>
+       <Edges Mode="1" TopEdge="0" BottomEdge="1000"/>
+       <Lines>
+        <Line Index="0" Enabled="1" Value="0" Color="210,210,210"/>
+        <Line Index="1" Enabled="0" Value="0" Color="0,0,248"/>
+        <Line Index="2" Enabled="0" Value="0" Color="248,0,0"/>
+       </Lines>
+       <Traces ActiveTrace="PDM Reset Source">
+        <Trace Id="PDM Reset Source" DisplayUnit="" DisplayDPS="0" Visible="1"/>
+       </Traces>
+      </Graph>
+      <Graph Name="Group 4" ScaleMode="1" ScaleMin="0" ScaleMax="2">
+       <Edges Mode="0" TopEdge="939" BottomEdge="1000"/>
+       <Edges Mode="1" TopEdge="0" BottomEdge="1000"/>
+       <Lines>
+        <Line Index="0" Enabled="1" Value="0" Color="210,210,210"/>
+        <Line Index="1" Enabled="0" Value="0" Color="0,0,248"/>
+        <Line Index="2" Enabled="0" Value="0" Color="248,0,0"/>
+       </Lines>
+       <Traces ActiveTrace="PDM I12 Door LH SW">
+        <Trace Id="PDM I12 Door LH SW" DisplayUnit="" DisplayDPS="0" Visible="1"/>
+        <Trace Id="PDM I11 Door RH SW" DisplayUnit="" DisplayDPS="0" Visible="1"/>
+       </Traces>
+      </Graph>
+     </Graphs>
+     <Cursor Version="1" Style="1" Snap="1"/>
+    </MoTeC.TimeDistance>
+    <MoTeC.TimeDistance Version="100" Name="Time/Distance Graph (1)" EnableOverlays="0" PosPC="493,0,1000,1000" ShowCaption="0" AutoCaption="0" LinkZoom="1" ModeId="0" ShowDataLegend="1" ShowColorLegend="1" TelemetryZoom="0" TraceLineWidth="1" TracePointSize="3" TraceStyle="0" LinkCursor="1" LinkDatum="1" ShowKeyValues="1" ShowKeyStats="0" KeyMode="0" KeyPos="1" ShowGridLines="0" ShowXAxis="0" ShowXAxisScrollBar="0" ShowYAxis="0" ShowYAxisScrollBar="0" ShowMarkers="0" ShowVSP="0" ShowDeviveEvents="0" ShowBands="0" BandGroup="Outings:Laps:Track Sections:Default" BandMode="1" OverlapMode="0" VariancePos="0.25" VarianceAutoScale="1">
+     <Graphs ActivateChild="Group 7">
+      <Graph Name="Group 2" ScaleMode="2" ScaleMin="0" ScaleMax="1">
+       <Edges Mode="0" TopEdge="0" BottomEdge="72"/>
+       <Edges Mode="1" TopEdge="0" BottomEdge="1000"/>
+       <Lines>
+        <Line Index="0" Enabled="1" Value="0" Color="210,210,210"/>
+        <Line Index="1" Enabled="0" Value="0" Color="0,0,248"/>
+        <Line Index="2" Enabled="0" Value="0" Color="248,0,0"/>
+       </Lines>
+       <Traces ActiveTrace="PDM S18 Indicator LH">
+        <Trace Id="PDM S17 Indicator RH" DisplayUnit="" DisplayDPS="0" Visible="1"/>
+        <Trace Id="PDM S18 Indicator LH" DisplayUnit="" DisplayDPS="0" Visible="1"/>
+       </Traces>
+      </Graph>
+      <Graph Name="Group 4" ScaleMode="1" ScaleMin="0" ScaleMax="1.5">
+       <Edges Mode="0" TopEdge="72" BottomEdge="210"/>
+       <Edges Mode="1" TopEdge="0" BottomEdge="1000"/>
+       <Lines>
+        <Line Index="0" Enabled="1" Value="0" Color="210,210,210"/>
+        <Line Index="1" Enabled="0" Value="0" Color="0,0,248"/>
+        <Line Index="2" Enabled="0" Value="0" Color="248,0,0"/>
+       </Lines>
+       <Traces ActiveTrace="PDM S24 H/L High LH">
+        <Trace Id="PDM S21 H/L Low RH" DisplayUnit="" DisplayDPS="0" Visible="1"/>
+        <Trace Id="PDM S22 H/L Low LH" DisplayUnit="" DisplayDPS="0" Visible="1"/>
+        <Trace Id="PDM S23 H/L High RH" DisplayUnit="" DisplayDPS="0" Visible="1"/>
+        <Trace Id="PDM S24 H/L High LH" DisplayUnit="" DisplayDPS="0" Visible="1"/>
+       </Traces>
+      </Graph>
+      <Graph Name="Group 3" ScaleMode="1" ScaleMin="0" ScaleMax="1.5">
+       <Edges Mode="0" TopEdge="210" BottomEdge="598"/>
+       <Edges Mode="1" TopEdge="0" BottomEdge="1000"/>
+       <Lines>
+        <Line Index="0" Enabled="1" Value="0" Color="210,210,210"/>
+        <Line Index="1" Enabled="0" Value="0" Color="0,0,248"/>
+        <Line Index="2" Enabled="0" Value="0" Color="248,0,0"/>
+       </Lines>
+       <Traces ActiveTrace="PDM S25 Number Light">
+        <Trace Id="PDM S10 Cockpit Light" DisplayUnit="" DisplayDPS="0" Visible="1"/>
+        <Trace Id="PDM S13 Tail Light" DisplayUnit="" DisplayDPS="0" Visible="1"/>
+        <Trace Id="PDM S15 Brake Lamp" DisplayUnit="" DisplayDPS="0" Visible="1"/>
+        <Trace Id="PDM S19 Add Light RH" DisplayUnit="" DisplayDPS="0" Visible="1"/>
+        <Trace Id="PDM S20 Add Light LH" DisplayUnit="" DisplayDPS="0" Visible="1"/>
+        <Trace Id="PDM S25 Number Light" DisplayUnit="" DisplayDPS="0" Visible="1"/>
+       </Traces>
+      </Graph>
+      <Graph Name="Group 7" ScaleMode="1" ScaleMin="0" ScaleMax="2">
+       <Edges Mode="0" TopEdge="598" BottomEdge="684"/>
+       <Edges Mode="1" TopEdge="0" BottomEdge="1000"/>
+       <Lines>
+        <Line Index="0" Enabled="1" Value="0" Color="210,210,210"/>
+        <Line Index="1" Enabled="0" Value="0" Color="0,0,248"/>
+        <Line Index="2" Enabled="0" Value="0" Color="248,0,0"/>
+       </Lines>
+       <Traces ActiveTrace="PDM S16 Wiper&amp;Rain Light">
+        <Trace Id="PDM S16 Wiper&amp;Rain Light" DisplayUnit="" DisplayDPS="0" Visible="1"/>
+       </Traces>
+      </Graph>
+      <Graph Name="Group 6" ScaleMode="2" ScaleMin="0" ScaleMax="1">
+       <Edges Mode="0" TopEdge="684" BottomEdge="842"/>
+       <Edges Mode="1" TopEdge="0" BottomEdge="1000"/>
+       <Lines>
+        <Line Index="0" Enabled="1" Value="0" Color="210,210,210"/>
+        <Line Index="1" Enabled="0" Value="0" Color="0,0,248"/>
+        <Line Index="2" Enabled="0" Value="0" Color="248,0,0"/>
+       </Lines>
+       <Traces ActiveTrace="PDM S9 AirCon Clutch">
+        <Trace Id="PDM S5 AirCon Blower" DisplayUnit="" DisplayDPS="0" Visible="1"/>
+        <Trace Id="PDM S9 AirCon Clutch" DisplayUnit="" DisplayDPS="0" Visible="1"/>
+       </Traces>
+      </Graph>
+      <Graph Name="Group 5" ScaleMode="1" ScaleMin="0" ScaleMax="2">
+       <Edges Mode="0" TopEdge="842" BottomEdge="905"/>
+       <Edges Mode="1" TopEdge="0" BottomEdge="1000"/>
+       <Lines>
+        <Line Index="0" Enabled="1" Value="0" Color="210,210,210"/>
+        <Line Index="1" Enabled="0" Value="0" Color="0,0,248"/>
+        <Line Index="2" Enabled="0" Value="0" Color="248,0,0"/>
+       </Lines>
+       <Traces ActiveTrace="PDM S11 Logger">
+        <Trace Id="PDM S12 Radio&amp;Drink" DisplayUnit="" DisplayDPS="0" Visible="1"/>
+        <Trace Id="PDM S11 Logger" DisplayUnit="" DisplayDPS="0" Visible="1"/>
+       </Traces>
+      </Graph>
+      <Graph Name="Group 1" ScaleMode="1" ScaleMin="0" ScaleMax="2">
+       <Edges Mode="0" TopEdge="905" BottomEdge="1000"/>
+       <Edges Mode="1" TopEdge="0" BottomEdge="1000"/>
+       <Lines>
+        <Line Index="0" Enabled="1" Value="0" Color="210,210,210"/>
+        <Line Index="1" Enabled="0" Value="0" Color="0,0,248"/>
+        <Line Index="2" Enabled="0" Value="0" Color="248,0,0"/>
+       </Lines>
+       <Traces ActiveTrace="PDM S14 Spare2">
+        <Trace Id="PDM S1 Spare1" DisplayUnit="" DisplayDPS="0" Visible="1"/>
+        <Trace Id="PDM S14 Spare2" DisplayUnit="" DisplayDPS="0" Visible="1"/>
+       </Traces>
+      </Graph>
+     </Graphs>
+     <Cursor Version="1" Style="1" Snap="1"/>
+    </MoTeC.TimeDistance>
+    <MoTeC.TimeDistance Version="100" Name="Time/Distance Graph (2)" EnableOverlays="0" PosPC="0,0,493,176" ShowCaption="0" AutoCaption="0" LinkZoom="1" ModeId="0" ShowDataLegend="1" ShowColorLegend="1" TelemetryZoom="0" TraceLineWidth="1" TracePointSize="3" TraceStyle="0" LinkCursor="1" LinkDatum="1" ShowKeyValues="1" ShowKeyStats="0" KeyMode="0" KeyPos="1" ShowGridLines="0" ShowXAxis="0" ShowXAxisScrollBar="0" ShowYAxis="0" ShowYAxisScrollBar="0" ShowMarkers="0" ShowVSP="0" ShowDeviveEvents="0" ShowBands="0" BandGroup="Outings:Laps:Track Sections:Default" BandMode="1" OverlapMode="0" VariancePos="0.25" VarianceAutoScale="1">
+     <Graphs ActivateChild="Group 2">
+      <Graph Name="Group 1" ScaleMode="2" ScaleMin="0" ScaleMax="1">
+       <Edges Mode="0" TopEdge="0" BottomEdge="451"/>
+       <Edges Mode="1" TopEdge="0" BottomEdge="1000"/>
+       <Lines>
+        <Line Index="0" Enabled="1" Value="0" Color="210,210,210"/>
+        <Line Index="1" Enabled="0" Value="0" Color="0,0,248"/>
+        <Line Index="2" Enabled="0" Value="0" Color="248,0,0"/>
+       </Lines>
+       <Traces ActiveTrace="nmot">
+        <Trace Id="nmot" DisplayUnit="rpm" DisplayDPS="0" Visible="1"/>
+       </Traces>
+      </Graph>
+      <Graph Name="Group 2" ScaleMode="2" ScaleMin="0" ScaleMax="1">
+       <Edges Mode="0" TopEdge="451" BottomEdge="1000"/>
+       <Edges Mode="1" TopEdge="0" BottomEdge="1000"/>
+       <Lines>
+        <Line Index="0" Enabled="1" Value="0" Color="210,210,210"/>
+        <Line Index="1" Enabled="0" Value="0" Color="0,0,248"/>
+        <Line Index="2" Enabled="0" Value="0" Color="248,0,0"/>
+       </Lines>
+       <Traces ActiveTrace="Speed_ecu">
+        <Trace Id="Speed_ecu" DisplayUnit="km/h" DisplayDPS="1" Visible="1"/>
+       </Traces>
+      </Graph>
+     </Graphs>
+     <Cursor Version="1" Style="1" Snap="1"/>
+    </MoTeC.TimeDistance>
+   </Controls>
+  </Worksheet>
+  <Worksheet Version="200" Name="Current A" LinkTo="Laps" LockByGPSTime="0">
+   <Controls Active="Time/Distance Graph">
+    <MoTeC.TimeDistance Version="100" Name="Time/Distance Graph" EnableOverlays="0" PosPC="0,186,480,1000" ShowCaption="0" AutoCaption="0" LinkZoom="1" ModeId="0" ShowDataLegend="1" ShowColorLegend="1" TelemetryZoom="0" TraceLineWidth="1" TracePointSize="3" TraceStyle="0" LinkCursor="1" LinkDatum="1" ShowKeyValues="1" ShowKeyStats="0" KeyMode="0" KeyPos="1" ShowGridLines="0" ShowXAxis="0" ShowXAxisScrollBar="0" ShowYAxis="0" ShowYAxisScrollBar="0" ShowMarkers="0" ShowVSP="0" ShowDeviveEvents="0" ShowBands="0" BandGroup="Outings:Laps:Track Sections:Default" BandMode="1" OverlapMode="0" VariancePos="0.25" VarianceAutoScale="1">
+     <Graphs ActivateChild="Group 1">
+      <Graph Name="Group 3" ScaleMode="2" ScaleMin="0" ScaleMax="1">
+       <Edges Mode="0" TopEdge="0" BottomEdge="128"/>
+       <Edges Mode="1" TopEdge="0" BottomEdge="1000"/>
+       <Lines>
+        <Line Index="0" Enabled="1" Value="0" Color="210,210,210"/>
+        <Line Index="1" Enabled="0" Value="0" Color="0,0,248"/>
+        <Line Index="2" Enabled="0" Value="0" Color="248,0,0"/>
+       </Lines>
+       <Traces ActiveTrace="PDM Total Current">
+        <Trace Id="PDM Total Current" DisplayUnit="A" DisplayDPS="1" Visible="1"/>
+       </Traces>
+      </Graph>
+      <Graph Name="Group 1" ScaleMode="2" ScaleMin="0" ScaleMax="1">
+       <Edges Mode="0" TopEdge="128" BottomEdge="272"/>
+       <Edges Mode="1" TopEdge="0" BottomEdge="1000"/>
+       <Lines>
+        <Line Index="0" Enabled="1" Value="0" Color="210,210,210"/>
+        <Line Index="1" Enabled="0" Value="0" Color="0,0,248"/>
+        <Line Index="2" Enabled="0" Value="0" Color="248,0,0"/>
+       </Lines>
+       <Traces ActiveTrace="PDM C11 Logger">
+        <Trace Id="PDM C11 Logger" DisplayUnit="A" DisplayDPS="1" Visible="1"/>
+       </Traces>
+      </Graph>
+      <Graph Name="Group 2" ScaleMode="2" ScaleMin="0" ScaleMax="1">
+       <Edges Mode="0" TopEdge="272" BottomEdge="499"/>
+       <Edges Mode="1" TopEdge="0" BottomEdge="1000"/>
+       <Lines>
+        <Line Index="0" Enabled="1" Value="0" Color="210,210,210"/>
+        <Line Index="1" Enabled="0" Value="0" Color="0,0,248"/>
+        <Line Index="2" Enabled="0" Value="0" Color="248,0,0"/>
+       </Lines>
+       <Traces ActiveTrace="PDM C7 ECU">
+        <Trace Id="PDM C7 ECU" DisplayUnit="A" DisplayDPS="1" Visible="1"/>
+        <Trace Id="PDM C26 Engine1" DisplayUnit="A" DisplayDPS="1" Visible="1"/>
+        <Trace Id="PDM C27 Engine2" DisplayUnit="A" DisplayDPS="1" Visible="1"/>
+       </Traces>
+      </Graph>
+      <Graph Name="Group 4" ScaleMode="2" ScaleMin="0" ScaleMax="1">
+       <Edges Mode="0" TopEdge="499" BottomEdge="610"/>
+       <Edges Mode="1" TopEdge="0" BottomEdge="1000"/>
+       <Lines>
+        <Line Index="0" Enabled="1" Value="0" Color="210,210,210"/>
+        <Line Index="1" Enabled="0" Value="0" Color="0,0,248"/>
+        <Line Index="2" Enabled="0" Value="0" Color="248,0,0"/>
+       </Lines>
+       <Traces ActiveTrace="PDM C6 Starter">
+        <Trace Id="PDM C6 Starter" DisplayUnit="A" DisplayDPS="1" Visible="1"/>
+       </Traces>
+      </Graph>
+      <Graph Name="Group 5" ScaleMode="2" ScaleMin="0" ScaleMax="1">
+       <Edges Mode="0" TopEdge="610" BottomEdge="832"/>
+       <Edges Mode="1" TopEdge="0" BottomEdge="1000"/>
+       <Lines>
+        <Line Index="0" Enabled="1" Value="0" Color="210,210,210"/>
+        <Line Index="1" Enabled="0" Value="0" Color="0,0,248"/>
+        <Line Index="2" Enabled="0" Value="0" Color="248,0,0"/>
+       </Lines>
+       <Traces ActiveTrace="PDM C3 ABS Valve">
+        <Trace Id="PDM C3 ABS Valve" DisplayUnit="A" DisplayDPS="1" Visible="1"/>
+        <Trace Id="PDM C4 AGS Compressor" DisplayUnit="A" DisplayDPS="1" Visible="1"/>
+        <Trace Id="PDM C28 Shift ACT&amp;ALT" DisplayUnit="A" DisplayDPS="1" Visible="1"/>
+       </Traces>
+      </Graph>
+      <Graph Name="Group 6" ScaleMode="2" ScaleMin="0" ScaleMax="1">
+       <Edges Mode="0" TopEdge="832" BottomEdge="1000"/>
+       <Edges Mode="1" TopEdge="0" BottomEdge="1000"/>
+       <Lines>
+        <Line Index="0" Enabled="1" Value="0" Color="210,210,210"/>
+        <Line Index="1" Enabled="0" Value="0" Color="0,0,248"/>
+        <Line Index="2" Enabled="0" Value="0" Color="248,0,0"/>
+       </Lines>
+       <Traces ActiveTrace="PDM C8 Fuel Pump">
+        <Trace Id="PDM C8 Fuel Pump" DisplayUnit="A" DisplayDPS="1" Visible="1"/>
+        <Trace Id="PDM C2 Fuel Pump Sub" DisplayUnit="A" DisplayDPS="1" Visible="1"/>
+        <Trace Id="PDM C29 Fuel Pump Lift RH" DisplayUnit="A" DisplayDPS="1" Visible="1"/>
+        <Trace Id="PDM C30 Fuel Pump Lift LH" DisplayUnit="A" DisplayDPS="1" Visible="1"/>
+       </Traces>
+      </Graph>
+     </Graphs>
+     <Cursor Version="1" Style="1" Snap="1"/>
+    </MoTeC.TimeDistance>
+    <MoTeC.TimeDistance Version="100" Name="Time/Distance Graph (2)" EnableOverlays="0" PosPC="0,0,480,186" ShowCaption="0" AutoCaption="0" LinkZoom="1" ModeId="0" ShowDataLegend="1" ShowColorLegend="1" TelemetryZoom="0" TraceLineWidth="1" TracePointSize="3" TraceStyle="0" LinkCursor="1" LinkDatum="1" ShowKeyValues="1" ShowKeyStats="0" KeyMode="0" KeyPos="1" ShowGridLines="0" ShowXAxis="0" ShowXAxisScrollBar="0" ShowYAxis="0" ShowYAxisScrollBar="0" ShowMarkers="0" ShowVSP="0" ShowDeviveEvents="0" ShowBands="0" BandGroup="Outings:Laps:Track Sections:Default" BandMode="1" OverlapMode="0" VariancePos="0.25" VarianceAutoScale="1">
+     <Graphs ActivateChild="Group 2">
+      <Graph Name="Group 1" ScaleMode="2" ScaleMin="0" ScaleMax="1">
+       <Edges Mode="0" TopEdge="0" BottomEdge="514"/>
+       <Edges Mode="1" TopEdge="0" BottomEdge="1000"/>
+       <Lines>
+        <Line Index="0" Enabled="1" Value="0" Color="210,210,210"/>
+        <Line Index="1" Enabled="0" Value="0" Color="0,0,248"/>
+        <Line Index="2" Enabled="0" Value="0" Color="248,0,0"/>
+       </Lines>
+       <Traces ActiveTrace="nmot">
+        <Trace Id="nmot" DisplayUnit="rpm" DisplayDPS="0" Visible="1"/>
+       </Traces>
+      </Graph>
+      <Graph Name="Group 2" ScaleMode="2" ScaleMin="0" ScaleMax="1">
+       <Edges Mode="0" TopEdge="514" BottomEdge="1000"/>
+       <Edges Mode="1" TopEdge="0" BottomEdge="1000"/>
+       <Lines>
+        <Line Index="0" Enabled="1" Value="0" Color="210,210,210"/>
+        <Line Index="1" Enabled="0" Value="0" Color="0,0,248"/>
+        <Line Index="2" Enabled="0" Value="0" Color="248,0,0"/>
+       </Lines>
+       <Traces ActiveTrace="Speed_ecu">
+        <Trace Id="Speed_ecu" DisplayUnit="km/h" DisplayDPS="1" Visible="1"/>
+       </Traces>
+      </Graph>
+     </Graphs>
+     <Cursor Version="1" Style="1" Snap="1"/>
+    </MoTeC.TimeDistance>
+    <MoTeC.TimeDistance Version="100" Name="Time/Distance Graph (1)" EnableOverlays="0" PosPC="481,0,1000,1000" ShowCaption="0" AutoCaption="0" LinkZoom="1" ModeId="0" ShowDataLegend="1" ShowColorLegend="1" TelemetryZoom="0" TraceLineWidth="1" TracePointSize="3" TraceStyle="0" LinkCursor="1" LinkDatum="1" ShowKeyValues="1" ShowKeyStats="0" KeyMode="0" KeyPos="1" ShowGridLines="0" ShowXAxis="0" ShowXAxisScrollBar="0" ShowYAxis="0" ShowYAxisScrollBar="0" ShowMarkers="0" ShowVSP="0" ShowDeviveEvents="0" ShowBands="0" BandGroup="Outings:Laps:Track Sections:Default" BandMode="1" OverlapMode="0" VariancePos="0.25" VarianceAutoScale="1">
+     <Graphs ActivateChild="Group 6">
+      <Graph Name="Group 2" ScaleMode="2" ScaleMin="0" ScaleMax="1">
+       <Edges Mode="0" TopEdge="0" BottomEdge="89"/>
+       <Edges Mode="1" TopEdge="0" BottomEdge="1000"/>
+       <Lines>
+        <Line Index="0" Enabled="1" Value="0" Color="210,210,210"/>
+        <Line Index="1" Enabled="0" Value="0" Color="0,0,248"/>
+        <Line Index="2" Enabled="0" Value="0" Color="248,0,0"/>
+       </Lines>
+       <Traces ActiveTrace="PDM C18 Indicator LH">
+        <Trace Id="PDM C18 Indicator LH" DisplayUnit="A" DisplayDPS="1" Visible="1"/>
+        <Trace Id="PDM C17 Indicator RH" DisplayUnit="A" DisplayDPS="1" Visible="1"/>
+       </Traces>
+      </Graph>
+      <Graph Name="Group 3" ScaleMode="2" ScaleMin="0" ScaleMax="1">
+       <Edges Mode="0" TopEdge="89" BottomEdge="438"/>
+       <Edges Mode="1" TopEdge="0" BottomEdge="1000"/>
+       <Lines>
+        <Line Index="0" Enabled="1" Value="0" Color="210,210,210"/>
+        <Line Index="1" Enabled="0" Value="0" Color="0,0,248"/>
+        <Line Index="2" Enabled="0" Value="0" Color="248,0,0"/>
+       </Lines>
+       <Traces ActiveTrace="PDM C25 Number Light">
+        <Trace Id="PDM C21 H/L Low RH" DisplayUnit="A" DisplayDPS="1" Visible="1"/>
+        <Trace Id="PDM C22 H/L Low LH" DisplayUnit="A" DisplayDPS="1" Visible="1"/>
+        <Trace Id="PDM C23 H/L High RH" DisplayUnit="A" DisplayDPS="1" Visible="1"/>
+        <Trace Id="PDM C24 H/L High LH" DisplayUnit="A" DisplayDPS="1" Visible="1"/>
+        <Trace Id="PDM C10 Cockpit Light" DisplayUnit="A" DisplayDPS="1" Visible="1"/>
+        <Trace Id="PDM C13 Tail Light" DisplayUnit="A" DisplayDPS="1" Visible="1"/>
+        <Trace Id="PDM C15 Brake Lamp" DisplayUnit="A" DisplayDPS="1" Visible="1"/>
+        <Trace Id="PDM C19 Add Light RH" DisplayUnit="A" DisplayDPS="1" Visible="1"/>
+        <Trace Id="PDM C20 Add Light LH" DisplayUnit="A" DisplayDPS="1" Visible="1"/>
+        <Trace Id="PDM C25 Number Light" DisplayUnit="A" DisplayDPS="1" Visible="1"/>
+       </Traces>
+      </Graph>
+      <Graph Name="Group 4" ScaleMode="2" ScaleMin="0" ScaleMax="1">
+       <Edges Mode="0" TopEdge="438" BottomEdge="532"/>
+       <Edges Mode="1" TopEdge="0" BottomEdge="1000"/>
+       <Lines>
+        <Line Index="0" Enabled="1" Value="0" Color="210,210,210"/>
+        <Line Index="1" Enabled="0" Value="0" Color="0,0,248"/>
+        <Line Index="2" Enabled="0" Value="0" Color="248,0,0"/>
+       </Lines>
+       <Traces ActiveTrace="PDM C16 Wiper&amp;Rain Light">
+        <Trace Id="PDM C16 Wiper&amp;Rain Light" DisplayUnit="A" DisplayDPS="1" Visible="1"/>
+       </Traces>
+      </Graph>
+      <Graph Name="Group 1" ScaleMode="2" ScaleMin="0" ScaleMax="1">
+       <Edges Mode="0" TopEdge="532" BottomEdge="665"/>
+       <Edges Mode="1" TopEdge="0" BottomEdge="1000"/>
+       <Lines>
+        <Line Index="0" Enabled="1" Value="0" Color="210,210,210"/>
+        <Line Index="1" Enabled="0" Value="0" Color="0,0,248"/>
+        <Line Index="2" Enabled="0" Value="0" Color="248,0,0"/>
+       </Lines>
+       <Traces ActiveTrace="PDM C9 AirCon Clutch">
+        <Trace Id="PDM C5 AirCon Blower" DisplayUnit="A" DisplayDPS="1" Visible="1"/>
+        <Trace Id="PDM C9 AirCon Clutch" DisplayUnit="A" DisplayDPS="1" Visible="1"/>
+       </Traces>
+      </Graph>
+      <Graph Name="Group 6" ScaleMode="2" ScaleMin="0" ScaleMax="1">
+       <Edges Mode="0" TopEdge="665" BottomEdge="833"/>
+       <Edges Mode="1" TopEdge="0" BottomEdge="1000"/>
+       <Lines>
+        <Line Index="0" Enabled="1" Value="0" Color="210,210,210"/>
+        <Line Index="1" Enabled="0" Value="0" Color="0,0,248"/>
+        <Line Index="2" Enabled="0" Value="0" Color="248,0,0"/>
+       </Lines>
+       <Traces ActiveTrace="PDM C12 Radio&amp;Drink">
+        <Trace Id="PDM C12 Radio&amp;Drink" DisplayUnit="A" DisplayDPS="1" Visible="1"/>
+       </Traces>
+      </Graph>
+      <Graph Name="Group 5" ScaleMode="2" ScaleMin="0" ScaleMax="1">
+       <Edges Mode="0" TopEdge="833" BottomEdge="1000"/>
+       <Edges Mode="1" TopEdge="0" BottomEdge="1000"/>
+       <Lines>
+        <Line Index="0" Enabled="1" Value="0" Color="210,210,210"/>
+        <Line Index="1" Enabled="0" Value="0" Color="0,0,248"/>
+        <Line Index="2" Enabled="0" Value="0" Color="248,0,0"/>
+       </Lines>
+       <Traces ActiveTrace="PDM C1 Spare1">
+        <Trace Id="PDM C1 Spare1" DisplayUnit="A" DisplayDPS="1" Visible="1"/>
+        <Trace Id="PDM C14 Spare2" DisplayUnit="A" DisplayDPS="1" Visible="1"/>
+       </Traces>
+      </Graph>
+     </Graphs>
+     <Cursor Version="1" Style="1" Snap="1"/>
+    </MoTeC.TimeDistance>
+   </Controls>
+  </Worksheet>
+  <Worksheet Version="200" Name="Current %" LinkTo="Laps" LockByGPSTime="0">
+   <Controls Active="Time/Distance Graph (1)">
+    <MoTeC.TimeDistance Version="100" Name="Time/Distance Graph (1)" EnableOverlays="0" PosPC="489,0,1000,1000" ShowCaption="0" AutoCaption="0" LinkZoom="1" ModeId="0" ShowDataLegend="1" ShowColorLegend="1" TelemetryZoom="0" TraceLineWidth="1" TracePointSize="3" TraceStyle="0" LinkCursor="1" LinkDatum="1" ShowKeyValues="1" ShowKeyStats="0" KeyMode="0" KeyPos="1" ShowGridLines="0" ShowXAxis="0" ShowXAxisScrollBar="0" ShowYAxis="0" ShowYAxisScrollBar="0" ShowMarkers="0" ShowVSP="0" ShowDeviveEvents="0" ShowBands="0" BandGroup="Outings:Laps:Track Sections:Default" BandMode="1" OverlapMode="0" VariancePos="0.25" VarianceAutoScale="1">
+     <Graphs ActivateChild="Group 10">
+      <Graph Name="Group 7" ScaleMode="2" ScaleMin="0" ScaleMax="1">
+       <Edges Mode="0" TopEdge="0" BottomEdge="165"/>
+       <Edges Mode="1" TopEdge="0" BottomEdge="1000"/>
+       <Lines>
+        <Line Index="0" Enabled="1" Value="0" Color="210,210,210"/>
+        <Line Index="1" Enabled="0" Value="0" Color="0,0,248"/>
+        <Line Index="2" Enabled="0" Value="0" Color="248,0,0"/>
+       </Lines>
+       <Traces ActiveTrace="PDM L17 Indicator Rh">
+        <Trace Id="PDM L17 Indicator Rh" DisplayUnit="%" DisplayDPS="0" Visible="1"/>
+        <Trace Id="PDM L18 Indicator LH" DisplayUnit="%" DisplayDPS="0" Visible="1"/>
+       </Traces>
+      </Graph>
+      <Graph Name="Group 5" ScaleMode="2" ScaleMin="0" ScaleMax="1">
+       <Edges Mode="0" TopEdge="165" BottomEdge="332"/>
+       <Edges Mode="1" TopEdge="0" BottomEdge="1000"/>
+       <Lines>
+        <Line Index="0" Enabled="1" Value="0" Color="210,210,210"/>
+        <Line Index="1" Enabled="0" Value="0" Color="0,0,248"/>
+        <Line Index="2" Enabled="0" Value="0" Color="248,0,0"/>
+       </Lines>
+       <Traces ActiveTrace="PDM L10 Cockpit Light">
+        <Trace Id="PDM L21 H/L Low RH" DisplayUnit="%" DisplayDPS="0" Visible="1"/>
+        <Trace Id="PDM L22 H/L Low LH" DisplayUnit="%" DisplayDPS="0" Visible="1"/>
+        <Trace Id="PDM L23 H/L High RH" DisplayUnit="%" DisplayDPS="0" Visible="1"/>
+        <Trace Id="PDM L24 H/L High LH" DisplayUnit="%" DisplayDPS="0" Visible="1"/>
+        <Trace Id="PDM L10 Cockpit Light" DisplayUnit="%" DisplayDPS="0" Visible="1"/>
+        <Trace Id="PDM L13 Tail Light" DisplayUnit="%" DisplayDPS="0" Visible="1"/>
+        <Trace Id="PDM L15 Brake Lamp" DisplayUnit="%" DisplayDPS="0" Visible="1"/>
+        <Trace Id="PDM L19 Add Light RH" DisplayUnit="%" DisplayDPS="0" Visible="1"/>
+        <Trace Id="PDM L20 Add Light LH" DisplayUnit="%" DisplayDPS="0" Visible="1"/>
+        <Trace Id="PDM L25 Number Light" DisplayUnit="%" DisplayDPS="0" Visible="1"/>
+       </Traces>
+      </Graph>
+      <Graph Name="Group 11" ScaleMode="2" ScaleMin="0" ScaleMax="1">
+       <Edges Mode="0" TopEdge="332" BottomEdge="499"/>
+       <Edges Mode="1" TopEdge="0" BottomEdge="1000"/>
+       <Lines>
+        <Line Index="0" Enabled="1" Value="0" Color="210,210,210"/>
+        <Line Index="1" Enabled="0" Value="0" Color="0,0,248"/>
+        <Line Index="2" Enabled="0" Value="0" Color="248,0,0"/>
+       </Lines>
+       <Traces ActiveTrace="PDM L16 Wiper&amp;Rain Light">
+        <Trace Id="PDM L16 Wiper&amp;Rain Light" DisplayUnit="%" DisplayDPS="0" Visible="1"/>
+       </Traces>
+      </Graph>
+      <Graph Name="Group 10" ScaleMode="2" ScaleMin="0" ScaleMax="1">
+       <Edges Mode="0" TopEdge="499" BottomEdge="663"/>
+       <Edges Mode="1" TopEdge="0" BottomEdge="1000"/>
+       <Lines>
+        <Line Index="0" Enabled="1" Value="0" Color="210,210,210"/>
+        <Line Index="1" Enabled="0" Value="0" Color="0,0,248"/>
+        <Line Index="2" Enabled="0" Value="0" Color="248,0,0"/>
+       </Lines>
+       <Traces ActiveTrace="PDM L9 AirCon Clutch">
+        <Trace Id="PDM L5 AirCon Blower" DisplayUnit="%" DisplayDPS="0" Visible="1"/>
+        <Trace Id="PDM L9 AirCon Clutch" DisplayUnit="%" DisplayDPS="0" Visible="1"/>
+       </Traces>
+      </Graph>
+      <Graph Name="Group 9" ScaleMode="2" ScaleMin="0" ScaleMax="1">
+       <Edges Mode="0" TopEdge="663" BottomEdge="833"/>
+       <Edges Mode="1" TopEdge="0" BottomEdge="1000"/>
+       <Lines>
+        <Line Index="0" Enabled="1" Value="0" Color="210,210,210"/>
+        <Line Index="1" Enabled="0" Value="0" Color="0,0,248"/>
+        <Line Index="2" Enabled="0" Value="0" Color="248,0,0"/>
+       </Lines>
+       <Traces ActiveTrace="PDM L12 Radio&amp;Drink">
+        <Trace Id="PDM L12 Radio&amp;Drink" DisplayUnit="%" DisplayDPS="0" Visible="1"/>
+       </Traces>
+      </Graph>
+      <Graph Name="Group 8" ScaleMode="2" ScaleMin="0" ScaleMax="1">
+       <Edges Mode="0" TopEdge="833" BottomEdge="1000"/>
+       <Edges Mode="1" TopEdge="0" BottomEdge="1000"/>
+       <Lines>
+        <Line Index="0" Enabled="1" Value="0" Color="210,210,210"/>
+        <Line Index="1" Enabled="0" Value="0" Color="0,0,248"/>
+        <Line Index="2" Enabled="0" Value="0" Color="248,0,0"/>
+       </Lines>
+       <Traces ActiveTrace="PDM L1 Spare1">
+        <Trace Id="PDM L1 Spare1" DisplayUnit="%" DisplayDPS="0" Visible="1"/>
+        <Trace Id="PDM L14 Spare2" DisplayUnit="%" DisplayDPS="0" Visible="1"/>
+       </Traces>
+      </Graph>
+     </Graphs>
+     <Cursor Version="1" Style="1" Snap="1"/>
+    </MoTeC.TimeDistance>
+    <MoTeC.TimeDistance Version="100" Name="Time/Distance Graph (2)" EnableOverlays="0" PosPC="0,0,489,232" ShowCaption="0" AutoCaption="0" LinkZoom="1" ModeId="0" ShowDataLegend="1" ShowColorLegend="1" TelemetryZoom="0" TraceLineWidth="1" TracePointSize="3" TraceStyle="0" LinkCursor="1" LinkDatum="1" ShowKeyValues="1" ShowKeyStats="0" KeyMode="0" KeyPos="1" ShowGridLines="0" ShowXAxis="0" ShowXAxisScrollBar="0" ShowYAxis="0" ShowYAxisScrollBar="0" ShowMarkers="0" ShowVSP="0" ShowDeviveEvents="0" ShowBands="0" BandGroup="Outings:Laps:Track Sections:Default" BandMode="1" OverlapMode="0" VariancePos="0.25" VarianceAutoScale="1">
+     <Graphs ActivateChild="Group 2">
+      <Graph Name="Group 1" ScaleMode="2" ScaleMin="0" ScaleMax="1">
+       <Edges Mode="0" TopEdge="0" BottomEdge="500"/>
+       <Edges Mode="1" TopEdge="0" BottomEdge="1000"/>
+       <Lines>
+        <Line Index="0" Enabled="1" Value="0" Color="210,210,210"/>
+        <Line Index="1" Enabled="0" Value="0" Color="0,0,248"/>
+        <Line Index="2" Enabled="0" Value="0" Color="248,0,0"/>
+       </Lines>
+       <Traces ActiveTrace="nmot">
+        <Trace Id="nmot" DisplayUnit="rpm" DisplayDPS="0" Visible="1"/>
+       </Traces>
+      </Graph>
+      <Graph Name="Group 2" ScaleMode="2" ScaleMin="0" ScaleMax="1">
+       <Edges Mode="0" TopEdge="500" BottomEdge="1000"/>
+       <Edges Mode="1" TopEdge="0" BottomEdge="1000"/>
+       <Lines>
+        <Line Index="0" Enabled="1" Value="0" Color="210,210,210"/>
+        <Line Index="1" Enabled="0" Value="0" Color="0,0,248"/>
+        <Line Index="2" Enabled="0" Value="0" Color="248,0,0"/>
+       </Lines>
+       <Traces ActiveTrace="Speed_ecu">
+        <Trace Id="Speed_ecu" DisplayUnit="km/h" DisplayDPS="1" Visible="1"/>
+       </Traces>
+      </Graph>
+     </Graphs>
+     <Cursor Version="1" Style="1" Snap="1"/>
+    </MoTeC.TimeDistance>
+    <MoTeC.TimeDistance Version="100" Name="Time/Distance Graph" EnableOverlays="0" PosPC="0,232,489,1000" ShowCaption="0" AutoCaption="0" LinkZoom="1" ModeId="0" ShowDataLegend="1" ShowColorLegend="1" TelemetryZoom="0" TraceLineWidth="1" TracePointSize="3" TraceStyle="0" LinkCursor="1" LinkDatum="1" ShowKeyValues="1" ShowKeyStats="0" KeyMode="0" KeyPos="1" ShowGridLines="0" ShowXAxis="0" ShowXAxisScrollBar="0" ShowYAxis="0" ShowYAxisScrollBar="0" ShowMarkers="0" ShowVSP="0" ShowDeviveEvents="0" ShowBands="0" BandGroup="Outings:Laps:Track Sections:Default" BandMode="1" OverlapMode="0" VariancePos="0.25" VarianceAutoScale="1">
+     <Graphs ActivateChild="Group 6">
+      <Graph Name="Group 1" ScaleMode="2" ScaleMin="0" ScaleMax="1">
+       <Edges Mode="0" TopEdge="0" BottomEdge="139"/>
+       <Edges Mode="1" TopEdge="0" BottomEdge="1000"/>
+       <Lines>
+        <Line Index="0" Enabled="1" Value="0" Color="210,210,210"/>
+        <Line Index="1" Enabled="0" Value="0" Color="0,0,248"/>
+        <Line Index="2" Enabled="0" Value="0" Color="248,0,0"/>
+       </Lines>
+       <Traces ActiveTrace="PDM L11 Logger">
+        <Trace Id="PDM L11 Logger" DisplayUnit="%" DisplayDPS="0" Visible="1"/>
+       </Traces>
+      </Graph>
+      <Graph Name="Group 2" ScaleMode="2" ScaleMin="0" ScaleMax="1">
+       <Edges Mode="0" TopEdge="139" BottomEdge="397"/>
+       <Edges Mode="1" TopEdge="0" BottomEdge="1000"/>
+       <Lines>
+        <Line Index="0" Enabled="1" Value="0" Color="210,210,210"/>
+        <Line Index="1" Enabled="0" Value="0" Color="0,0,248"/>
+        <Line Index="2" Enabled="0" Value="0" Color="248,0,0"/>
+       </Lines>
+       <Traces ActiveTrace="PDM L27 Engine2">
+        <Trace Id="PDM L7 ECU" DisplayUnit="%" DisplayDPS="0" Visible="1"/>
+        <Trace Id="PDM L26 Engine1" DisplayUnit="%" DisplayDPS="0" Visible="1"/>
+        <Trace Id="PDM L27 Engine2" DisplayUnit="%" DisplayDPS="0" Visible="1"/>
+       </Traces>
+      </Graph>
+      <Graph Name="Group 3" ScaleMode="2" ScaleMin="0" ScaleMax="1">
+       <Edges Mode="0" TopEdge="397" BottomEdge="596"/>
+       <Edges Mode="1" TopEdge="0" BottomEdge="1000"/>
+       <Lines>
+        <Line Index="0" Enabled="1" Value="0" Color="210,210,210"/>
+        <Line Index="1" Enabled="0" Value="0" Color="0,0,248"/>
+        <Line Index="2" Enabled="0" Value="0" Color="248,0,0"/>
+       </Lines>
+       <Traces ActiveTrace="PDM L6 Starter">
+        <Trace Id="PDM L6 Starter" DisplayUnit="%" DisplayDPS="0" Visible="1"/>
+       </Traces>
+      </Graph>
+      <Graph Name="Group 4" ScaleMode="2" ScaleMin="0" ScaleMax="1">
+       <Edges Mode="0" TopEdge="596" BottomEdge="795"/>
+       <Edges Mode="1" TopEdge="0" BottomEdge="1000"/>
+       <Lines>
+        <Line Index="0" Enabled="1" Value="0" Color="210,210,210"/>
+        <Line Index="1" Enabled="0" Value="0" Color="0,0,248"/>
+        <Line Index="2" Enabled="0" Value="0" Color="248,0,0"/>
+       </Lines>
+       <Traces ActiveTrace="PDM L28 Shift ACT&amp;ALT">
+        <Trace Id="PDM L3 ABS Valve" DisplayUnit="%" DisplayDPS="0" Visible="1"/>
+        <Trace Id="PDM L4 AGS Compressor" DisplayUnit="%" DisplayDPS="0" Visible="1"/>
+        <Trace Id="PDM L28 Shift ACT&amp;ALT" DisplayUnit="%" DisplayDPS="0" Visible="1"/>
+       </Traces>
+      </Graph>
+      <Graph Name="Group 6" ScaleMode="2" ScaleMin="0" ScaleMax="1">
+       <Edges Mode="0" TopEdge="795" BottomEdge="1000"/>
+       <Edges Mode="1" TopEdge="0" BottomEdge="1000"/>
+       <Lines>
+        <Line Index="0" Enabled="1" Value="0" Color="210,210,210"/>
+        <Line Index="1" Enabled="0" Value="0" Color="0,0,248"/>
+        <Line Index="2" Enabled="0" Value="0" Color="248,0,0"/>
+       </Lines>
+       <Traces ActiveTrace="PDM L2 Fuel Pump Sub">
+        <Trace Id="PDM L8 Fuel Pump" DisplayUnit="%" DisplayDPS="0" Visible="1"/>
+        <Trace Id="PDM L2 Fuel Pump Sub" DisplayUnit="%" DisplayDPS="0" Visible="1"/>
+        <Trace Id="PDM L29 Fuel Pump Lift RH" DisplayUnit="%" DisplayDPS="0" Visible="1"/>
+        <Trace Id="PDM L30 Fuel Pump Lift LH" DisplayUnit="%" DisplayDPS="0" Visible="1"/>
+       </Traces>
+      </Graph>
+     </Graphs>
+     <Cursor Version="1" Style="1" Snap="1"/>
+    </MoTeC.TimeDistance>
+   </Controls>
+  </Worksheet>
+  <Worksheet Version="200" Name="Fuel Pump A%" LinkTo="Laps" LockByGPSTime="0">
+   <Controls Active="Time/Distance Graph">
+    <MoTeC.TimeDistance Version="100" Name="Time/Distance Graph" PosPC="0,0,1000,772" ShowCaption="0" AutoCaption="0" LinkZoom="1" ModeId="0" ShowDataLegend="1" ShowColorLegend="1" TelemetryZoom="0" TraceLineWidth="1" TracePointSize="3" TraceStyle="0" LinkCursor="1" LinkDatum="1" ShowKeyValues="1" ShowKeyStats="1" KeyMode="0" KeyPos="1" ShowGridLines="0" ShowXAxis="0" ShowXAxisScrollBar="0" ShowYAxis="0" ShowYAxisScrollBar="0" ShowMarkers="0" ShowVSP="0" ShowDeviveEvents="0" ShowBands="0" BandGroup="Outings:Laps:Track Sections:Default" BandMode="1" OverlapMode="0" VariancePos="0.25" VarianceAutoScale="1">
+     <Graphs ActivateChild="Group 1">
+      <Graph Name="Group 1" ScaleMode="2" ScaleMin="0" ScaleMax="1">
+       <Edges Mode="0" TopEdge="0" BottomEdge="199"/>
+       <Edges Mode="1" TopEdge="0" BottomEdge="1000"/>
+       <Lines>
+        <Line Index="0" Enabled="1" Value="0" Color="210,210,210"/>
+        <Line Index="1" Enabled="0" Value="0" Color="0,0,248"/>
+        <Line Index="2" Enabled="0" Value="0" Color="248,0,0"/>
+       </Lines>
+       <Traces ActiveTrace="nmot">
+        <Trace Id="nmot" DisplayUnit="rpm" DisplayDPS="0" Visible="1"/>
+       </Traces>
+      </Graph>
+      <Graph Name="Group 2" ScaleMode="2" ScaleMin="0" ScaleMax="1">
+       <Edges Mode="0" TopEdge="199" BottomEdge="400"/>
+       <Edges Mode="1" TopEdge="0" BottomEdge="1000"/>
+       <Lines>
+        <Line Index="0" Enabled="1" Value="0" Color="210,210,210"/>
+        <Line Index="1" Enabled="0" Value="0" Color="0,0,248"/>
+        <Line Index="2" Enabled="0" Value="0" Color="248,0,0"/>
+       </Lines>
+       <Traces ActiveTrace="Speed_ecu">
+        <Trace Id="Speed_ecu" DisplayUnit="km/h" DisplayDPS="1" Visible="1"/>
+       </Traces>
+      </Graph>
+      <Graph Name="Group 3" ScaleMode="2" ScaleMin="0" ScaleMax="1">
+       <Edges Mode="0" TopEdge="400" BottomEdge="578"/>
+       <Edges Mode="1" TopEdge="0" BottomEdge="1000"/>
+       <Lines>
+        <Line Index="0" Enabled="1" Value="0" Color="210,210,210"/>
+        <Line Index="1" Enabled="0" Value="0" Color="0,0,248"/>
+        <Line Index="2" Enabled="0" Value="0" Color="248,0,0"/>
+       </Lines>
+       <Traces ActiveTrace="pfuel">
+        <Trace Id="pfuel" DisplayUnit="bar" DisplayDPS="3" Visible="1"/>
+       </Traces>
+      </Graph>
+      <Graph Name="Group 6" ScaleMode="2" ScaleMin="0" ScaleMax="1">
+       <Edges Mode="0" TopEdge="578" BottomEdge="802"/>
+       <Edges Mode="1" TopEdge="0" BottomEdge="1000"/>
+       <Lines>
+        <Line Index="0" Enabled="1" Value="0" Color="210,210,210"/>
+        <Line Index="1" Enabled="0" Value="0" Color="0,0,248"/>
+        <Line Index="2" Enabled="0" Value="0" Color="248,0,0"/>
+       </Lines>
+       <Traces ActiveTrace="PDM C2 Fuel Pump Sub">
+        <Trace Id="PDM C8 Fuel Pump" DisplayUnit="A" DisplayDPS="1" Visible="1"/>
+        <Trace Id="PDM C2 Fuel Pump Sub" DisplayUnit="A" DisplayDPS="1" Visible="0"/>
+        <Trace Id="PDM C29 Fuel Pump Lift RH" DisplayUnit="A" DisplayDPS="1" Visible="1"/>
+        <Trace Id="PDM C30 Fuel Pump Lift LH" DisplayUnit="A" DisplayDPS="1" Visible="1"/>
+       </Traces>
+      </Graph>
+      <Graph Name="Group 4" ScaleMode="2" ScaleMin="0" ScaleMax="1">
+       <Edges Mode="0" TopEdge="802" BottomEdge="1000"/>
+       <Edges Mode="1" TopEdge="0" BottomEdge="1000"/>
+       <Lines>
+        <Line Index="0" Enabled="1" Value="0" Color="210,210,210"/>
+        <Line Index="1" Enabled="0" Value="0" Color="0,0,248"/>
+        <Line Index="2" Enabled="0" Value="0" Color="248,0,0"/>
+       </Lines>
+       <Traces ActiveTrace="Low Fuel Switch">
+        <Trace Id="Low Fuel Switch" DisplayUnit="" DisplayDPS="0" Visible="1"/>
+       </Traces>
+      </Graph>
+     </Graphs>
+     <Cursor Version="1" Style="1" Snap="1"/>
+    </MoTeC.TimeDistance>
+    <MoTeC.TimeDistance Version="100" Name="Time/Distance Graph (1)" EnableOverlays="0" PosPC="0,772,1000,1000" ShowCaption="0" AutoCaption="0" LinkZoom="1" ModeId="0" ShowDataLegend="1" ShowColorLegend="1" TelemetryZoom="0" TraceLineWidth="1" TracePointSize="3" TraceStyle="0" LinkCursor="1" LinkDatum="1" ShowKeyValues="1" ShowKeyStats="0" KeyMode="0" KeyPos="1" ShowGridLines="0" ShowXAxis="0" ShowXAxisScrollBar="0" ShowYAxis="0" ShowYAxisScrollBar="0" ShowMarkers="0" ShowVSP="0" ShowDeviveEvents="1" ShowBands="0" BandGroup="Outings:Laps:Track Sections:Default" BandMode="1" OverlapMode="0" VariancePos="0.25" VarianceAutoScale="1">
+     <Graphs ActivateChild="Group 6">
+      <Graph Name="Group 6" ScaleMode="2" ScaleMin="0" ScaleMax="1">
+       <Edges Mode="0" TopEdge="0" BottomEdge="1000"/>
+       <Edges Mode="1" TopEdge="0" BottomEdge="1000"/>
+       <Lines>
+        <Line Index="0" Enabled="1" Value="0" Color="210,210,210"/>
+        <Line Index="1" Enabled="0" Value="0" Color="0,0,248"/>
+        <Line Index="2" Enabled="0" Value="0" Color="248,0,0"/>
+       </Lines>
+       <Traces ActiveTrace="PDM L2 Fuel Pump Sub">
+        <Trace Id="PDM L8 Fuel Pump" DisplayUnit="%" DisplayDPS="0" Visible="1"/>
+        <Trace Id="PDM L2 Fuel Pump Sub" DisplayUnit="%" DisplayDPS="0" Visible="0"/>
+        <Trace Id="PDM L29 Fuel Pump Lift RH" DisplayUnit="%" DisplayDPS="0" Visible="1"/>
+        <Trace Id="PDM L30 Fuel Pump Lift LH" DisplayUnit="%" DisplayDPS="0" Visible="1"/>
+       </Traces>
+      </Graph>
+     </Graphs>
+     <Cursor Version="1" Style="1" Snap="1"/>
+    </MoTeC.TimeDistance>
+   </Controls>
+  </Worksheet>
+  <Worksheet Version="200" Name="Battery" LinkTo="Laps" LockByGPSTime="0">
+   <Controls Active="Time/Distance Graph">
+    <MoTeC.TimeDistance Version="100" Name="Time/Distance Graph" EnableOverlays="0" PosPC="0,0,1000,1000" ShowCaption="0" AutoCaption="0" LinkZoom="1" ModeId="0" ShowDataLegend="1" ShowColorLegend="1" TelemetryZoom="0" TraceLineWidth="1" TracePointSize="3" TraceStyle="0" LinkCursor="1" LinkDatum="1" ShowKeyValues="1" ShowKeyStats="0" KeyMode="0" KeyPos="1" ShowGridLines="0" ShowXAxis="0" ShowXAxisScrollBar="0" ShowYAxis="0" ShowYAxisScrollBar="0" ShowMarkers="0" ShowVSP="0" ShowDeviveEvents="0" ShowBands="0" BandGroup="Outings:Laps:Track Sections:Default" BandMode="1" OverlapMode="0" VariancePos="0.25" VarianceAutoScale="1">
+     <Graphs ActivateChild="Group 3">
+      <Graph Name="Group 1" ScaleMode="2" ScaleMin="0" ScaleMax="1">
+       <Edges Mode="0" TopEdge="0" BottomEdge="165"/>
+       <Edges Mode="1" TopEdge="0" BottomEdge="1000"/>
+       <Lines>
+        <Line Index="0" Enabled="1" Value="0" Color="210,210,210"/>
+        <Line Index="1" Enabled="0" Value="0" Color="0,0,248"/>
+        <Line Index="2" Enabled="0" Value="0" Color="248,0,0"/>
+       </Lines>
+       <Traces ActiveTrace="nmot">
+        <Trace Id="nmot" DisplayUnit="rpm" DisplayDPS="0" Visible="1"/>
+       </Traces>
+      </Graph>
+      <Graph Name="Group 2" ScaleMode="2" ScaleMin="0" ScaleMax="1">
+       <Edges Mode="0" TopEdge="165" BottomEdge="308"/>
+       <Edges Mode="1" TopEdge="0" BottomEdge="1000"/>
+       <Lines>
+        <Line Index="0" Enabled="1" Value="0" Color="210,210,210"/>
+        <Line Index="1" Enabled="0" Value="0" Color="0,0,248"/>
+        <Line Index="2" Enabled="0" Value="0" Color="248,0,0"/>
+       </Lines>
+       <Traces ActiveTrace="Speed_ecu">
+        <Trace Id="Speed_ecu" DisplayUnit="km/h" DisplayDPS="1" Visible="1"/>
+       </Traces>
+      </Graph>
+      <Graph Name="Group 3" ScaleMode="2" ScaleMin="0" ScaleMax="1">
+       <Edges Mode="0" TopEdge="308" BottomEdge="487"/>
+       <Edges Mode="1" TopEdge="0" BottomEdge="1000"/>
+       <Lines>
+        <Line Index="0" Enabled="1" Value="0" Color="210,210,210"/>
+        <Line Index="1" Enabled="0" Value="0" Color="0,0,248"/>
+        <Line Index="2" Enabled="0" Value="0" Color="248,0,0"/>
+       </Lines>
+       <Traces ActiveTrace="ub">
+        <Trace Id="Battery Volts" DisplayUnit="V" DisplayDPS="2" Visible="1"/>
+        <Trace Id="ub" DisplayUnit="V" DisplayDPS="2" Visible="1"/>
+       </Traces>
+      </Graph>
+      <Graph Name="Group 4" ScaleMode="2" ScaleMin="0" ScaleMax="1">
+       <Edges Mode="0" TopEdge="487" BottomEdge="629"/>
+       <Edges Mode="1" TopEdge="0" BottomEdge="1000"/>
+       <Lines>
+        <Line Index="0" Enabled="1" Value="0" Color="210,210,210"/>
+        <Line Index="1" Enabled="0" Value="0" Color="0,0,248"/>
+        <Line Index="2" Enabled="0" Value="0" Color="248,0,0"/>
+       </Lines>
+       <Traces ActiveTrace="ALT Lamp">
+        <Trace Id="ALT Lamp" DisplayUnit="V" DisplayDPS="2" Visible="1"/>
+       </Traces>
+      </Graph>
+      <Graph Name="Group 5" ScaleMode="2" ScaleMin="0" ScaleMax="1">
+       <Edges Mode="0" TopEdge="629" BottomEdge="833"/>
+       <Edges Mode="1" TopEdge="0" BottomEdge="1000"/>
+       <Lines>
+        <Line Index="0" Enabled="1" Value="0" Color="210,210,210"/>
+        <Line Index="1" Enabled="0" Value="0" Color="0,0,248"/>
+        <Line Index="2" Enabled="0" Value="0" Color="248,0,0"/>
+       </Lines>
+       <Traces ActiveTrace="PDM Total Current">
+        <Trace Id="PDM Total Current" DisplayUnit="A" DisplayDPS="1" Visible="1"/>
+       </Traces>
+      </Graph>
+      <Graph Name="Group 6" ScaleMode="2" ScaleMin="0" ScaleMax="1">
+       <Edges Mode="0" TopEdge="833" BottomEdge="1000"/>
+       <Edges Mode="1" TopEdge="0" BottomEdge="1000"/>
+       <Lines>
+        <Line Index="0" Enabled="1" Value="0" Color="210,210,210"/>
+        <Line Index="1" Enabled="0" Value="0" Color="0,0,248"/>
+        <Line Index="2" Enabled="0" Value="0" Color="248,0,0"/>
+       </Lines>
+       <Traces ActiveTrace="Clutch Fluid Pres">
+        <Trace Id="Clutch Fluid Pres" DisplayUnit="bar" DisplayDPS="3" Visible="1"/>
+       </Traces>
+      </Graph>
+     </Graphs>
+     <Cursor Version="1" Style="1" Snap="1"/>
+    </MoTeC.TimeDistance>
+   </Controls>
+  </Worksheet>
+ </Worksheets>
+</Workbook>

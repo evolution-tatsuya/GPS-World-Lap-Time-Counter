@@ -23,6 +23,9 @@ import CircuitCreate from './pages/CircuitCreate';
 import Admin from './pages/Admin';
 import PersonalMeasurement from './pages/PersonalMeasurement';
 import LiveMonitor from './pages/LiveMonitor';
+import GalleryLogin from './pages/GalleryLogin';
+import GalleryDashboard from './pages/GalleryDashboard';
+import DriverDashboard from './pages/DriverDashboard';
 
 // React Query Client
 const queryClient = new QueryClient({
@@ -93,6 +96,11 @@ function App() {
             <Route path="/admin" element={<Admin />} />
             <Route path="/personal" element={<PersonalMeasurement />} />
             <Route path="/subscribe" element={<Subscribe />} />
+
+            {/* ライブダッシュボード */}
+            <Route path="/gallery" element={<GalleryLogin />} />
+            <Route path="/live/:code" element={<GalleryDashboard />} />
+            <Route path="/dashboard-live" element={<DriverDashboard />} />
 
             {/* 詳細ページ */}
             <Route path="/events/:id" element={<EventDetail />} />

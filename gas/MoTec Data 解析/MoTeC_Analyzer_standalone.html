@@ -1,0 +1,1795 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>T-EVOLUTION MoTeC Analyzer</title>
+<style>
+  :root{--bg:#131313;--panel:#1d1d1d;--panel2:#242424;--line:#333;--red:#E10600;--white:#f5f5f5;--gray:#9a9a9a;--green:#2ecc71;--yellow:#f1c40f;--blue:#3498db}
+  *{margin:0;padding:0;box-sizing:border-box}
+  html,body{height:100%}
+  body{background:var(--bg);color:var(--white);font-family:'Bahnschrift','Yu Gothic UI','Hiragino Kaku Gothic ProN',sans-serif;display:flex;flex-direction:column;height:100vh;overflow:hidden}
+  header{padding:7px 14px;border-bottom:2px solid var(--red);display:flex;align-items:center;gap:10px;flex:0 0 auto}
+  header h1{font-size:14px;letter-spacing:2px;font-style:italic}
+  header h1 span{color:var(--red)}
+  header .btn{background:var(--red);color:#fff;padding:5px 12px;border-radius:5px;cursor:pointer;font-size:11px;font-weight:bold;letter-spacing:1px;border:none}
+  header .btn.ghost{background:#2a2a2a;color:var(--white)}
+  header .btn.ghost.on{background:var(--red)}
+  header .spacer{flex:1}
+  main{flex:1 1 auto;display:flex;min-height:0}
+  .resizer{flex:0 0 auto;width:5px;background:#2a2a2a;cursor:col-resize;transition:background .15s}
+  .resizer:hover,.resizer.active{background:var(--red)}
+  #side.hidden,#right.hidden{display:none}
+  #resizerL.hidden,#resizerR.hidden{display:none}
+
+  #side{width:236px;flex:0 0 auto;border-right:1px solid var(--line);display:flex;flex-direction:column;background:var(--panel)}
+  #side h2{font-size:10px;color:var(--gray);padding:8px 10px 4px;letter-spacing:1px;display:flex;justify-content:space-between}
+  #fileTray{border-bottom:1px solid var(--line);max-height:150px;overflow-y:auto}
+  .fileItem{padding:6px 9px;border-bottom:1px solid #262626;font-size:11px;display:flex;flex-direction:column;gap:2px}
+  .fileItem .row1{display:flex;align-items:center;gap:5px}
+  .fileItem .dot{width:9px;height:9px;border-radius:50%;flex:0 0 auto}
+  .fileItem .fn{color:var(--gray);font-size:9px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .fileItem .del{color:#666;cursor:pointer;font-size:13px}
+  .fileItem .del:hover{color:var(--red)}
+  .fileItem .info{color:#666;cursor:pointer;font-size:12px;margin-left:auto}
+  .fileItem .info:hover{color:#3498db}
+  #metaDlg{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:100;display:none;align-items:center;justify-content:center}
+  #metaDlg .card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:18px;max-width:560px;width:90%;max-height:80vh;overflow:auto}
+  #metaDlg .close{float:right;color:#888;cursor:pointer;font-size:18px}
+  .fileItem input.lbl{background:#111;border:1px solid var(--line);color:#fff;border-radius:3px;font-size:11px;padding:2px 5px;flex:1;min-width:0}
+  #lapList{overflow-y:auto;flex:1}
+  .lapItem{display:flex;align-items:center;gap:6px;padding:6px 9px;border-bottom:1px solid #242424;cursor:pointer;font-size:11px}
+  .lapItem:hover{background:var(--panel2)}
+  .lapItem.sel{background:#2a1414}
+  .lapItem .sw{width:10px;height:10px;border-radius:2px;flex:0 0 auto;border:1px solid #000}
+  .lapItem .fb{font-size:8px;padding:1px 4px;border-radius:3px;color:#fff;font-weight:bold}
+  .lapItem .no{width:28px;color:var(--gray)}
+  .lapItem .tm{font-variant-numeric:tabular-nums;font-weight:bold;margin-left:auto}
+  .lapItem.best .tm{color:var(--green)}
+
+  #charts{flex:1 1 auto;display:flex;flex-direction:column;min-width:0;overflow-y:auto;position:relative}
+  .chartRow{border-bottom:1px solid var(--line);position:relative}
+  .chartRow .legend{position:absolute;top:2px;left:6px;z-index:2;display:flex;flex-direction:column;gap:0;background:rgba(19,19,19,.55);border-radius:3px;padding:1px 4px}
+  .chartRow .legItem{display:flex;align-items:baseline;gap:6px;font-size:10px;line-height:1.35;white-space:nowrap}
+  .chartRow .legName{font-weight:600;letter-spacing:.3px}
+  .chartRow .legVal{margin-left:auto;font-variant-numeric:tabular-nums;font-weight:bold;min-width:42px;text-align:right}
+  .chartRow .rm{position:absolute;top:2px;right:6px;font-size:11px;color:#555;cursor:pointer;z-index:3}
+  .chartRow .rm:hover{color:var(--red)}
+  canvas{display:block;width:100%}
+  .modeBtn{background:#2a2a2a;border:1px solid var(--line);color:var(--white);font-size:10px;padding:3px 9px;border-radius:4px;cursor:pointer}
+  .modeBtn.on{background:var(--red);border-color:var(--red)}
+  .wsTab{background:none;border:none;border-bottom:2px solid transparent;color:var(--gray);font-size:11px;padding:6px 11px;cursor:pointer;white-space:nowrap;flex:0 0 auto}
+  .wsTab:hover{color:var(--white)}
+  .wsTab.on{color:var(--white);border-bottom-color:var(--red);font-weight:bold}
+  #wsTabs .wbName{font-size:10px;color:var(--red);font-weight:bold;padding:0 8px 0 2px;flex:0 0 auto;letter-spacing:.5px}
+  .modeBtn:hover{border-color:var(--red)}
+  #cursorInfo{padding:3px 8px;font-size:10px;color:var(--gray);border-top:1px solid var(--line);flex:0 0 auto}
+  #emptyHint{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#555;font-size:13px;text-align:center;line-height:1.8}
+
+  #right{width:320px;flex:0 0 auto;border-left:1px solid var(--line);background:var(--panel);display:flex;flex-direction:column;min-height:0}
+  .rtabs{display:flex;border-bottom:1px solid var(--line);flex:0 0 auto}
+  .rtabs button{flex:1;background:none;border:none;color:var(--gray);padding:8px 0;font-size:11px;font-weight:bold;letter-spacing:1px;cursor:pointer;border-bottom:2px solid transparent}
+  .rtabs button.on{color:#fff;border-bottom-color:var(--red)}
+  .rpane{flex:1 1 auto;overflow-y:auto;display:none;padding:8px 10px}
+  .rpane.on{display:block}
+  #gg{margin:0 auto 8px;display:block}
+  .presets{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:6px}
+  .presets button{background:#2a2a2a;border:1px solid var(--line);color:var(--white);font-size:10px;padding:3px 7px;border-radius:4px;cursor:pointer}
+  .presets button:hover{border-color:var(--red)}
+  #chanSearch{width:100%;padding:5px;background:#111;border:1px solid var(--line);color:#fff;border-radius:4px;margin-bottom:5px;font-size:11px}
+  .chanItem{padding:3px 4px;font-size:11px;cursor:pointer;border-radius:3px;display:flex;justify-content:space-between}
+  .chanItem:hover{background:var(--panel2)}
+  .chanItem.on{background:#2a1414;color:#fff}
+  .chanItem .u{color:#666;font-size:9px}
+  .chanItem.derived{color:var(--yellow)}
+
+  #suggestBtn{width:100%;background:var(--red);color:#fff;border:none;padding:9px;border-radius:5px;font-weight:bold;letter-spacing:1px;cursor:pointer;font-size:12px;margin-bottom:8px}
+  #suggestBtn:disabled{background:#333;color:#666;cursor:default}
+  .finding{border:1px solid var(--line);border-radius:6px;padding:8px;margin-bottom:8px;font-size:11px;line-height:1.5}
+  .finding .sev{font-size:9px;font-weight:bold;padding:1px 6px;border-radius:3px;color:#000}
+  .sev.high{background:var(--red);color:#fff}.sev.medium{background:var(--yellow)}.sev.low{background:#888;color:#fff}.sev.info{background:var(--blue);color:#fff}
+  .finding .obs{font-weight:bold;margin:4px 0 3px}
+  .finding .cause{color:var(--gray);margin-bottom:3px}
+  .finding .action{color:var(--green)}
+  .finding .ev{color:#666;font-size:9px;margin-top:3px}
+  .deltaBox{background:#111;border:1px solid var(--line);border-radius:5px;padding:7px;font-size:12px;margin-bottom:8px;text-align:center}
+  .aiBox{border-top:1px solid var(--line);margin-top:8px;padding-top:8px}
+  .aiBox input{width:100%;padding:5px;background:#111;border:1px solid var(--line);color:#fff;border-radius:4px;font-size:11px;margin-bottom:5px}
+  .aiBox .row{display:flex;gap:5px;align-items:center;margin-bottom:5px}
+  .aiBox button{background:#2a2a2a;border:1px solid var(--line);color:#fff;padding:6px 10px;border-radius:4px;cursor:pointer;font-size:11px}
+  .aiBox button.go{background:var(--red);border:none;flex:1;font-weight:bold}
+  #aiOut{font-size:11px;line-height:1.6;white-space:pre-wrap;margin-top:8px;color:#ddd}
+  .muted{color:#666;font-size:10px}
+
+  #drop{position:absolute;inset:0;background:rgba(19,19,19,.97);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:50;text-align:center;gap:16px}
+  #drop.hide{display:none}
+  #drop .box{border:2px dashed var(--red);border-radius:12px;padding:40px 54px;max-width:560px}
+  #drop h3{font-size:22px;font-style:italic;letter-spacing:2px;margin-bottom:10px}
+  #drop h3 span{color:var(--red)}
+  #drop p{color:var(--gray);font-size:13px;line-height:1.7}
+  #drop .btn{margin-top:14px;display:inline-block;background:var(--red);color:#fff;padding:10px 22px;border-radius:6px;cursor:pointer;font-weight:bold;letter-spacing:1px}
+  #prog{color:var(--gray);font-size:13px;margin-top:8px}
+  .hint{color:#666;font-size:11px}
+  #dragOverlay{position:absolute;inset:0;background:rgba(225,6,0,.12);border:3px dashed var(--red);z-index:60;display:none;align-items:center;justify-content:center;font-size:20px;letter-spacing:2px;pointer-events:none}
+  #dragOverlay.show{display:flex}
+  /* フローティング・コース窓(i2式・スケルトン) */
+  #courseWin{position:fixed;top:120px;left:360px;width:340px;height:280px;z-index:70;display:none;flex-direction:column;
+    background:transparent;border:none;box-shadow:none}
+  #courseWin.show{display:flex}
+  #courseWinBar{flex:0 0 auto;display:flex;justify-content:space-between;align-items:center;padding:2px 6px;font-size:10px;color:rgba(255,255,255,.5);cursor:move;background:transparent;letter-spacing:1px;opacity:.35;transition:opacity .15s}
+  #courseWin:hover #courseWinBar{opacity:1;background:rgba(225,6,0,.3)}
+  #courseWinClose{cursor:pointer;color:#fff;font-size:15px;line-height:1}
+  #courseWinClose:hover{color:var(--red)}
+  #courseFloat{flex:1 1 auto;width:100%;min-height:0;display:block}
+  #courseWinResize{position:absolute;right:0;bottom:0;width:16px;height:16px;cursor:nwse-resize;
+    background:linear-gradient(135deg,transparent 50%,var(--red) 50%);opacity:.25;transition:opacity .15s}
+  #courseWin:hover #courseWinResize{opacity:1}
+  /* フローティング・数値窓 */
+  #numWin{position:fixed;top:150px;left:420px;width:230px;height:auto;z-index:71;display:none;flex-direction:column;
+    background:rgba(13,13,13,.82);border:1px solid var(--line);border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.5)}
+  #numWin.show{display:flex}
+  #numWinBar{flex:0 0 auto;display:flex;justify-content:space-between;align-items:center;padding:3px 8px;font-size:10px;color:#fff;cursor:move;background:rgba(225,6,0,.3);border-radius:7px 7px 0 0;letter-spacing:1px}
+  #numWinClose{cursor:pointer;font-size:15px;line-height:1}
+  #numWinClose:hover{color:var(--red)}
+  #numWinBody{padding:6px 8px;display:flex;flex-direction:column;gap:3px}
+  #numWinBody .nrow{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+  #numWinBody .nname{font-size:11px;font-weight:600}
+  #numWinBody .nval{font-size:19px;font-weight:bold;font-variant-numeric:tabular-nums;line-height:1.1}
+  #numWinResize{position:absolute;right:0;bottom:0;width:14px;height:14px;cursor:nwse-resize;background:linear-gradient(135deg,transparent 50%,var(--line) 50%);border-radius:0 0 7px 0}
+</style>
+</head>
+<body>
+<header>
+  <h1>T-<span>EVOLUTION</span> MoTeC Analyzer</h1>
+  <button class="btn ghost" id="toggleLeft" title="左サイドバーの表示/非表示">◧ 左</button>
+  <button class="btn ghost" id="toggleRight" title="右サイドバーの表示/非表示">右 ◨</button>
+  <button class="btn ghost" id="toggleCourse" title="コース窓の表示/非表示">🗺️ コース窓</button>
+  <button class="btn ghost" id="toggleNum" title="数値窓の表示/非表示">🔢 数値窓</button>
+  <span class="spacer"></span>
+  <label class="btn">＋ .ld を追加<input type="file" id="fileInput" accept=".ld" multiple hidden></label>
+  <input type="file" id="i2Input" accept=".i2wkb,.xml" multiple hidden>
+</header>
+<main>
+  <aside id="side">
+    <h2>FILES <span id="fileCount"></span></h2>
+    <div id="fileTray"></div>
+    <h2>LAPS <span class="muted">クリックで重ね(最大8)</span></h2>
+    <div id="lapList"></div>
+  </aside>
+  <div class="resizer" id="resizerL" title="ドラッグで左サイドバー幅を調整"></div>
+  <section id="chartsWrap" style="flex:1 1 auto;display:flex;flex-direction:column;min-width:0">
+    <div id="chartToolbar" style="flex:0 0 auto;display:flex;align-items:center;gap:8px;padding:5px 10px;border-bottom:1px solid var(--line);font-size:11px">
+      <span style="color:var(--gray)">軸:</span>
+      <button id="modeDist" class="modeBtn on">距離軸(比較)</button>
+      <button id="modeTime" class="modeBtn">時間軸(単体・全周)</button>
+      <span id="zoomInfo" style="color:#666;margin-left:8px"></span>
+      <span style="flex:1"></span>
+      <button id="zoomIn" class="modeBtn">＋拡大</button>
+      <button id="zoomOut" class="modeBtn">－縮小</button>
+      <button id="zoomReset" class="modeBtn">全体表示</button>
+      <span style="color:var(--gray);margin-left:6px">背景帯:</span>
+      <select id="bandSel" style="background:#2a2a2a;border:1px solid var(--line);color:#fff;font-size:11px;border-radius:4px;padding:2px 4px"><option value="">なし</option></select>
+      <span style="color:#555">ドラッグ=カーソル移動 / Alt+ドラッグ=移動 / Alt+ホイール=ズーム</span>
+    </div>
+    <div id="wsTabs" style="flex:0 0 auto;display:none;align-items:center;gap:2px;padding:0 8px;border-bottom:1px solid var(--line);overflow-x:auto;white-space:nowrap"></div>
+    <section id="charts"><div id="emptyHint">右の「チャンネル」タブから見たい項目を選ぶと<br>ここにグラフが重なって表示されます。<br><br>「📖 ワークブック」タブから i2 の解析画面(複数ch重ね)を再現できます。</div></section>
+  </section>
+  <div class="resizer" id="resizerR" title="ドラッグで右サイドバー幅を調整"></div>
+  <aside id="right">
+    <div class="rtabs">
+      <button data-pane="suggest" class="on">🔧 セット提案</button>
+      <button data-pane="chan">📊 チャンネル</button>
+      <button data-pane="course">🗺️ コース</button>
+      <button data-pane="scatter">⊹ XY</button>
+      <button data-pane="report">▦ 表</button>
+      <button data-pane="histo">⊞ 分布</button>
+      <button data-pane="gg">◎ G-G</button>
+    </div>
+    <div class="rpane on" id="pane-suggest">
+      <button id="suggestBtn" disabled>ラップを2つ選んで解析</button>
+      <div id="suggestOut"></div>
+      <div class="aiBox">
+        <div class="muted">AI上乗せ解析 (Claude API)。数値サマリのみ送信・生データは送りません。</div>
+        <input id="apiKey" type="password" placeholder="Claude API キー (sk-ant-... 空ならルール解析のみ)">
+        <div class="row"><label class="muted"><input type="checkbox" id="aiEnable"> AIエージェント解析を使う</label></div>
+        <button class="go" id="aiRun" style="width:100%">AIで深く解析する</button>
+        <div style="margin-top:6px">
+          <input id="askInput" placeholder="気になる点を質問(例: 130Rでリアが不安定)">
+          <button id="askRun" style="width:100%;margin-top:4px">この点を重点解析</button>
+        </div>
+        <div id="aiOut"></div>
+      </div>
+    </div>
+    <div class="rpane" id="pane-chan">
+      <div class="presets" id="presets"></div>
+      <input id="chanSearch" placeholder="チャンネル検索 (Damper, Ride, Brake...)">
+      <div id="chanList"></div>
+    </div>
+    <div class="rpane" id="pane-course">
+      <canvas id="courseMap" width="300" height="300" style="width:100%;background:#0d0d0d;border-radius:6px"></canvas>
+      <div class="muted" style="text-align:center;margin-top:4px">GPS軌跡。1本目は速度で色分け(青遅→赤速)、比較ラップは細線。白丸=カーソル位置。</div>
+    </div>
+    <div class="rpane" id="pane-scatter">
+      <div style="display:flex;gap:5px;margin-bottom:6px;font-size:11px">
+        <label style="flex:1">X軸<select id="scatterX" style="width:100%;background:#111;border:1px solid var(--line);color:#fff;border-radius:4px;padding:3px;font-size:11px"></select></label>
+        <label style="flex:1">Y軸<select id="scatterY" style="width:100%;background:#111;border:1px solid var(--line);color:#fff;border-radius:4px;padding:3px;font-size:11px"></select></label>
+      </div>
+      <canvas id="scatterCv" width="300" height="300" style="width:100%;background:#0d0d0d;border-radius:6px"></canvas>
+      <div class="muted" style="text-align:center;margin-top:4px">任意2chの散布図。選択ラップを色分け。例: タイヤ温度×荷重、スリップ×舵角</div>
+    </div>
+    <div class="rpane" id="pane-report">
+      <div class="muted" style="margin-bottom:5px">選択ラップ × 表示チャンネルの数値表(min/max/avg)。カーソル位置があればその値も。</div>
+      <div id="reportBox" style="overflow-x:auto"></div>
+    </div>
+    <div class="rpane" id="pane-histo">
+      <label style="font-size:11px">チャンネル<select id="histoCh" style="width:100%;background:#111;border:1px solid var(--line);color:#fff;border-radius:4px;padding:3px;font-size:11px;margin-bottom:6px"></select></label>
+      <canvas id="histoCv" width="300" height="240" style="width:100%;background:#0d0d0d;border-radius:6px"></canvas>
+      <div class="muted" style="text-align:center;margin-top:4px">値の分布(どの値でどれだけ時間を使ったか)。選択ラップ色分け。RPM/ダンパー速度/スロットル等の評価に。</div>
+    </div>
+    <div class="rpane" id="pane-gg">
+      <canvas id="gg" width="300" height="300"></canvas>
+      <div class="muted" style="text-align:center">横G×縦G の摩擦円。選択ラップを色分け表示。</div>
+    </div>
+  </aside>
+</main>
+
+<div id="dragOverlay">ここにドロップして追加</div>
+<div id="metaDlg"><div class="card"><span class="close" id="metaClose">×</span><div id="metaBody"></div></div></div>
+<!-- i2式フローティング・コース窓(透過・ドラッグ移動・リサイズ) -->
+<div id="courseWin">
+  <div id="courseWinBar"><span>🗺️ コース</span><span id="courseWinClose">×</span></div>
+  <canvas id="courseFloat"></canvas>
+  <div id="courseWinResize"></div>
+</div>
+<!-- i2式フローティング・数値(Numeric)窓: カーソル位置の各ch値を大きく表示 -->
+<div id="numWin">
+  <div id="numWinBar"><span>🔢 数値</span><span id="numWinClose">×</span></div>
+  <div id="numWinBody"></div>
+  <div id="numWinResize"></div>
+</div>
+<div id="drop">
+  <div class="box">
+    <h3>MoTeC <span>.ld</span> を投入</h3>
+    <p>i2 Pro でロギングした <b>.ld</b> をドラッグ＆ドロップ（複数可）<br>
+       読み込んだ全ファイルのラップを重ねて比較・セット提案します。</p>
+    <p class="hint">解析はすべてブラウザ内で完結（ファイルはPCの外に出ません）。</p>
+    <label class="btn">ファイルを選択<input type="file" id="fileInput2" accept=".ld" multiple hidden></label>
+    <div id="prog"></div>
+  </div>
+</div>
+
+<script>
+/* ============================================================================
+ * MoTeC .ld パーサ (ブラウザ / Node 共通, 依存なし)
+ * 確定レイアウト(実データ 鈴鹿Rd.5 #26 で検証済):
+ *   header: 0x00 u32 magic=0x40 / 0x08 u32 meta_ptr / 0x0C u32 data_ptr
+ *   channel block = 124 bytes linked-list (0x04 u32 next で辿る, next=0 終端):
+ *     0x00 u32 prev / 0x04 u32 next / 0x08 u32 data_ptr / 0x0C u32 n_samples
+ *     0x12 u16 dtype / 0x14 u16 datasize / 0x16 u16 freq
+ *     0x18 i16 shift / 0x1A i16 mul / 0x1C i16 scale / 0x1E i16 dec
+ *     0x20 char[32] name / 0x40 char[8] short / 0x48 char[12] unit
+ *   dtype: 0/3=int(datasizeで2/4), 5/7=float32
+ *   物理値: phys = (raw / scale) * 10^(-dec) * mul + shift   (scale,mul=0→1)
+ * ==========================================================================*/
+(function (global) {
+  'use strict';
+
+  function cstr(dv, off, len) {
+    let s = '';
+    for (let i = 0; i < len; i++) {
+      const c = dv.getUint8(off + i);
+      if (c === 0) break;
+      s += String.fromCharCode(c);
+    }
+    return s.trim();
+  }
+
+  /** ArrayBuffer からチャンネルのメタ情報だけを高速抽出 (データ本体は遅延読込) */
+  function parseHeader(buf) {
+    const dv = new DataView(buf);
+    const magic = dv.getUint32(0x00, true);
+    const metaPtr = dv.getUint32(0x08, true);
+    const dataPtr = dv.getUint32(0x0c, true);
+    if (magic !== 0x40) {
+      console.warn('LD magic が想定外:', magic.toString(16));
+    }
+    const channels = [];
+    let off = metaPtr;
+    const seen = new Set();
+    let guard = 0;
+    while (off && !seen.has(off) && guard < 5000) {
+      seen.add(off);
+      guard++;
+      if (off + 124 > buf.byteLength) break;
+      const prev = dv.getUint32(off + 0x00, true);
+      const next = dv.getUint32(off + 0x04, true);
+      const dptr = dv.getUint32(off + 0x08, true);
+      const n = dv.getUint32(off + 0x0c, true);
+      const dtype = dv.getUint16(off + 0x12, true);
+      const dsize = dv.getUint16(off + 0x14, true);
+      const freq = dv.getUint16(off + 0x16, true);
+      const shift = dv.getInt16(off + 0x18, true);
+      const mul = dv.getInt16(off + 0x1a, true);
+      const scale = dv.getInt16(off + 0x1c, true);
+      const dec = dv.getInt16(off + 0x1e, true);
+      const name = cstr(dv, off + 0x20, 32);
+      const short = cstr(dv, off + 0x40, 8);
+      const unit = cstr(dv, off + 0x48, 12);
+      channels.push({
+        idx: channels.length, name, short, unit,
+        freq, n, dtype, dsize, dptr, shift, mul, scale, dec,
+      });
+      if (next === 0) break;
+      off = next;
+    }
+    const meta = parseMeta(dv, metaPtr);
+    return { magic, metaPtr, dataPtr, channels, meta };
+  }
+
+  /** ヘッダーからメタ情報(日時・車両・コメント等)を抽出。
+   *  実データ(NISSAN GT-R NISMO GT3, C185ロガー)で確定した固定オフセット。 */
+  function parseMeta(dv, metaPtr) {
+    // メタ文字列は \0 だけでなく改行(0x0d/0x0a)でも終端する
+    const mstr = (off, len) => {
+      let s = '';
+      for (let i = 0; i < len; i++) { const c = dv.getUint8(off + i); if (c === 0 || c === 0x0d || c === 0x0a) break; s += String.fromCharCode(c); }
+      return s.trim();
+    };
+    const M = {
+      date:     mstr(0x005e, 16),   // "23/08/2026"
+      time:     mstr(0x007e, 12),   // "12:27:09"
+      comment:  mstr(0x0624, 128),  // ユーザー入力コメント "jung-yasuda ..."
+      configName: mstr(0x077d, 64), // "264H3_User_Basic_for #26"
+      vehicle:  mstr(0x0db4, 64),   // "NISSAN GT-R NISMO GT3"
+    };
+    // 互換: 旧UIが参照するキー
+    M.shortComment = M.comment;
+    M.vehicleId = M.vehicle;
+    // 汎用スキャン(ℹ詳細用): ヘッダー領域の全文字列
+    const strings = [];
+    const end = Math.min(metaPtr || dv.byteLength, dv.byteLength, 0x8000);
+    let i = 0x40;
+    while (i < end) {
+      const c = dv.getUint8(i);
+      if (c >= 32 && c <= 126) {
+        let j = i, s = '';
+        while (j < end) { const x = dv.getUint8(j); if (x >= 32 && x <= 126) { s += String.fromCharCode(x); j++; } else break; }
+        if (s.length >= 4 && /[A-Za-z0-9]/.test(s)) strings.push({ off: i, text: s });
+        i = j;
+      } else i++;
+    }
+    return { fields: M, strings };
+  }
+
+  /** 1チャンネルの生サンプルを物理値 Float64Array に展開
+   *  dtype: このMoTeC機種では 0/3/5 いずれも整数(datasizeで2/4byte)を
+   *  scale/dec/mul でスケーリング。float32型はこのデータには存在しない。
+   *  (dtype=5 を float32 と誤読すると GPS 等が壊れる — 実データで確認済) */
+  function loadChannel(buf, ch) {
+    const dv = new DataView(buf);
+    const sz = ch.dsize === 4 ? 4 : 2;
+    const n = Math.min(ch.n, Math.floor((buf.byteLength - ch.dptr) / sz));
+    const out = new Float64Array(n);
+    const sc = ch.scale || 1;
+    const ml = ch.mul || 1;
+    const fac = (1 / sc) * Math.pow(10, -ch.dec) * ml;
+    let p = ch.dptr;
+    if (sz === 4) {
+      for (let i = 0; i < n; i++, p += 4) out[i] = dv.getInt32(p, true) * fac + ch.shift;
+    } else {
+      for (let i = 0; i < n; i++, p += 2) out[i] = dv.getInt16(p, true) * fac + ch.shift;
+    }
+    return out;
+  }
+
+  /** Lap Number チャンネルの変化点からラップ配列を作る
+   *  返り値: [{lap, tStart, tEnd, dur}]  (時間は秒) */
+  function detectLaps(buf, header) {
+    const lnCh = header.channels.find((c) => c.name === 'Lap Number');
+    if (!lnCh) return [];
+    const ln = loadChannel(buf, lnCh);
+    const f = lnCh.freq || 1;
+    const bounds = []; // {lap, idx}
+    let prev = null;
+    for (let i = 0; i < ln.length; i++) {
+      const v = Math.round(ln[i]);
+      if (v !== prev) {
+        bounds.push({ lap: v, idx: i });
+        prev = v;
+      }
+    }
+    // 連続する同一 lap の最初の出現をラップ開始とみなす。負値(-1)は無効ラップ
+    const laps = [];
+    for (let k = 0; k < bounds.length; k++) {
+      const b = bounds[k];
+      if (b.lap < 0) continue;
+      const startIdx = b.idx;
+      // 次に「異なるlap」に変わる所を終端に
+      let endIdx = ln.length;
+      for (let j = k + 1; j < bounds.length; j++) {
+        if (bounds[j].lap !== b.lap) { endIdx = bounds[j].idx; break; }
+      }
+      const tStart = startIdx / f;
+      const tEnd = endIdx / f;
+      laps.push({ lap: b.lap, startIdx, endIdx, tStart, tEnd, dur: tEnd - tStart });
+    }
+    // 同一lap番号が飛び飛びに出る場合を統合(最初と最後で1本に)
+    const merged = {};
+    for (const l of laps) {
+      if (!merged[l.lap]) merged[l.lap] = { ...l };
+      else {
+        merged[l.lap].endIdx = Math.max(merged[l.lap].endIdx, l.endIdx);
+        merged[l.lap].tEnd = merged[l.lap].endIdx / f;
+        merged[l.lap].dur = merged[l.lap].tEnd - merged[l.lap].tStart;
+      }
+    }
+    return Object.values(merged).sort((a, b) => a.lap - b.lap);
+  }
+
+  const API = { parseHeader, loadChannel, detectLaps, cstr };
+  if (typeof module !== 'undefined' && module.exports) module.exports = API;
+  global.LD = API;
+})(typeof window !== 'undefined' ? window : globalThis);
+
+</script>
+<script>
+/* ============================================================================
+ * analysis.js — セットアップ解析エンジン
+ *  (1) 計算チャンネル再現 (User.xml / Brake endless.xml 由来)
+ *  (2) ラップ区間ごとの車両姿勢・ブレーキ・スリップ指標の集計
+ *  (3) ルールベースのセット変更提案 (GT/ハコ車, オフライン)
+ *  (4) Claude API 用の数値サマリ生成 (生ldは送らない)
+ * 依存: LD (ld_engine.js) — window.LD
+ * ==========================================================================*/
+(function (global) {
+  'use strict';
+
+  /* ---- 低レベル: あるファイルの、あるラップ区間の生サンプルを取り出す ---- */
+  function chanWindow(file, name, lap) {
+    const LD = global.LD;
+    if (!file.cache[name]) {
+      const c = file.header.channels.find((x) => x.name === name);
+      if (!c) return null;
+      file.cache[name] = { ch: c, data: LD.loadChannel(file.buf, c) };
+    }
+    const co = file.cache[name];
+    const f = co.ch.freq || 1;
+    const s = Math.floor(lap.tStart * f);
+    const e = Math.min(Math.floor(lap.tEnd * f), co.data.length);
+    return { data: co.data, s, e, f, unit: co.ch.unit };
+  }
+  function has(file, name) {
+    return !!file.header.channels.find((x) => x.name === name);
+  }
+
+  /* ---- 統計ヘルパ ---- */
+  function agg(win) {
+    if (!win) return null;
+    let mn = Infinity, mx = -Infinity, sum = 0, n = 0, absSum = 0;
+    for (let i = win.s; i < win.e; i++) {
+      const v = win.data[i];
+      if (!isFinite(v)) continue;
+      if (v < mn) mn = v; if (v > mx) mx = v; sum += v; absSum += Math.abs(v); n++;
+    }
+    if (!n) return null;
+    return { min: mn, max: mx, avg: sum / n, absAvg: absSum / n, n, range: mx - mn };
+  }
+  // 2つの同期窓を要素ごとに演算 (freqが同じ前提。異なる時は短い方に合わせる)
+  function combine(winA, winB, fn) {
+    if (!winA || !winB) return null;
+    const nA = winA.e - winA.s, nB = winB.e - winB.s;
+    const n = Math.min(nA, nB);
+    const out = new Float64Array(n);
+    for (let i = 0; i < n; i++) out[i] = fn(winA.data[winA.s + i], winB.data[winB.s + i]);
+    return { data: out, s: 0, e: n, f: winA.f };
+  }
+  function aggArr(arr, filterFn) {
+    let mn = Infinity, mx = -Infinity, sum = 0, n = 0, absSum = 0;
+    for (const v of arr) {
+      if (!isFinite(v)) continue;
+      if (filterFn && !filterFn(v)) continue;
+      if (v < mn) mn = v; if (v > mx) mx = v; sum += v; absSum += Math.abs(v); n++;
+    }
+    if (!n) return null;
+    return { min: mn, max: mx, avg: sum / n, absAvg: absSum / n, n, range: mx - mn };
+  }
+
+  /* ==========================================================================
+   * 計算チャンネル: 生chから派生chを作る (グラフにも出せる)
+   * 返り値 {data, f}  (freq基準は元chに合わせる)
+   * ========================================================================*/
+  const DERIVED = {
+    'RH Roll Fr': { need: ['Ride Height FR', 'Ride Height FL'], unit: 'mm',
+      calc: (f, lap) => combine(chanWindow(f, 'Ride Height FR', lap), chanWindow(f, 'Ride Height FL', lap), (a, b) => a - b) },
+    'RH Roll Rr': { need: ['Ride Height RR', 'Ride Height RL'], unit: 'mm',
+      calc: (f, lap) => combine(chanWindow(f, 'Ride Height RR', lap), chanWindow(f, 'Ride Height RL', lap), (a, b) => a - b) },
+    'RH Pitching': { need: ['Ride Height FL', 'Ride Height FR', 'Ride Height RL', 'Ride Height RR'], unit: 'mm',
+      calc: (f, lap) => {
+        const fl = chanWindow(f, 'Ride Height FL', lap), fr = chanWindow(f, 'Ride Height FR', lap),
+          rl = chanWindow(f, 'Ride Height RL', lap), rr = chanWindow(f, 'Ride Height RR', lap);
+        const n = Math.min(fl.e - fl.s, fr.e - fr.s, rl.e - rl.s, rr.e - rr.s);
+        const out = new Float64Array(n);
+        for (let i = 0; i < n; i++) out[i] = (fl.data[fl.s + i] + fr.data[fr.s + i]) / 2 - (rl.data[rl.s + i] + rr.data[rr.s + i]) / 2;
+        return { data: out, s: 0, e: n, f: fl.f };
+      } },
+    'DP Roll Fr': { need: ['Damper Pos FR', 'Damper Pos FL'], unit: 'mm',
+      calc: (f, lap) => combine(chanWindow(f, 'Damper Pos FR', lap), chanWindow(f, 'Damper Pos FL', lap), (a, b) => (-a) - (-b)) },
+    'DP Roll Rr': { need: ['Damper Pos RR', 'Damper Pos RL'], unit: 'mm',
+      calc: (f, lap) => combine(chanWindow(f, 'Damper Pos RR', lap), chanWindow(f, 'Damper Pos RL', lap), (a, b) => (-a) - (-b)) },
+    'Brake Bal Front%': { need: ['Brake Pres FL', 'Brake Pres FR', 'Brake Pres RL', 'Brake Pres RR'], unit: '%',
+      calc: (f, lap) => {
+        const fl = chanWindow(f, 'Brake Pres FL', lap), fr = chanWindow(f, 'Brake Pres FR', lap),
+          rl = chanWindow(f, 'Brake Pres RL', lap), rr = chanWindow(f, 'Brake Pres RR', lap);
+        const n = Math.min(fl.e - fl.s, fr.e - fr.s, rl.e - rl.s, rr.e - rr.s);
+        const out = new Float64Array(n);
+        for (let i = 0; i < n; i++) {
+          const F = (fl.data[fl.s + i] + fr.data[fr.s + i]) / 2, R = (rl.data[rl.s + i] + rr.data[rr.s + i]) / 2;
+          out[i] = (F + R > 3) ? (F / (F + R)) * 100 : NaN;
+        }
+        return { data: out, s: 0, e: n, f: fl.f };
+      } },
+    'Slip Rear%': { need: ['Wheel Speed RL', 'Wheel Speed RR', 'Wheel Speed FL', 'Wheel Speed FR'], unit: '%',
+      calc: (f, lap) => {
+        const rl = chanWindow(f, 'Wheel Speed RL', lap), rr = chanWindow(f, 'Wheel Speed RR', lap),
+          fl = chanWindow(f, 'Wheel Speed FL', lap), fr = chanWindow(f, 'Wheel Speed FR', lap);
+        const n = Math.min(rl.e - rl.s, rr.e - rr.s, fl.e - fl.s, fr.e - fr.s);
+        const out = new Float64Array(n);
+        for (let i = 0; i < n; i++) {
+          const rear = (rl.data[rl.s + i] + rr.data[rr.s + i]) / 2, front = (fl.data[fl.s + i] + fr.data[fr.s + i]) / 2;
+          out[i] = rear > 20 ? (rear - front) / rear * 100 : NaN;
+        }
+        return { data: out, s: 0, e: n, f: rl.f };
+      } },
+  };
+
+  // ch(生 or 派生)が最終的に生chまで解決できるか(循環防止付き)
+  function resolvable(file, name, seen) {
+    seen = seen || new Set();
+    if (has(file, name)) return true;          // 生ch
+    const d = DERIVED[name];
+    if (!d) return false;
+    if (seen.has(name)) return false;          // 循環
+    seen.add(name);
+    return d.need.every((nm) => resolvable(file, nm, seen));
+  }
+  function derivedAvailable(file) {
+    return Object.keys(DERIVED).filter((k) => resolvable(file, k));
+  }
+  // グラフ用: 派生chの窓を返す (無ければnull)。派生→派生の依存も辿る。
+  function derivedWindow(file, name, lap) {
+    const d = DERIVED[name];
+    if (!d || !resolvable(file, name)) return null;
+    return d.calc(file, lap);
+  }
+
+  /* ==========================================================================
+   * ラップ1本のセットアップ指標を集計 (提案とサマリの元データ)
+   * ========================================================================*/
+  function lapMetrics(file, lap) {
+    const m = { file: file.label, lap: lap.lap, dur: lap.dur, avail: {} };
+    const gLat = chanWindow(file, 'G Force Lat', lap);
+    const gLong = chanWindow(file, 'G Force Long', lap);
+    if (gLat) m.gLat = agg(gLat);
+    if (gLong) {
+      // ブレーキ(負)と加速(正)を分離
+      let brakeMin = 0, accMax = 0;
+      for (let i = gLong.s; i < gLong.e; i++) { const v = gLong.data[i]; if (v < brakeMin) brakeMin = v; if (v > accMax) accMax = v; }
+      m.brakeGmax = brakeMin; m.accGmax = accMax;
+    }
+    // 姿勢
+    const roll = { };
+    const rhRollFr = derivedWindow(file, 'RH Roll Fr', lap);
+    const rhRollRr = derivedWindow(file, 'RH Roll Rr', lap);
+    const rhPitch = derivedWindow(file, 'RH Pitching', lap);
+    if (rhRollFr) m.rollFr = agg(rhRollFr);
+    if (rhRollRr) m.rollRr = agg(rhRollRr);
+    if (rhPitch) m.pitch = agg(rhPitch);
+    // ダンパー速度域 (レンジ)
+    for (const w of ['FL', 'FR', 'RL', 'RR']) {
+      const d = chanWindow(file, 'Damper Pos ' + w, lap);
+      if (d) { m['damper' + w] = agg(d); }
+    }
+    // ブレーキ配分
+    const bbf = derivedWindow(file, 'Brake Bal Front%', lap);
+    if (bbf) m.brakeBalFront = aggArr(bbf.data, (v) => isFinite(v));
+    // ブレーキ圧
+    for (const w of ['FL', 'FR', 'RL', 'RR']) {
+      const b = chanWindow(file, 'Brake Pres ' + w, lap);
+      if (b) m['brakePres' + w] = agg(b);
+    }
+    // リアスリップ(トラクション)
+    const slip = derivedWindow(file, 'Slip Rear%', lap);
+    if (slip) m.slipRear = aggArr(slip.data, (v) => isFinite(v) && v > -50 && v < 50);
+    // ヨーレート
+    const yaw = chanWindow(file, 'ABS Yaw Rate', lap);
+    if (yaw) m.yaw = agg(yaw);
+    // 最高速・最低速
+    const spd = chanWindow(file, 'Drive Speed', lap);
+    if (spd) m.speed = agg(spd);
+    return m;
+  }
+
+  /* ==========================================================================
+   * ルールベース提案エンジン (GT/ハコ車)
+   * 2ラップ(base=基準/良い方, comp=比較対象)のmetricsを取り、
+   * 差分と絶対値から具体的セット変更案を root cause 付きで返す。
+   * ========================================================================*/
+  function num(x, d = 1) { return x == null ? null : +x.toFixed(d); }
+
+  function suggest(baseM, compM) {
+    // base=速い/良い方を基準に、comp(=もう一方)を良くする提案を出す。
+    // 単一データ解析(compのみ)も可: baseM を null にすると絶対値ルールのみ。
+    const findings = [];
+    const add = (area, severity, obs, cause, action, evidence) =>
+      findings.push({ area, severity, obs, cause, action, evidence });
+
+    const M = compM; // 分析対象
+    const B = baseM;
+
+    // --- 1. コーナリングバランス: ロール量の前後差 ---
+    if (M.rollFr && M.rollRr) {
+      const fr = Math.abs(M.rollFr.range), rr = Math.abs(M.rollRr.range);
+      const ratio = rr > 0.1 ? fr / rr : null;
+      if (ratio != null) {
+        if (ratio < 0.8) {
+          add('バランス', 'high',
+            `リアのロール量(${num(rr)}mm)がフロント(${num(fr)}mm)より大きい`,
+            'リアのロール剛性が相対的に低く、リアが逃げやすい(オーバーステア傾向 or リアグリップ不足)',
+            'リアARBを1段強める / リアスプリングレート↑ or フロントARBを緩める。ジオメトリーではリアtoe-inを僅かに増やし安定方向',
+            `Rr roll range ${num(rr)}mm vs Fr ${num(fr)}mm (比 ${num(ratio, 2)})`);
+        } else if (ratio > 1.25) {
+          add('バランス', 'high',
+            `フロントのロール量(${num(fr)}mm)がリア(${num(rr)}mm)より大きい`,
+            'フロントのロール剛性が相対的に低く、フロントが逃げる(アンダーステア傾向)',
+            'フロントARBを1段強める / フロントスプリングレート↑ or リアARBを緩める。フロントcamberを増やし外輪の接地を稼ぐのも有効',
+            `Fr roll range ${num(fr)}mm vs Rr ${num(rr)}mm (比 ${num(ratio, 2)})`);
+        }
+      }
+    }
+
+    // --- 2. ピッチング(ブレーキング時の前のめり) ---
+    if (M.pitch) {
+      const pitchRange = Math.abs(M.pitch.range);
+      if (pitchRange > 40) {
+        add('姿勢', 'medium',
+          `ピッチング変化が大きい(${num(pitchRange)}mm)`,
+          'ブレーキング〜加速でのノーズダイブ/リアスクワットが大きく、空力バランスと荷重移動が不安定',
+          'フロント車高をやや上げる or フロントバンプラバー/3rdスプリングで底付き対策。リアはスクワット過大ならリア圧側減衰↑',
+          `RH Pitching range ${num(pitchRange)}mm`);
+      }
+    }
+
+    // --- 3. ブレーキ前後バランス ---
+    if (M.brakeBalFront && M.brakeBalFront.avg) {
+      const bf = M.brakeBalFront.avg;
+      if (bf > 72) {
+        add('ブレーキ', 'medium',
+          `ブレーキ前配分が高い(前${num(bf)}%)`,
+          'フロントに制動が寄りすぎ、進入でフロントロック/アンダー気味の可能性',
+          'ブレーキバランスを後ろへ1〜2%。フロントロックが出るならフロントパッドμを僅かに下げる or リアμ↑。ABS介入が早いなら閾値見直し',
+          `Brake Bal Front avg ${num(bf)}%`);
+      } else if (bf < 60) {
+        add('ブレーキ', 'medium',
+          `ブレーキ前配分が低い(前${num(bf)}%)`,
+          'リアに制動が寄り、進入でリアが不安定(オーバー傾向)になりやすい',
+          'ブレーキバランスを前へ1〜2%。リアロックの兆候があればリアパッドμ↓ / リア圧側で姿勢安定',
+          `Brake Bal Front avg ${num(bf)}%`);
+      }
+    }
+
+    // --- 4. リアトラクション(スリップ) ---
+    if (M.slipRear && M.slipRear.avg != null) {
+      const sr = M.slipRear.max;
+      if (sr > 8) {
+        add('トラクション', 'high',
+          `脱出でリアスリップが大きい(最大${num(sr)}%)`,
+          'リアの縦グリップ不足でホイールスピン。トラクション不足でタイム損失',
+          'リア車高↑でリアの荷重を稼ぐ / リアスプリング柔らかめ / リアウィング角度↑(高速域)。トラコン介入を1段早める。デフ設定があればロック率見直し',
+          `Slip Rear max ${num(sr)}% (avg ${num(M.slipRear.avg)}%)`);
+      }
+    }
+
+    // --- 5. ヨー安定性 ---
+    if (M.yaw) {
+      const yawRange = M.yaw.range;
+      if (yawRange > 90) {
+        add('安定性', 'low',
+          `ヨーレート変動が大きい(${num(yawRange)}deg/s)`,
+          '旋回中の姿勢変化が大きく、車が神経質。リア安定性 or ジオメトリー要因',
+          'リアtoe-in増、リアウィング↑で高速安定。キャスター↑でセルフアライニング強化も検討',
+          `Yaw range ${num(yawRange)}deg/s`);
+      }
+    }
+
+    // --- 6. base比較(2データ): セクター/全体タイム差の主因 ---
+    let deltaNote = null;
+    if (B) {
+      const dt = M.dur - B.dur;
+      deltaNote = { deltaSec: num(dt, 3), baseLabel: `${B.file} L${B.lap}`, compLabel: `${M.file} L${M.lap}` };
+      // 最高速比較
+      if (M.speed && B.speed) {
+        const dv = M.speed.max - B.speed.max;
+        if (Math.abs(dv) > 3) {
+          add('比較', 'info',
+            `最高速が基準比 ${dv > 0 ? '+' : ''}${num(dv)}km/h`,
+            dv < 0 ? '最高速が低い=空力抵抗過大 or トラクション不足 or ストレートでの立ち上がり差' : '最高速が高い=空力/パワー面で有利',
+            dv < 0 ? 'リアウィング角度↓で抵抗減(バランス許す範囲) / 立ち上がりトラクション改善' : '現状維持',
+            `Vmax ${num(M.speed.max)} vs ${num(B.speed.max)} km/h`);
+        }
+      }
+      // ブレーキGの比較 (突っ込めているか)
+      if (M.brakeGmax != null && B.brakeGmax != null) {
+        const db = M.brakeGmax - B.brakeGmax; // 負同士。より負なら強く止めている
+        if (db > 0.15) { // compの方が弱い減速
+          add('比較', 'info',
+            `最大減速Gが基準より弱い(${num(M.brakeGmax, 2)}G vs ${num(B.brakeGmax, 2)}G)`,
+            'ブレーキングを詰め切れていない or 車両が不安定で踏めない',
+            '車両が安定なら操作(より奥で強く)。不安定が原因ならブレーキバランス/リア安定化を先に',
+            `Brake G ${num(M.brakeGmax, 2)} vs ${num(B.brakeGmax, 2)}`);
+        }
+      }
+    }
+
+    // 重要度順
+    const rank = { high: 0, medium: 1, low: 2, info: 3 };
+    findings.sort((a, b) => rank[a.severity] - rank[b.severity]);
+    return { findings, deltaNote };
+  }
+
+  /* ==========================================================================
+   * Claude API 用サマリ (生ldは送らない — 集計値のみ)
+   * ========================================================================*/
+  function buildSummary(pairs) {
+    // pairs: [{file, lap, metrics}] 1個以上
+    const lines = [];
+    lines.push('# MoTeC セットアップ解析サマリ (GT/ハコ車, Z34ベース)');
+    lines.push('各ラップの集計指標(数値のみ。生データは含まない)。');
+    for (const p of pairs) {
+      const m = p.metrics;
+      lines.push(`\n## ${m.file} L${m.lap}  (${m.dur.toFixed(3)}s)`);
+      if (m.speed) lines.push(`- 速度: max ${m.speed.max.toFixed(1)} / min ${m.speed.min.toFixed(1)} km/h`);
+      if (m.brakeGmax != null) lines.push(`- 最大減速G ${m.brakeGmax.toFixed(2)} / 最大加速G ${m.accGmax.toFixed(2)}`);
+      if (m.gLat) lines.push(`- 横G: ±${Math.max(Math.abs(m.gLat.min), Math.abs(m.gLat.max)).toFixed(2)}`);
+      if (m.rollFr) lines.push(`- ロール量 Fr ${m.rollFr.range.toFixed(1)}mm / Rr ${m.rollRr ? m.rollRr.range.toFixed(1) : '-'}mm`);
+      if (m.pitch) lines.push(`- ピッチング range ${m.pitch.range.toFixed(1)}mm`);
+      if (m.brakeBalFront) lines.push(`- ブレーキ前配分 avg ${m.brakeBalFront.avg.toFixed(1)}%`);
+      if (m.brakePresFL) lines.push(`- ブレーキ圧 F ${m.brakePresFL.max.toFixed(0)}/${m.brakePresFR.max.toFixed(0)} R ${m.brakePresRL ? m.brakePresRL.max.toFixed(0) : '-'}/${m.brakePresRR ? m.brakePresRR.max.toFixed(0) : '-'} bar`);
+      if (m.slipRear) lines.push(`- リアスリップ max ${m.slipRear.max.toFixed(1)}% avg ${m.slipRear.avg.toFixed(1)}%`);
+      if (m.yaw) lines.push(`- ヨーレート range ${m.yaw.range.toFixed(0)}deg/s`);
+      for (const w of ['FL', 'FR', 'RL', 'RR']) if (m['damper' + w]) lines.push(`- Damper ${w} range ${m['damper' + w].range.toFixed(1)}mm`);
+    }
+    return lines.join('\n');
+  }
+
+  /* ==========================================================================
+   * i2 Pro ワークスペース取り込み
+   *   parseWorkbook(xml)  → {name, channels[]}   (.i2wkb)
+   *   parseMaths(xml)     → [{id, unit, script, need[]}]  (User.xml等)
+   *   計算式は簡易評価器で JS 関数に変換し DERIVED に登録
+   * ========================================================================*/
+  function parseWorkbook(xml) {
+    const name = (xml.match(/<Workbook\b[^>]*Name="([^"]*)"/) || [])[1] || 'Workbook';
+    const chans = new Set();
+    let m;
+    const reC = /Channel="([^"]+)"/g;
+    while ((m = reC.exec(xml))) chans.add(m[1]);
+    const reI = /\bId="([^"]+)"/g;
+    while ((m = reI.exec(xml))) {
+      const v = m[1];
+      if (v && !/^\d+$/.test(v) && !/^(Group|Bar|Time\/|Worksheet|Scatter|Histogram)/.test(v)) chans.add(v);
+    }
+    // ★Worksheet > Graph > Trace 構造を抽出 (i2画面再現用)
+    //   worksheets: [{ name, graphs: [ [ch,ch,...], ... ] }]   graphs[i] = 1つのグラフに重ねるch配列
+    const worksheets = [];
+    const wsRe = /<Worksheet\b([^>]*)>([\s\S]*?)<\/Worksheet>/g;
+    let ws;
+    const usedNames = {};
+    while ((ws = wsRe.exec(xml))) {
+      let wsName = (ws[1].match(/Name="([^"]*)"/) || [])[1] || 'Sheet';
+      // Time/Distance系のGraphからTraceを取る (Scatter/Histogram等の座標軸ノイズを除外)
+      const graphs = [];
+      const gRe = /<Graph\b([^>]*)>([\s\S]*?)<\/Graph>/g;
+      let g;
+      while ((g = gRe.exec(ws[2]))) {
+        const traces = [];
+        const tRe = /<Trace\b[^>]*\bId="([^"]*)"/g;
+        let t;
+        while ((t = tRe.exec(g[2]))) { if (t[1]) traces.push(t[1]); }
+        if (traces.length) graphs.push(traces);
+      }
+      if (graphs.length) {
+        // 同名worksheetは連番付与
+        if (usedNames[wsName]) { usedNames[wsName]++; wsName = wsName + ' (' + usedNames[wsName] + ')'; }
+        else usedNames[wsName] = 1;
+        worksheets.push({ name: wsName, graphs });
+      }
+    }
+    return { name, channels: [...chans], worksheets };
+  }
+
+  // MoTeC Math式 → JS。'Channel Name' [unit] を参照に変換。基本演算とchoose/abs等に対応。
+  function compileMathScript(script) {
+    // 参照チャンネル抽出
+    const refs = [];
+    // 'Name' [unit]  または 'Name'
+    let js = script.replace(/'([^']+)'\s*(?:\[[^\]]*\])?/g, (mm, nm) => {
+      const idx = refs.indexOf(nm);
+      const i = idx >= 0 ? idx : (refs.push(nm) - 1);
+      return `__v(${i},__i)`;
+    });
+    // 関数/演算子の正規化
+    js = js.replace(/\bchoose\s*\(/gi, 'CHOOSE(')
+           .replace(/\babs\s*\(/gi, 'Math.abs(')
+           .replace(/\bmin\s*\(/gi, 'Math.min(')
+           .replace(/\bmax\s*\(/gi, 'Math.max(')
+           .replace(/\bsqrt\s*\(/gi, 'Math.sqrt(')
+           .replace(/&gt;/g, '>').replace(/&lt;/g, '<').replace(/&amp;/g, '&')
+           .replace(/[\r\n]+/g, ' ');
+    // 数値だけ/参照だけの安全チェック: 危険トークンを弾く
+    if (/[a-zA-Z_$]/.test(js.replace(/__v|__i|CHOOSE|Math\.\w+/g, ''))) {
+      // 未対応の識別子が残る → コンパイル失敗扱い
+      return null;
+    }
+    try {
+      // eslint-disable-next-line no-new-func
+      const fn = new Function('__v', '__i', 'CHOOSE', `return (${js});`);
+      return { fn, refs };
+    } catch (e) { return null; }
+  }
+  function CHOOSE() { // MoTeC choose(cond,a,b) 相当(可変長は先頭condで2分岐に簡略)
+    const cond = arguments[0];
+    return cond ? arguments[1] : (arguments[arguments.length - 1]);
+  }
+
+  // Maths XML(User.xml / Brake endless.xml)を読み、計算chをDERIVEDに動的登録
+  function loadMathsXml(xml, sourceLabel) {
+    const added = [];
+    const reExpr = /<MathExpression\b([^>]*?)(?:\/>|>([\s\S]*?)<\/MathExpression>)/g;
+    let m;
+    while ((m = reExpr.exec(xml))) {
+      const attrs = m[1];
+      const idM = attrs.match(/\bId="([^"]*)"/); if (!idM) continue;
+      const id = idM[1];
+      const unitM = attrs.match(/\bUnit="([^"]*)"/); const unit = unitM ? unitM[1] : '';
+      const scriptM = attrs.match(/\bScript="([\s\S]*?)"/);
+      let script = scriptM ? scriptM[1] : (m[2] || '');
+      script = script.replace(/&quot;/g, '"').replace(/&gt;/g, '>').replace(/&lt;/g, '<').replace(/&amp;/g, '&');
+      if (!script.trim()) continue;
+      const compiled = compileMathScript(script);
+      if (!compiled) continue; // 未対応式はスキップ
+      const need = compiled.refs.slice();
+      // DERIVED登録: 参照chが全て(生or既存派生)存在すれば計算
+      DERIVED[id] = {
+        need, unit, source: sourceLabel,
+        calc: (file, lap) => {
+          // 各参照chの窓を取得(生 or 既に登録済み派生)
+          const wins = need.map((nm) => DERIVED[nm] ? derivedWindow(file, nm, lap) : chanWindow(file, nm, lap));
+          if (wins.some((w) => !w)) return null;
+          const n = Math.min(...wins.map((w) => w.e - w.s));
+          const bases = wins.map((w) => w.s);
+          const out = new Float64Array(n);
+          const vfn = (i, k) => wins[i].data[bases[i] + k];
+          for (let k = 0; k < n; k++) { out[k] = compiled.fn(vfn, k, CHOOSE); }
+          return { data: out, s: 0, e: n, f: wins[0].f };
+        },
+      };
+      added.push({ id, unit, need });
+    }
+    return added;
+  }
+
+  const API = { chanWindow, has, lapMetrics, suggest, buildSummary, DERIVED, derivedAvailable, derivedWindow,
+    parseWorkbook, loadMathsXml, compileMathScript };
+  if (typeof module !== 'undefined' && module.exports) module.exports = API;
+  global.ANALYSIS = API;
+})(typeof window !== 'undefined' ? window : globalThis);
+
+</script>
+<script>
+const FILE_COLORS=['#E10600','#3498db','#2ecc71','#f1c40f','#9b59b6','#e67e22','#1abc9c','#ff6b9d'];
+const LAP_SHADES=[1.0,0.6,0.38];
+let files=[],selected=[],cursorFrac=null,lockedCursor=null,charts=null,nextId=1;
+let activeChannels=[]; // 手動選択chのフラット配列(チャンネルタブのハイライト用)
+let chartLayout=[];    // [[ch,ch...],[ch...]] 各要素=1グラフ枠に重ねるch群(i2のGraph+Trace)
+let tvChart=null;      // Time Variance行(得失タイム)
+let bandChannel='';    // 背景色帯にするチャンネル(ギア/アラーム等)。空=なし
+const GEAR_COLORS=['#333','#5a3d3d','#5a533d','#3d5a3d','#3d535a','#4a3d5a','#5a3d53','#3d5a5a','#5a4a3d'];
+/* ===== .ld 永続化(IndexedDB)。更新しても残り、閉じるボタン/ブラウザ終了で消える ===== */
+const IDB_NAME='motec_ld',IDB_STORE='files';
+function idbOpen(){return new Promise((res,rej)=>{const r=indexedDB.open(IDB_NAME,1);
+  r.onupgradeneeded=()=>{r.result.createObjectStore(IDB_STORE,{keyPath:'key'});};
+  r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error);});}
+async function idbPut(rec){try{const db=await idbOpen();return new Promise((res,rej)=>{const tx=db.transaction(IDB_STORE,'readwrite');tx.objectStore(IDB_STORE).put(rec);tx.oncomplete=()=>res();tx.onerror=()=>rej(tx.error);});}catch(e){console.warn('idbPut',e);}}
+async function idbAll(){try{const db=await idbOpen();return new Promise((res)=>{const tx=db.transaction(IDB_STORE,'readonly');const rq=tx.objectStore(IDB_STORE).getAll();rq.onsuccess=()=>res(rq.result||[]);rq.onerror=()=>res([]);});}catch(e){return [];}}
+async function idbDel(key){try{const db=await idbOpen();return new Promise((res)=>{const tx=db.transaction(IDB_STORE,'readwrite');tx.objectStore(IDB_STORE).delete(key);tx.oncomplete=()=>res();tx.onerror=()=>res();});}catch(e){}}
+async function idbClear(){try{const db=await idbOpen();return new Promise((res)=>{const tx=db.transaction(IDB_STORE,'readwrite');tx.objectStore(IDB_STORE).clear();tx.oncomplete=()=>res();tx.onerror=()=>res();});}catch(e){}}
+// activeChannels から単一chレイアウトを作る (手動選択時)
+function layoutFromActive(){chartLayout=activeChannels.map(n=>[n]);}
+// レイアウトに含まれる全chをフラット化
+function layoutChannels(){return chartLayout.reduce((a,g)=>a.concat(g),[]);}
+let rtab='suggest';
+
+const PRESETS={
+  'サス':['Damper Pos FL','Damper Pos FR','Damper Pos RL','Damper Pos RR','RH Roll Fr','RH Roll Rr','RH Pitching'],
+  'ライドハイト':['Ride Height FL','Ride Height FR','Ride Height RL','Ride Height RR','RH Pitching'],
+  'ブレーキ':['Brake Pres FL','Brake Pres FR','Brake Pres RL','Brake Pres RR','Brake Bal Front%','G Force Long'],
+  'タイヤ/駆動':['Wheel Speed FL','Wheel Speed FR','Wheel Speed RL','Wheel Speed RR','Slip Rear%'],
+  '走行':['Drive Speed','aps','G Force Long','Steering Angle','gear_ecu'],
+  'ヨー/操舵':['Steering Angle','ABS Yaw Rate','G Force Lat'],
+};
+// カスタム/取り込みプリセット (localStorageに保存)
+let customPresets={};
+try{customPresets=JSON.parse(localStorage.getItem('motec_presets')||'{}');}catch(e){customPresets={};}
+function savePresets(){localStorage.setItem('motec_presets',JSON.stringify(customPresets));}
+function allPresets(){return Object.assign({},PRESETS,customPresets);}
+// i2 workbook(worksheet構造付き)ストア
+let importedWorkbooks={};
+try{importedWorkbooks=JSON.parse(localStorage.getItem('motec_workbooks')||'{}');}catch(e){importedWorkbooks={};}
+function saveWorkbooks(){try{localStorage.setItem('motec_workbooks',JSON.stringify(importedWorkbooks));}catch(e){}}
+
+function fmtTime(s){const m=Math.floor(s/60);return m+':'+(s-m*60).toFixed(3).padStart(6,'0');}
+function fileById(id){return files.find(f=>f.id===id);}
+
+/* 表示状態: モードとズーム範囲(view.start/end は 0..1) */
+let viewMode='distance';         // 'distance'=比較(1ラップ距離軸) / 'time'=単体(セッション時間軸)
+let view={start:0,end:1};        // 表示範囲(横軸 0..1)
+let timeFile=null;               // 時間軸モードで表示する対象ファイル(先頭選択)
+
+/* あるラップの距離テーブルをキャッシュ (速度積分) */
+function distTable(file,lap){
+  const key=file.id+'#'+lap.lap+'#dist';
+  if(file.cache[key])return file.cache[key];
+  const spd=window.ANALYSIS.chanWindow(file,'Drive Speed',lap);if(!spd)return null;
+  const ss=spd.s,se=spd.e,sf=spd.f;const dist=new Float64Array(se-ss);let acc=0;
+  for(let i=ss;i<se;i++){acc+=Math.max(0,spd.data[i])/3.6/sf;dist[i-ss]=acc;}
+  return file.cache[key]={dist,total:acc||1,ss,se,sf};
+}
+
+const PTS=1200;
+/* 距離軸モード: ラップを距離0..1で、view範囲だけPTS点サンプル */
+function seriesFor(file,lap,name,vw){
+  vw=vw||view;
+  let win=null,unit='';
+  if(window.ANALYSIS.DERIVED[name]){win=window.ANALYSIS.derivedWindow(file,name,lap);if(window.ANALYSIS.DERIVED[name])unit=window.ANALYSIS.DERIVED[name].unit;}
+  else{win=window.ANALYSIS.chanWindow(file,name,lap);if(win)unit=win.unit;}
+  if(!win)return null;
+  const dt=distTable(file,lap);if(!dt)return null;
+  const total=dt.total;const out=new Float64Array(PTS);
+  const ws=win.s,we=win.e,wn=we-ws;
+  const d0=total*vw.start,d1=total*vw.end;
+  for(let k=0;k<PTS;k++){const target=d0+(d1-d0)*k/(PTS-1);
+    let lo=0,hi=dt.dist.length-1;while(lo<hi){const m=(lo+hi)>>1;if(dt.dist[m]<target)lo=m+1;else hi=m;}
+    const tf=lo/Math.max(1,dt.se-dt.ss);const ci=Math.min(we-1,ws+Math.floor(tf*wn));out[k]=win.data[ci];}
+  return {y:out,total,unit};
+}
+/* 時間軸モード: ファイル全体(セッション先頭〜末尾)をview範囲でサンプル */
+function seriesTime(file,name,vw){
+  vw=vw||view;
+  const co=window.ANALYSIS.DERIVED[name]?null:window.ANALYSIS.chanWindow(file,name,{tStart:0,tEnd:1e9});
+  let data,f,unit='';
+  if(co){data=co.data;f=co.f;unit=co.unit;}
+  else{ // 派生chは全域計算(重いので生ch優先) — 全域lapで代用
+    const w=window.ANALYSIS.derivedWindow(file,name,{tStart:0,tEnd:1e9});if(!w)return null;data=w.data;f=w.f;unit=window.ANALYSIS.DERIVED[name].unit;}
+  const N=data.length;const totalT=N/f;const out=new Float64Array(PTS);
+  const i0=Math.floor(N*vw.start),i1=Math.floor(N*vw.end);
+  for(let k=0;k<PTS;k++){const idx=Math.min(N-1,i0+Math.floor((i1-i0)*k/(PTS-1)));out[k]=data[idx];}
+  return {y:out,total:totalT,unit,totalT};
+}
+/* 距離比(0..1)における経過時間[s]。速度積分の距離テーブルから逆引き */
+function timeAtDist(file,lap,frac){
+  const spd=window.ANALYSIS.chanWindow(file,'Drive Speed',lap);if(!spd)return null;
+  const ss=spd.s,se=spd.e,sf=spd.f;let acc=0;const dist=new Float64Array(se-ss);
+  for(let i=ss;i<se;i++){acc+=Math.max(0,spd.data[i])/3.6/sf;dist[i-ss]=acc;}
+  const target=acc*frac;let lo=0,hi=dist.length-1;while(lo<hi){const m=(lo+hi)>>1;if(dist[m]<target)lo=m+1;else hi=m;}
+  return lo/sf; // 経過時間
+}
+/* Time Variance: 基準ラップに対する比較ラップの得失タイム系列(距離軸PTS点)。
+   値>0 = 比較が基準より遅い(時間を失っている), <0 = 速い(得ている) */
+function timeVarianceSeries(baseFile,baseLap,compFile,compLap){
+  const tb=distTable(baseFile,baseLap),tc=distTable(compFile,compLap);if(!tb||!tc)return null;
+  const total=Math.min(tb.total,tc.total);
+  const timeAt=(tbl,d)=>{let lo=0,hi=tbl.dist.length-1;while(lo<hi){const m=(lo+hi)>>1;if(tbl.dist[m]<d)lo=m+1;else hi=m;}return lo/tbl.sf;};
+  const out=new Float64Array(PTS);const d0=total*view.start,d1=total*view.end;
+  for(let k=0;k<PTS;k++){const d=d0+(d1-d0)*k/(PTS-1);out[k]=timeAt(tc,d)-timeAt(tb,d);}
+  return {y:out,total};
+}
+
+function selColor(sel,idx){
+  if(sel.color)return sel.color; // 手動で色指定されていればそれを優先
+  const file=fileById(sel.fileId);const before=selected.slice(0,idx).filter(s=>s.fileId===sel.fileId).length;
+  return shade(file.color,LAP_SHADES[Math.min(before,LAP_SHADES.length-1)]);}
+const PALETTE=['#E10600','#3498db','#2ecc71','#f1c40f','#9b59b6','#e67e22','#1abc9c','#ff6b9d','#ffffff','#ff8c00','#00e5ff','#c0392b'];
+function shade(hex,f){const r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16);return `rgb(${r*f|0},${g*f|0},${b*f|0})`;}
+function activeSel(){return selected.map((s,i)=>{const file=fileById(s.fileId);const lap=file&&file.laps.find(l=>l.lap===s.lap);return lap?{sel:s,file,lap,color:selColor(s,i)}:null;}).filter(Boolean);}
+
+/* ===== チャート ===== */
+const TRACE_COLORS=['#E10600','#3498db','#2ecc71','#f1c40f','#9b59b6','#e67e22','#1abc9c','#ff6b9d'];
+function buildCharts(){
+  const cont=document.getElementById('charts');
+  cont.querySelectorAll('.chartRow').forEach(e=>e.remove());
+  const hint=document.getElementById('emptyHint');
+  const info=document.getElementById('cursorInfo');
+  if(!chartLayout.length){if(hint)hint.style.display='flex';charts=[];if(info)info.remove();return;}
+  if(hint)hint.style.display='none';
+  charts=[];
+  tvChart=null;
+  // ★Time Variance 行(得失タイム): 2ラップ以上選択時に最上部へ
+  if(selected.length>=2){
+    const row=document.createElement('div');row.className='chartRow';row.style.borderBottom='2px solid var(--red)';
+    const legend=document.createElement('div');legend.className='legend';
+    const item=document.createElement('div');item.className='legItem';
+    item.innerHTML='<span class="legName" style="color:#fff">⏱ Time Variance</span><span class="legVal" id="tvVal" style="color:#fff">—</span>';
+    legend.appendChild(item);
+    const cv=document.createElement('canvas');row.append(legend,cv);cont.appendChild(row);
+    tvChart={canvas:cv,valEl:item.querySelector('.legVal')};
+  }
+  for(const grp of chartLayout){ // grp = このグラフ枠に重ねるch配列
+    const row=document.createElement('div');row.className='chartRow';
+    // 左側=縦積み凡例(名前＋値をセット)。i2風。
+    const legend=document.createElement('div');legend.className='legend';
+    const valEls={};
+    grp.forEach((n,i)=>{
+      const col=TRACE_COLORS[i%TRACE_COLORS.length];
+      const item=document.createElement('div');item.className='legItem';
+      item.innerHTML=`<span class="legName" style="color:${col}">${n}</span><span class="legVal" style="color:${col}">—</span>`;
+      legend.appendChild(item);
+      valEls[n]=item.querySelector('.legVal');
+    });
+    const rm=document.createElement('div');rm.className='rm';rm.textContent='×';rm.onclick=()=>{removeGraph(grp);};
+    const cv=document.createElement('canvas');
+    row.append(legend,rm,cv);cont.appendChild(row);
+    charts.push({group:grp,canvas:cv,valEls});
+  }
+  let info2=document.getElementById('cursorInfo');
+  if(!info2){info2=document.createElement('div');info2.id='cursorInfo';cont.appendChild(info2);}
+  else cont.appendChild(info2);
+  resizeCharts();drawAll();
+}
+function removeGraph(grp){const i=chartLayout.indexOf(grp);if(i>=0)chartLayout.splice(i,1);
+  activeChannels=layoutChannels();buildCharts();renderChannels(document.getElementById('chanSearch').value);}
+function resizeCharts(){if(!charts)return;const nRows=charts.length+(tvChart?1:0);const H=Math.max(64,Math.min(150,Math.floor((document.getElementById('charts').clientHeight-24)/Math.max(1,nRows))));
+  const dpr=window.devicePixelRatio||1;
+  if(tvChart){const w=tvChart.canvas.parentElement.clientWidth;const th=Math.round(H*0.9);tvChart.canvas.width=w*dpr;tvChart.canvas.height=th*dpr;tvChart.canvas.style.height=th+'px';tvChart.canvas.getContext('2d').setTransform(dpr,0,0,dpr,0,0);tvChart.w=w;tvChart.h=th;}
+  for(const c of charts){const w=c.canvas.parentElement.clientWidth;
+    c.canvas.width=w*dpr;c.canvas.height=H*dpr;c.canvas.style.height=H+'px';c.canvas.getContext('2d').setTransform(dpr,0,0,dpr,0,0);c.w=w;c.h=H;}}
+const ZERO_CH=new Set(['G Force Long','Steering Angle','RH Roll Fr','RH Roll Rr','RH Pitching','DP Roll Fr','DP Roll Rr','ABS Yaw Rate']);
+function getSeries(s,name){return viewMode==='time'?seriesTime(s.file,name):seriesFor(s.file,s.lap,name);}
+/* 背景色帯(ColorBand): bandChannelの値(ギア等)で背景を区間色分け */
+function drawBand(ctx,W,H,s){
+  const ser=getSeries(s,bandChannel);if(!ser)return;
+  const N=ser.y.length;let prev=null,x0=0;
+  for(let i=0;i<=N;i++){
+    const v=i<N?Math.round(ser.y[i]):null;
+    if(v!==prev){
+      if(prev!=null){const col=GEAR_COLORS[((prev%GEAR_COLORS.length)+GEAR_COLORS.length)%GEAR_COLORS.length];
+        ctx.fillStyle=col;ctx.globalAlpha=.45;ctx.fillRect(x0,0,(i/(N-1)*W)-x0,H);ctx.globalAlpha=1;}
+      x0=i/(N-1)*W;prev=v;
+    }
+  }
+}
+/* Time Variance描画: sel[0]を基準に、sel[1..]の得失タイム曲線 */
+function drawTimeVariance(sel){
+  const cv=tvChart.canvas;const ctx=cv.getContext('2d');const W=tvChart.w,H=tvChart.h;ctx.clearRect(0,0,W,H);
+  if(viewMode==='time'||sel.length<2){ctx.fillStyle='#555';ctx.font='10px sans-serif';ctx.fillText('距離軸で2ラップ以上を選ぶと得失タイムを表示',120,H/2);tvChart.valEl.textContent='';tvChart._series=null;return;}
+  const base=sel[0];const comps=sel.slice(1);
+  const seriesList=comps.map(c=>({series:timeVarianceSeries(base.file,base.lap,c.file,c.lap),color:c.color,sel:c})).filter(x=>x.series);
+  if(!seriesList.length){tvChart._series=null;return;}
+  // スケール(全比較の絶対最大)
+  let amax=0.01;for(const s of seriesList)for(const v of s.series.y)if(Math.abs(v)>amax)amax=Math.abs(v);
+  amax*=1.15;
+  const zy=H/2;
+  // グリッド: 0線と±amax目盛
+  ctx.strokeStyle='#3a3a3a';ctx.beginPath();ctx.moveTo(0,zy);ctx.lineTo(W,zy);ctx.stroke();
+  ctx.fillStyle='#666';ctx.font='9px sans-serif';ctx.textAlign='right';
+  ctx.fillText('+'+amax.toFixed(2)+'s(遅)',W-4,H-3);ctx.fillText('-'+amax.toFixed(2)+'s(速)',W-4,10);ctx.textAlign='left';
+  // 曲線: 上=遅い(+), 下=速い(-)。塗りで得失を強調
+  for(const {series,color} of seriesList){
+    const N=series.y.length;
+    ctx.beginPath();for(let i=0;i<N;i++){const x=i/(N-1)*W;const y=zy+(series.y[i]/amax)*(H/2-4);i?ctx.lineTo(x,y):ctx.moveTo(x,y);}
+    ctx.strokeStyle=color;ctx.lineWidth=1.6;ctx.stroke();
+  }
+  tvChart._series=seriesList;
+  // カーソル線＋値
+  if(cursorFrac!=null){const cx=cursorFrac*W;ctx.strokeStyle='rgba(255,255,255,.5)';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(cx,0);ctx.lineTo(cx,H);ctx.stroke();
+    let txt='';for(const {series,color,sel:cs} of seriesList){const idx=Math.min(series.y.length-1,Math.round(cursorFrac*(series.y.length-1)));const v=series.y[idx];txt+=`<span style="color:${color}">${v>=0?'+':''}${v.toFixed(2)}s</span> `;}
+    tvChart.valEl.innerHTML=txt;}
+  else{ // カーソル無し=最終差(ラップタイム差)
+    let txt='';for(const {series,color} of seriesList){const v=series.y[series.y.length-1];txt+=`<span style="color:${color}">${v>=0?'+':''}${v.toFixed(2)}s</span> `;}tvChart.valEl.innerHTML=txt;}
+}
+function drawAll(){
+  if(!charts)return;const sel=activeSel();
+  // 時間軸モードは対象を先頭ファイル1つに(全ラップ連続表示)
+  let drawList=sel;
+  if(viewMode==='time'){const tf=timeFile||(sel[0]&&sel[0].file)||files[0];drawList=tf?[{file:tf,lap:null,color:tf.color}]:[];}
+  // ★Time Variance 描画(距離軸・2ラップ以上)
+  if(tvChart){drawTimeVariance(sel);}
+  for(const c of charts){const ctx=c.canvas.getContext('2d');ctx.clearRect(0,0,c.w,c.h);
+    if(bandChannel&&drawList[0])drawBand(ctx,c.w,c.h,drawList[0]); // 背景色帯(ギア等)
+    const grp=c.group; // このグラフに重ねるch配列
+    const singleCh=grp.length===1;
+    // ★グループ共通スケール: 枠内の全ch・全ラップから1つのmin/maxを作る(i2式)。
+    //   → 同じ値は同じ高さに来る。4輪温度等は同一軸で重なる。
+    let gmn=Infinity,gmx=-Infinity,anyZero=false;
+    const lines=[]; // {ser,color,chName}
+    grp.forEach((chName,ci)=>{
+      let has=false;const sers=[];
+      for(const s of drawList){const ser=getSeries(s,chName);if(!ser)continue;
+        for(let i=0;i<ser.y.length;i++){const v=ser.y[i];if(isFinite(v)){if(v<gmn)gmn=v;if(v>gmx)gmx=v;has=true;}}
+        sers.push({ser,lapColor:s.color});}
+      if(!has)return; // このchはこのデータに無い→描かない(想像で埋めない)
+      if(ZERO_CH.has(chName))anyZero=true;
+      const chColor=TRACE_COLORS[ci%TRACE_COLORS.length];
+      sers.forEach((se,li)=>{
+        let col;
+        if(singleCh)col=se.lapColor;                       // 単一ch=ラップ色
+        else col=drawList.length>1?shade(chColor,li===0?1:0.55):chColor; // 複数ch=ch別色(複数ラップは明度差)
+        lines.push({ser:se.ser,color:col,chName});
+      });
+    });
+    if(!isFinite(gmn)){ctx.fillStyle='#555';ctx.font='10px sans-serif';ctx.fillText('このデータには無いチャンネルです',c.legendW||120,c.h/2);Object.values(c.valEls||{}).forEach(el=>el.textContent='無');continue;}
+    // ゼロ中心chを含む枠は0対称スケール
+    if(anyZero){const a=Math.max(Math.abs(gmn),Math.abs(gmx))||1;gmn=-a;gmx=a;}
+    if(gmn===gmx){gmn-=1;gmx+=1;}const pd=(gmx-gmn)*0.08;gmn-=pd;gmx+=pd;
+    // 0線
+    if(anyZero){const zy=c.h-((0-gmn)/(gmx-gmn))*c.h;ctx.strokeStyle='#2e2e2e';ctx.beginPath();ctx.moveTo(0,zy);ctx.lineTo(c.w,zy);ctx.stroke();}
+    for(const L of lines){ctx.strokeStyle=L.color;ctx.lineWidth=1.4;ctx.beginPath();const N=L.ser.y.length;let started=false;
+      for(let i=0;i<N;i++){const v=L.ser.y[i];if(!isFinite(v)){started=false;continue;}const x=i/(N-1)*c.w;const y=c.h-((v-gmn)/(gmx-gmn))*c.h;if(!started){ctx.moveTo(x,y);started=true;}else ctx.lineTo(x,y);}ctx.stroke();}
+    // 軸目盛(min/max)を右上に表示
+    ctx.fillStyle='#555';ctx.font='9px sans-serif';ctx.textAlign='right';
+    ctx.fillText(gmx.toFixed(0),c.w-4,10);ctx.fillText(gmn.toFixed(0),c.w-4,c.h-3);ctx.textAlign='left';
+    // カーソル縦線: 固定(lockedCursor)は明るい実線、ホバーは薄線
+    if(lockedCursor!=null){const cx=lockedCursor*c.w;ctx.strokeStyle='rgba(255,255,255,.85)';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(cx,0);ctx.lineTo(cx,c.h);ctx.stroke();}
+    if(cursorFrac!=null&&cursorFrac!==lockedCursor){const cx=cursorFrac*c.w;ctx.strokeStyle='rgba(255,255,255,.28)';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(cx,0);ctx.lineTo(cx,c.h);ctx.stroke();}
+    // 各chの値を凡例に書く(カーソルがあればその位置、無ければ空)。複数ラップ時は値を「/」区切り。
+    if(c.valEls){
+      // chNameごとにlinesをまとめる
+      const byCh={};for(const L of lines){(byCh[L.chName]=byCh[L.chName]||[]).push(L);}
+      for(const chName of c.group){
+        const el=c.valEls[chName];if(!el)continue;
+        const ls=byCh[chName];
+        if(!ls){el.textContent='無';el.style.opacity=.5;continue;}
+        el.style.opacity=1;
+        if(cursorFrac==null){el.textContent='';continue;}
+        const vals=ls.map(L=>{const idx=Math.min(L.ser.y.length-1,Math.round(cursorFrac*(L.ser.y.length-1)));const v=L.ser.y[idx];return isFinite(v)?v.toFixed(1):'—';});
+        el.textContent=vals.join(' / ');
+      }
+    }
+  }
+  const info=document.getElementById('cursorInfo');
+  if(info){
+    if(viewMode==='time'&&drawList[0]){
+      const tf=drawList[0].file;const st=seriesTime(tf,'Drive Speed');const totalT=st?st.totalT:0;
+      const tNow=(view.start+(view.end-view.start)*(cursorFrac==null?0:cursorFrac))*totalT;
+      info.innerHTML=`[単体・時間軸] ${tf.label} セッション全体 ${totalT.toFixed(0)}s ｜ 表示 ${(view.start*totalT).toFixed(1)}〜${(view.end*totalT).toFixed(1)}s`+(cursorFrac!=null?` ｜ カーソル ${tNow.toFixed(2)}s`:'');
+    }else if(cursorFrac!=null&&sel[0]){
+      const ser0=seriesFor(sel[0].file,sel[0].lap,'Drive Speed');
+      const distNow=ser0.total*(view.start+(view.end-view.start)*cursorFrac);
+      let parts=[];let baseT=null;
+      const fracAbs=view.start+(view.end-view.start)*cursorFrac;
+      for(const s of sel){const t=timeAtDist(s.file,s.lap,fracAbs);if(t==null)continue;if(baseT==null)baseT=t;const d=t-baseT;
+        parts.push(`<span style="color:${s.color}">${s.file.label}·L${s.lap.lap} <b>${t.toFixed(2)}s</b>${d!==0?' ('+(d>0?'+':'')+d.toFixed(2)+')':''}</span>`);}
+      info.innerHTML='距離 '+distNow.toFixed(0)+'/'+ser0.total.toFixed(0)+'m　｜　'+parts.join('　');
+    }
+    else info.innerHTML=sel.length?sel.map(s=>`<span style="color:${s.color}">${s.file.label}·L${s.lap.lap} ${fmtTime(s.lap.dur)}</span>`).join('　｜　'):'';
+  }
+  drawCourse(sel);
+  drawScatter(sel);
+  drawHistogram(sel);
+  drawGG(sel);
+  if(rtab==='report')renderReport();
+  renderNumWin(sel,drawList);
+}
+/* コースマップ: GPS軌跡を速度で色分け */
+function speedColor(t){ // 0(遅)→1(速): 青→シアン→緑→黄→赤
+  t=Math.max(0,Math.min(1,t));
+  const stops=[[0,'#1a4fff'],[.25,'#00c8ff'],[.5,'#2ecc71'],[.75,'#f1c40f'],[1,'#E10600']];
+  for(let i=0;i<stops.length-1;i++){if(t<=stops[i+1][0]){const a=stops[i],b=stops[i+1];const f=(t-a[0])/(b[0]-a[0]);
+    const ca=hex2rgb(a[1]),cb=hex2rgb(b[1]);return `rgb(${ca[0]+(cb[0]-ca[0])*f|0},${ca[1]+(cb[1]-ca[1])*f|0},${ca[2]+(cb[2]-ca[2])*f|0})`;}}
+  return stops[stops.length-1][1];}
+function hex2rgb(h){return [parseInt(h.slice(1,3),16),parseInt(h.slice(3,5),16),parseInt(h.slice(5,7),16)];}
+function drawCourse(sel){
+  // 右パネルのタブが開いていれば courseMap に、フローティング窓が開いていれば courseFloat に描く
+  const panelOpen=document.getElementById('pane-course')&&document.getElementById('pane-course').style.display!=='none';
+  const winOpen=document.getElementById('courseWin')&&document.getElementById('courseWin').classList.contains('show');
+  if(panelOpen)drawCourseTo(sel,document.getElementById('courseMap'));
+  if(winOpen)drawCourseTo(sel,document.getElementById('courseFloat'));
+}
+function drawCourseTo(sel,cv){
+  if(!cv)return;
+  const ctx=cv.getContext('2d');const W=cv.width/(window.devicePixelRatio||1),H=cv.height/(window.devicePixelRatio||1);
+  ctx.clearRect(0,0,W,H);
+  const list=sel.length?sel:[];if(!list.length){ctx.fillStyle='#555';ctx.font='11px sans-serif';ctx.fillText('ラップを選択するとコース図が出ます',12,H/2);return;}
+  // 全選択ラップの緯度経度範囲
+  let mnla=Infinity,mxla=-Infinity,mnlo=Infinity,mxlo=-Infinity;const tracks=[];
+  for(const s of list){const la=window.ANALYSIS.chanWindow(s.file,'GPS Latitude',s.lap),lo=window.ANALYSIS.chanWindow(s.file,'GPS Longitude',s.lap);
+    const spd=window.ANALYSIS.chanWindow(s.file,'Drive Speed',s.lap);
+    if(!la||!lo){continue;}
+    const pts=[];const f=la.f;const sf=spd?spd.f:f;
+    for(let i=la.s;i<la.e;i++){const a=la.data[i],o=lo.data[i];if(a>-90&&a<90&&o>-180&&o<180&&Math.abs(a)>1){
+      const si=spd?Math.min(spd.data.length-1,Math.floor((i-la.s)/f*sf)+spd.s):0;const v=spd?spd.data[si]:0;
+      pts.push([a,o,v]);if(a<mnla)mnla=a;if(a>mxla)mxla=a;if(o<mnlo)mnlo=o;if(o>mxlo)mxlo=o;}}
+    tracks.push({pts,color:s.color,file:s.file,lap:s.lap});}
+  if(!isFinite(mnla)){ctx.fillStyle='#555';ctx.font='11px sans-serif';ctx.fillText('このラップにGPSデータがありません',12,H/2);return;}
+  // 緯度経度→メートル換算(緯度中心基準)してからキャンバスにフィット
+  const pad=18;const latMid=(mnla+mxla)/2;const midLo=(mnlo+mxlo)/2;
+  const mPerLat=111320, mPerLon=111320*Math.cos(latMid*Math.PI/180);
+  const spanX=(mxlo-mnlo)*mPerLon||1, spanY=(mxla-mnla)*mPerLat||1; // コースの東西/南北メートル
+  const sc=Math.min((W-2*pad)/spanX,(H-2*pad-14)/spanY); // 凡例分14px確保
+  const cX=W/2,cY=(H-14)/2;
+  function proj(a,o){return [cX+(o-midLo)*mPerLon*sc, cY-(a-latMid)*mPerLat*sc];}
+  // 速度域(全体max)
+  let vmax=0;for(const t of tracks)for(const p of t.pts)if(p[2]>vmax)vmax=p[2];vmax=vmax||1;
+  // 複数ラップ: 1本目は速度色分け、2本目以降はラップ色の線
+  tracks.forEach((t,ti)=>{
+    if(ti===0){ // メイン=速度ヒートマップ
+      for(let i=1;i<t.pts.length;i++){const [a0,o0]=proj(t.pts[i-1][0],t.pts[i-1][1]);const [a1,o1]=proj(t.pts[i][0],t.pts[i][1]);
+        ctx.strokeStyle=speedColor(t.pts[i][2]/vmax);ctx.lineWidth=2.4;ctx.beginPath();ctx.moveTo(a0,o0);ctx.lineTo(a1,o1);ctx.stroke();}
+    }else{ // 比較ラップ=単色細線
+      ctx.strokeStyle=t.color;ctx.lineWidth=1.3;ctx.globalAlpha=.8;ctx.beginPath();
+      t.pts.forEach((p,i)=>{const [x,y]=proj(p[0],p[1]);i?ctx.lineTo(x,y):ctx.moveTo(x,y);});ctx.stroke();ctx.globalAlpha=1;}
+  });
+  // カーソル位置マーカー
+  if(cursorFrac!=null&&tracks[0]){const fracAbs=view.start+(view.end-view.start)*cursorFrac;const idx=Math.min(tracks[0].pts.length-1,Math.floor(fracAbs*tracks[0].pts.length));
+    const [x,y]=proj(tracks[0].pts[idx][0],tracks[0].pts[idx][1]);ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(x,y,4,0,7);ctx.fill();ctx.strokeStyle='#000';ctx.lineWidth=1;ctx.stroke();}
+  // 凡例(速度バー)はパネル表示のみ。フローティング窓は軌跡だけ。
+  if(cv.id==='courseMap'){
+    ctx.fillStyle='#888';ctx.font='9px sans-serif';ctx.fillText('遅',6,H-6);ctx.fillText('速',W-16,H-6);
+    for(let i=0;i<40;i++){ctx.fillStyle=speedColor(i/39);ctx.fillRect(16+i*(W-40)/40,H-12,(W-40)/40+1,5);}
+  }
+}
+
+function drawGG(sel){const cv=document.getElementById('gg');if(!cv)return;const ctx=cv.getContext('2d');const W=300,H=300;ctx.clearRect(0,0,W,H);
+  const cx=W/2,cy=H/2,R=128,scale=R/2.6;
+  ctx.strokeStyle='#333';for(const g of[1,2]){ctx.beginPath();ctx.arc(cx,cy,g*scale,0,7);ctx.stroke();}
+  ctx.strokeStyle='#2a2a2a';ctx.beginPath();ctx.moveTo(cx-R,cy);ctx.lineTo(cx+R,cy);ctx.moveTo(cx,cy-R);ctx.lineTo(cx,cy+R);ctx.stroke();
+  ctx.fillStyle='#666';ctx.font='9px sans-serif';ctx.fillText('1G',cx+scale+2,cy-2);ctx.fillText('2G',cx+2*scale+2,cy-2);
+  for(const s of sel){const lat=window.ANALYSIS.chanWindow(s.file,'G Force Lat',s.lap),lon=window.ANALYSIS.chanWindow(s.file,'G Force Long',s.lap);if(!lat||!lon)continue;
+    ctx.fillStyle=s.color;for(let i=lat.s;i<lat.e;i+=3){ctx.fillRect(cx+lat.data[i]*scale,cy-lon.data[i]*scale,1.4,1.4);}}
+}
+/* Scatter(XY散布): X軸ch × Y軸ch の相関。選択ラップ色分け */
+function drawScatter(sel){
+  const cv=document.getElementById('scatterCv');if(!cv||document.getElementById('pane-scatter').style.display==='none')return;
+  const ctx=cv.getContext('2d');const W=cv.width/(window.devicePixelRatio||1),H=cv.height/(window.devicePixelRatio||1);ctx.clearRect(0,0,W,H);
+  const xn=document.getElementById('scatterX').value,yn=document.getElementById('scatterY').value;
+  if(!xn||!yn){ctx.fillStyle='#555';ctx.font='11px sans-serif';ctx.fillText('X軸とY軸のチャンネルを選択',12,H/2);return;}
+  const pad=34;const pts=[];let mnx=Infinity,mxx=-Infinity,mny=Infinity,mxy=-Infinity;
+  for(const s of sel){const xw=window.ANALYSIS.chanWindow(s.file,xn,s.lap),yw=window.ANALYSIS.chanWindow(s.file,yn,s.lap);if(!xw||!yw)continue;
+    const n=Math.min(xw.e-xw.s,yw.e-yw.s);const arr=[];const step=Math.max(1,Math.floor(n/2000));
+    for(let i=0;i<n;i+=step){const x=xw.data[xw.s+i],y=yw.data[yw.s+i];if(isFinite(x)&&isFinite(y)){arr.push([x,y]);if(x<mnx)mnx=x;if(x>mxx)mxx=x;if(y<mny)mny=y;if(y>mxy)mxy=y;}}
+    pts.push({arr,color:s.color});}
+  if(!isFinite(mnx)){ctx.fillStyle='#555';ctx.font='11px sans-serif';ctx.fillText('このデータに該当chがありません',12,H/2);return;}
+  const sx=v=>pad+((v-mnx)/((mxx-mnx)||1))*(W-pad-8), sy=v=>H-pad-((v-mny)/((mxy-mny)||1))*(H-pad-8);
+  // 軸
+  ctx.strokeStyle='#333';ctx.beginPath();ctx.moveTo(pad,8);ctx.lineTo(pad,H-pad);ctx.lineTo(W-8,H-pad);ctx.stroke();
+  ctx.fillStyle='#888';ctx.font='9px sans-serif';
+  ctx.fillText(mxx.toFixed(0),W-24,H-pad+12);ctx.fillText(mnx.toFixed(0),pad,H-pad+12);
+  ctx.save();ctx.translate(10,pad+30);ctx.rotate(-Math.PI/2);ctx.fillText(yn+' [max '+mxy.toFixed(0)+']',0,0);ctx.restore();
+  ctx.fillText(xn+' [max '+mxx.toFixed(0)+']',pad+2,H-6);
+  for(const {arr,color} of pts){ctx.fillStyle=color;for(const [x,y] of arr)ctx.fillRect(sx(x),sy(y),1.4,1.4);}
+}
+/* Report(数値表): 表示中ch × 選択ラップ の min/max/avg(+カーソル値) */
+function renderReport(){
+  const box=document.getElementById('reportBox');if(!box)return;
+  const pane=document.getElementById('pane-report');if(pane&&pane.style.display==='none')return;
+  const sel=activeSel();const chans=layoutChannels();
+  if(!sel.length||!chans.length){box.innerHTML='<div class="muted">ラップとチャンネルを選ぶと表が出ます。</div>';return;}
+  const A=window.ANALYSIS;
+  let html='<table style="width:100%;border-collapse:collapse;font-size:11px;font-variant-numeric:tabular-nums">';
+  html+='<thead><tr><th style="text-align:left;color:#888;padding:3px 6px;position:sticky;left:0;background:#1d1d1d">Ch</th>';
+  for(const s of sel)html+=`<th style="color:${s.color};padding:3px 6px;white-space:nowrap">${s.file.label}·L${s.lap.lap}</th>`;
+  html+='</tr></thead><tbody>';
+  const cur=cursorFrac;
+  for(const ch of chans){
+    html+=`<tr><td style="color:#ccc;padding:3px 6px;position:sticky;left:0;background:#1d1d1d;white-space:nowrap">${ch}</td>`;
+    for(const s of sel){
+      let win=A.DERIVED[ch]?A.derivedWindow(s.file,ch,s.lap):A.chanWindow(s.file,ch,s.lap);
+      if(!win){html+='<td style="padding:3px 6px;color:#555">無</td>';continue;}
+      let mn=Infinity,mx=-Infinity,sum=0,n=0;for(let i=win.s;i<win.e;i++){const v=win.data[i];if(isFinite(v)){if(v<mn)mn=v;if(v>mx)mx=v;sum+=v;n++;}}
+      if(!n){html+='<td style="padding:3px 6px;color:#555">無</td>';continue;}
+      let curV='';if(cur!=null){const idx=Math.min(win.e-1,win.s+Math.floor((cur)*(win.e-win.s-1)));const v=win.data[idx];if(isFinite(v))curV=`<div style="color:#fff">@${v.toFixed(1)}</div>`;}
+      html+=`<td style="padding:3px 6px;line-height:1.3">${curV}<span style="color:#e57">${mx.toFixed(1)}</span>/<span style="color:#5ae">${mn.toFixed(1)}</span><div style="color:#888">avg ${(sum/n).toFixed(1)}</div></td>`;
+    }
+    html+='</tr>';
+  }
+  html+='</tbody></table>';box.innerHTML=html;
+}
+function renderScatterOptions(){if(!files.length)return;const xs=document.getElementById('scatterX'),ys=document.getElementById('scatterY');
+  const opts=files[0].header.channels.map(c=>c.name);
+  const fill=(sel,def)=>{const cur=sel.value;sel.innerHTML='';for(const n of opts){const o=document.createElement('option');o.value=n;o.textContent=n;sel.appendChild(o);}sel.value=cur||def||opts[0];};
+  fill(xs,'G Force Lat');fill(ys,'G Force Long');}
+/* Histogram(分布): 選択chの値ヒストグラム(時間比)。選択ラップ色分け重ね */
+function drawHistogram(sel){
+  const cv=document.getElementById('histoCv');if(!cv||document.getElementById('pane-histo').style.display==='none')return;
+  const ctx=cv.getContext('2d');const W=cv.width/(window.devicePixelRatio||1),H=cv.height/(window.devicePixelRatio||1);ctx.clearRect(0,0,W,H);
+  const ch=document.getElementById('histoCh').value;if(!ch){ctx.fillStyle='#555';ctx.font='11px sans-serif';ctx.fillText('チャンネルを選択',12,H/2);return;}
+  const A=window.ANALYSIS;const BINS=40;const pad=30;
+  // 全ラップ通しの値域
+  let mn=Infinity,mx=-Infinity;const data=[];
+  for(const s of sel){const w=A.DERIVED[ch]?A.derivedWindow(s.file,ch,s.lap):A.chanWindow(s.file,ch,s.lap);if(!w)continue;
+    const arr=[];for(let i=w.s;i<w.e;i++){const v=w.data[i];if(isFinite(v)){arr.push(v);if(v<mn)mn=v;if(v>mx)mx=v;}}data.push({arr,color:s.color});}
+  if(!isFinite(mn)){ctx.fillStyle='#555';ctx.font='11px sans-serif';ctx.fillText('このデータに該当chがありません',12,H/2);return;}
+  if(mn===mx){mn-=1;mx+=1;}
+  // 各ラップのビン集計(割合)
+  const hists=data.map(d=>{const h=new Array(BINS).fill(0);for(const v of d.arr){let b=Math.floor((v-mn)/(mx-mn)*BINS);if(b<0)b=0;if(b>=BINS)b=BINS-1;h[b]++;}
+    const tot=d.arr.length||1;return {h:h.map(x=>x/tot),color:d.color};});
+  let peak=0;for(const H2 of hists)for(const v of H2.h)if(v>peak)peak=v;peak=peak||1;
+  // 軸
+  ctx.strokeStyle='#333';ctx.beginPath();ctx.moveTo(pad,6);ctx.lineTo(pad,H-pad);ctx.lineTo(W-6,H-pad);ctx.stroke();
+  ctx.fillStyle='#888';ctx.font='9px sans-serif';ctx.fillText(mn.toFixed(0),pad,H-pad+12);ctx.fillText(mx.toFixed(0),W-30,H-pad+12);
+  // 複数ラップは各ビンを横に分割して並べる(不透明=グラフ線と同じ明るさ)
+  const bw=(W-pad-8)/BINS;const nL=hists.length;const sub=bw/nL;
+  hists.forEach((H2,hi)=>{ctx.fillStyle=H2.color;
+    for(let i=0;i<BINS;i++){const bh=(H2.h[i]/peak)*(H-pad-8);ctx.fillRect(pad+i*bw+hi*sub,H-pad-bh,Math.max(1,sub-0.5),bh);}});
+}
+function renderHistoOptions(){if(!files.length)return;const sel=document.getElementById('histoCh');const cur=sel.value;sel.innerHTML='';
+  for(const c of files[0].header.channels){const o=document.createElement('option');o.value=c.name;o.textContent=c.name;sel.appendChild(o);}
+  sel.value=cur||'nmot';}
+
+/* ===== ファイルトレイ & ラップ ===== */
+function esc(s){return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;');}
+function metaLine(f){const m=f.meta&&f.meta.fields||{};const parts=[];
+  if(m.date||m.time)parts.push((m.date||'')+' '+(m.time||''));
+  if(m.vehicle)parts.push(m.vehicle);
+  return parts.filter(Boolean).join(' / ');
+}
+function renderFileTray(){const tray=document.getElementById('fileTray');tray.innerHTML='';
+  document.getElementById('fileCount').textContent=files.length?`(${files.length})`:'';
+  for(const f of files){const el=document.createElement('div');el.className='fileItem';
+    const ml=metaLine(f);const cm=(f.meta&&f.meta.fields&&f.meta.fields.shortComment||'').trim();
+    el.innerHTML=`<div class="row1"><div class="dot" style="background:${f.color}"></div>`+
+      `<input class="lbl" value="${esc(f.label)}" data-id="${f.id}">`+
+      `<div class="info" data-id="${f.id}" title="ヘッダー情報を表示">ℹ</div>`+
+      `<div class="del" data-id="${f.id}">×</div></div>`+
+      `<div class="fn">${esc(f.name)} · ${f.laps.length}laps${f.bestLap?' · BEST '+fmtTime(f.bestLap.dur):''}</div>`+
+      (ml?`<div class="fn" style="color:#7aa">${esc(ml)}</div>`:'')+
+      (cm?`<div class="fn" style="color:#cc8">📝 ${esc(cm)}</div>`:'');
+    tray.appendChild(el);}
+  tray.querySelectorAll('input.lbl').forEach(i=>i.oninput=e=>{const f=fileById(+e.target.dataset.id);if(f){f.label=e.target.value;renderLaps();drawAll();}});
+  tray.querySelectorAll('.del').forEach(d=>d.onclick=e=>removeFile(+e.target.dataset.id));
+  tray.querySelectorAll('.info').forEach(d=>d.onclick=e=>showMeta(+e.target.dataset.id));
+}
+/* ヘッダー内の全情報をモーダル表示(オフセット調整前でも中身が見える) */
+function showMeta(id){const f=fileById(id);if(!f)return;const m=f.meta||{fields:{},strings:[]};
+  const dlg=document.getElementById('metaDlg');const body=document.getElementById('metaBody');
+  let html=`<h3 style="color:#E10600;margin-bottom:8px">${esc(f.name)}</h3>`;
+  html+='<table style="width:100%;font-size:12px;border-collapse:collapse">';
+  const F=m.fields;
+  for(const [k,label] of [['date','日付'],['time','時刻'],['vehicle','車両'],['configName','設定ファイル'],['comment','コメント']]){
+    if(F[k])html+=`<tr><td style="color:#9a9a9a;padding:2px 8px 2px 0;vertical-align:top">${label}</td><td style="padding:2px 0">${esc(F[k])}</td></tr>`;}
+  html+='</table>';
+  html+='<div style="color:#9a9a9a;font-size:11px;margin:10px 0 4px">▼ ヘッダー内の全文字列(名前/コメント候補。ここから正しい項目を探せます)</div>';
+  html+='<div style="max-height:300px;overflow:auto;font-size:11px;font-family:monospace;background:#111;padding:6px;border-radius:4px">';
+  for(const s of (m.strings||[]).slice(0,120)){html+=`<div><span style="color:#555">0x${s.off.toString(16)}</span> ${esc(s.text.slice(0,90))}</div>`;}
+  html+='</div>';
+  body.innerHTML=html;dlg.style.display='flex';
+}
+function renderLaps(){const list=document.getElementById('lapList');list.innerHTML='';
+  for(const f of files)for(const lap of f.laps){const isRace=lap.dur>30&&lap.dur<300;
+    const si=selected.findIndex(s=>s.fileId===f.id&&s.lap===lap.lap);
+    const el=document.createElement('div');el.className='lapItem'+(f.bestLap&&lap.lap===f.bestLap.lap?' best':'')+(si>=0?' sel':'');
+    const swColor=si>=0?selColor(selected[si],si):'transparent';
+    const sw=document.createElement('div');sw.className='sw';sw.style.background=swColor;
+    if(si>=0){sw.style.cursor='pointer';sw.title='クリックで色変更';sw.onclick=(e)=>{e.stopPropagation();openColorPicker(f.id,lap.lap,e);};}
+    const rest=document.createElement('div');rest.style.cssText='display:flex;align-items:center;gap:6px;flex:1';
+    rest.innerHTML=`<div class="fb" style="background:${f.color}" title="${esc(f.label)}">${esc(f.shortLabel||f.label)}</div><div class="no">L${lap.lap}</div><div class="tm">${isRace?fmtTime(lap.dur):'—'}</div>`;
+    rest.onclick=()=>toggleLap(f.id,lap.lap);
+    el.append(sw,rest);list.appendChild(el);}
+}
+/* 色ピッカー: 選択ラップの色を手動変更 */
+function openColorPicker(fileId,lap,e){
+  const existing=document.getElementById('colorPop');if(existing)existing.remove();
+  const pop=document.createElement('div');pop.id='colorPop';
+  pop.style.cssText='position:fixed;z-index:200;background:#222;border:1px solid #444;border-radius:6px;padding:6px;display:flex;flex-wrap:wrap;gap:4px;width:132px;box-shadow:0 4px 16px rgba(0,0,0,.5)';
+  pop.style.left=Math.min(e.clientX,window.innerWidth-140)+'px';pop.style.top=(e.clientY+8)+'px';
+  for(const col of PALETTE){const sw=document.createElement('div');sw.style.cssText=`width:20px;height:20px;border-radius:3px;background:${col};cursor:pointer;border:1px solid #000`;
+    sw.onclick=()=>{const s=selected.find(x=>x.fileId===fileId&&x.lap===lap);if(s){s.color=col;}pop.remove();renderLaps();drawAll();};pop.appendChild(sw);}
+  // 自動(色リセット)
+  const auto=document.createElement('div');auto.textContent='自動';auto.style.cssText='width:100%;text-align:center;font-size:10px;color:#9a9a9a;cursor:pointer;padding:3px;border-top:1px solid #444;margin-top:2px';
+  auto.onclick=()=>{const s=selected.find(x=>x.fileId===fileId&&x.lap===lap);if(s)delete s.color;pop.remove();renderLaps();drawAll();};pop.appendChild(auto);
+  document.body.appendChild(pop);
+  setTimeout(()=>{document.addEventListener('click',function h(){pop.remove();document.removeEventListener('click',h);},{once:true});},50);
+}
+function toggleLap(fileId,lap){const i=selected.findIndex(s=>s.fileId===fileId&&s.lap===lap);
+  if(i>=0)selected.splice(i,1);else{if(selected.length>=8)selected.shift();selected.push({fileId,lap});}
+  renderLaps();drawAll();updateSuggestBtn();}
+
+/* ===== チャンネルタブ ===== */
+function toggleChannel(name){const i=activeChannels.indexOf(name);if(i>=0)activeChannels.splice(i,1);else activeChannels.push(name);
+  currentWorksheet=null;renderWsTabs();layoutFromActive();buildCharts();renderChannels(document.getElementById('chanSearch').value);}
+function renderPresets(){const box=document.getElementById('presets');box.innerHTML='';
+  const P=allPresets();
+  for(const k of Object.keys(P)){const isCustom=!!customPresets[k];
+    const b=document.createElement('button');b.textContent=(isCustom?'★':'')+k;b.title=P[k].join(', ');
+    b.onclick=()=>{activeChannels=P[k].filter(n=>channelExists(n));currentWorksheet=null;renderWsTabs();layoutFromActive();buildCharts();renderChannels(document.getElementById('chanSearch').value);};
+    if(isCustom){b.oncontextmenu=(e)=>{e.preventDefault();if(confirm('プリセット「'+k+'」を削除しますか?')){delete customPresets[k];savePresets();renderPresets();}};b.style.borderColor='#7a5a00';}
+    box.appendChild(b);}
+  // 現在の構成を保存
+  const save=document.createElement('button');save.textContent='＋ 現在を保存';save.style.background='#333';
+  save.onclick=()=>{if(!activeChannels.length){alert('先にチャンネルを表示してください');return;}
+    const name=prompt('プリセット名を入力(既存名で上書き):');if(!name)return;customPresets[name]=activeChannels.slice();savePresets();renderPresets();};
+  box.appendChild(save);
+  // i2 workbook/Maths 取り込み
+  const imp=document.createElement('button');imp.textContent='📁 i2取り込み';imp.style.background='#1a3a1a';imp.title='.i2wkb や Maths(User.xml等)を選ぶとプリセット/計算chとして取り込みます';
+  imp.onclick=()=>document.getElementById('i2Input').click();
+  box.appendChild(imp);}
+function channelExists(name){if(!files.length)return false;const f=files[0];
+  if(window.ANALYSIS.DERIVED[name])return window.ANALYSIS.DERIVED[name].need.every(n=>window.ANALYSIS.has(f,n));
+  return window.ANALYSIS.has(f,name);}
+
+/* ===== ワークブックタブ: i2画面(worksheet=Graph構成)再現 ===== */
+let currentWorksheet=null; // {wb,ws}
+function renderWorkbooks(){
+  const box=document.getElementById('workbookList');if(!box)return;box.innerHTML='';
+  const names=Object.keys(importedWorkbooks);
+  if(!names.length){box.innerHTML='<div class="muted">まだWorkbookを取り込んでいません。上のボタンから .i2wkb を選んでください。</div>';return;}
+  for(const wbName of names){
+    const wb=importedWorkbooks[wbName];
+    const head=document.createElement('div');head.style.cssText='font-size:12px;font-weight:bold;color:#E10600;margin:8px 0 3px;display:flex;justify-content:space-between';
+    head.innerHTML=`<span>📖 ${esc(wbName)}</span><span class="del" data-wb="${esc(wbName)}" style="cursor:pointer;color:#666">×</span>`;
+    box.appendChild(head);
+    for(const ws of (wb.worksheets||[])){
+      const on=currentWorksheet&&currentWorksheet.wb===wbName&&currentWorksheet.ws===ws.name;
+      const el=document.createElement('div');el.className='chanItem'+(on?' on':'');
+      el.style.cssText='padding:4px 6px';
+      el.innerHTML=`<span>${esc(ws.name)}</span><span class="u">${ws.graphs.length}グラフ</span>`;
+      el.onclick=()=>applyWorksheet(wbName,ws.name);
+      box.appendChild(el);
+    }
+  }
+  box.querySelectorAll('.del').forEach(d=>d.onclick=e=>{e.stopPropagation();const nm=e.target.dataset.wb;
+    if(confirm('Workbook「'+nm+'」を削除しますか?')){delete importedWorkbooks[nm];saveWorkbooks();renderWorkbooks();}});
+}
+function applyWorksheet(wbName,wsName){
+  const wb=importedWorkbooks[wbName];if(!wb)return;
+  const ws=(wb.worksheets||[]).find(w=>w.name===wsName);if(!ws)return;
+  currentWorksheet={wb:wbName,ws:wsName};
+  // 各Graph=1グラフ枠。存在しないchも枠は残す(i2同様。データ無ければ「無い」と表示)
+  chartLayout=ws.graphs.map(g=>g.slice());
+  activeChannels=layoutChannels();
+  buildCharts();renderWorkbooks();renderWsTabs();
+}
+/* i2風: グラフ上部にworksheetを横タブ表示 */
+function renderWsTabs(){
+  const bar=document.getElementById('wsTabs');if(!bar)return;bar.innerHTML='';
+  const wbNames=Object.keys(importedWorkbooks);
+  bar.style.display='flex';
+  // 取込ボタン(常時)
+  const imp=document.createElement('button');imp.className='wsTab';imp.textContent='📁 取込';imp.title='.i2wkb / Maths を取り込む';imp.style.color='#2ecc71';
+  imp.onclick=()=>document.getElementById('i2Input').click();bar.appendChild(imp);
+  if(!wbNames.length){const hint=document.createElement('span');hint.className='wbName';hint.style.color='#666';hint.textContent='← i2のWorkbookを取り込むと画面を再現';bar.appendChild(hint);return;}
+  // Workbook選択ドロップダウン
+  const cur=currentWorksheet?currentWorksheet.wb:wbNames[0];
+  const sel=document.createElement('select');sel.style.cssText='background:#2a2a2a;border:1px solid var(--line);color:#E10600;font-size:11px;font-weight:bold;border-radius:4px;padding:2px 4px;margin:0 4px';
+  for(const nm of wbNames){const o=document.createElement('option');o.value=nm;o.textContent='📖 '+nm;o.selected=nm===cur;sel.appendChild(o);}
+  sel.onchange=()=>{const wb=importedWorkbooks[sel.value];if(wb&&wb.worksheets&&wb.worksheets[0])applyWorksheet(sel.value,wb.worksheets[0].name);};
+  bar.appendChild(sel);
+  // 選択中Workbookのworksheet横タブ
+  const wb=importedWorkbooks[cur];if(!wb)return;
+  for(const ws of (wb.worksheets||[])){
+    const b=document.createElement('button');b.className='wsTab'+(currentWorksheet&&ws.name===currentWorksheet.ws&&cur===currentWorksheet.wb?' on':'');
+    b.textContent=ws.name;b.title=ws.graphs.length+'グラフ';
+    b.onclick=()=>applyWorksheet(cur,ws.name);
+    bar.appendChild(b);
+  }
+}
+function renderChannels(filter=''){const box=document.getElementById('chanList');if(!files.length){box.innerHTML='';return;}box.innerHTML='';const f=filter.toLowerCase();
+  const derived=Object.keys(window.ANALYSIS.DERIVED).filter(n=>channelExists(n)&&n.toLowerCase().includes(f));
+  for(const n of derived){const d=document.createElement('div');d.className='chanItem derived'+(activeChannels.includes(n)?' on':'');
+    d.innerHTML=`<span>∑ ${n}</span><span class="u">${window.ANALYSIS.DERIVED[n].unit}</span>`;d.onclick=()=>toggleChannel(n);box.appendChild(d);}
+  const raw=files[0].header.channels.filter(c=>c.name.toLowerCase().includes(f)).slice(0,120);
+  for(const c of raw){const d=document.createElement('div');d.className='chanItem'+(activeChannels.includes(c.name)?' on':'');
+    d.innerHTML=`<span>${c.name}</span><span class="u">${c.unit||''} ${c.freq}Hz</span>`;d.onclick=()=>toggleChannel(c.name);box.appendChild(d);}
+}
+
+/* ===== セット提案 ===== */
+function updateSuggestBtn(){const b=document.getElementById('suggestBtn');
+  if(selected.length>=2){b.disabled=false;b.textContent='この2ラップを解析してセット提案';}
+  else if(selected.length===1){b.disabled=false;b.textContent='この1ラップを解析(絶対値ルール)';}
+  else{b.disabled=true;b.textContent='ラップを選んで解析';}}
+function runSuggest(){
+  const sel=activeSel();if(!sel.length)return;
+  const A=window.ANALYSIS;
+  let baseM=null,compM=null;
+  if(sel.length>=2){
+    // 速い方(dur小)を基準に
+    const a=sel[0],b=sel[1];const fast=a.lap.dur<=b.lap.dur?a:b, slow=a.lap.dur<=b.lap.dur?b:a;
+    baseM=A.lapMetrics(fast.file,fast.lap);compM=A.lapMetrics(slow.file,slow.lap);
+  }else{compM=A.lapMetrics(sel[0].file,sel[0].lap);}
+  const res=A.suggest(baseM,compM);
+  window._lastSummary=A.buildSummary(sel.slice(0,3).map(s=>({file:s.file.label,lap:s.lap.lap,metrics:A.lapMetrics(s.file,s.lap)})));
+  const out=document.getElementById('suggestOut');let html='';
+  if(res.deltaNote)html+=`<div class="deltaBox"><b>${res.deltaNote.compLabel}</b> は <b>${res.deltaNote.baseLabel}</b> に対して <b style="color:${res.deltaNote.deltaSec>0?'#E10600':'#2ecc71'}">${res.deltaNote.deltaSec>0?'+':''}${res.deltaNote.deltaSec}s</b></div>`;
+  if(!res.findings.length)html+='<div class="muted">明確な要改善点は検出されませんでした。バランスは良好です。</div>';
+  for(const fd of res.findings)html+=`<div class="finding"><span class="sev ${fd.severity}">${fd.severity.toUpperCase()}</span> <b>${fd.area}</b><div class="obs">${fd.obs}</div><div class="cause">原因: ${fd.cause}</div><div class="action">→ ${fd.action}</div><div class="ev">${fd.evidence}</div></div>`;
+  out.innerHTML=html;
+}
+
+/* ===== AI上乗せ (Claude API) ===== */
+async function runAI(){
+  const out=document.getElementById('aiOut');
+  const key=document.getElementById('apiKey').value.trim();
+  if(!key){out.textContent='APIキーが未入力です。ルール解析のみで使えます(上のボタン)。';return;}
+  if(!window._lastSummary){out.textContent='先に上の「解析してセット提案」を実行してください。';return;}
+  out.textContent='AIエージェントが解析中…';
+  const sys=`あなたはGT/ハコ車(Z34ベースレーシングカー)のデータエンジニアチームです。5人の専門エージェント(サスペンション/ブレーキ/空力/タイヤ/ドライビング)として、与えられたMoTeC解析サマリを読み、次のセット変更案を出してください。調整可能項目: ARB(Fr/Rr)、スプリング/ダンパー、車高、ブレーキバランス、リアウィング角度、ジオメトリー(トー/キャンバー/キャスター)、ブレーキパッド摩材、ABS介入、トラコン。各エージェントが1-2行で所見を述べ、最後に【総合セット変更案】を優先順位付きで3つまで、具体的な方向(↑↓何段)で示すこと。簡潔に、日本語で。`;
+  try{
+    const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'content-type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+      body:JSON.stringify({model:'claude-opus-4-8',max_tokens:1500,system:sys,messages:[{role:'user',content:window._lastSummary}]})});
+    const j=await r.json();
+    if(j.error){out.textContent='APIエラー: '+j.error.message;return;}
+    out.textContent=(j.content&&j.content[0]&&j.content[0].text)||JSON.stringify(j);
+  }catch(e){out.textContent='通信エラー: '+e.message+'\n(ネット接続 or APIキーを確認)';}
+}
+
+/* ===== 質問ベースの重点解析 ===== */
+async function runAsk(){
+  const out=document.getElementById('aiOut');
+  const q=document.getElementById('askInput').value.trim();
+  if(!q){out.textContent='気になる点を入力してください。';return;}
+  if(!window._lastSummary){runSuggest();}
+  const key=document.getElementById('apiKey').value.trim();
+  if(!key){out.textContent='質問への回答にはClaude APIキーが必要です。キー無しの場合は上の「解析してセット提案」でルールベースの提案が出ます。';return;}
+  out.textContent='「'+q+'」について解析中…';
+  const sys=`あなたはGT/ハコ車(Z34ベース)のデータエンジニアです。ユーザーの気になる点に対し、与えられたMoTeC解析サマリの数値を根拠に、原因の切り分けと具体的なセット変更案(ARB/スプリング/ダンパー/車高/ブレーキバランス/リアウィング/トー/キャンバー/キャスター/ブレーキパッド/ABS/トラコン)を簡潔に日本語で答えてください。数値根拠を必ず添えること。`;
+  try{
+    const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'content-type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+      body:JSON.stringify({model:'claude-opus-4-8',max_tokens:1200,system:sys,messages:[{role:'user',content:'【気になる点】'+q+'\n\n【解析サマリ】\n'+window._lastSummary}]})});
+    const j=await r.json();
+    if(j.error){out.textContent='APIエラー: '+j.error.message;return;}
+    out.textContent=(j.content&&j.content[0]&&j.content[0].text)||JSON.stringify(j);
+  }catch(e){out.textContent='通信エラー: '+e.message;}
+}
+
+/* ===== ファイル読み込み ===== */
+function shortName(n){return n.replace(/\.ld$/i,'').replace(/^\d{8}-/,'');}
+async function addFiles(list,fromIdb){const prog=document.getElementById('prog');
+  for(const item of list){
+    // fromIdb時は item={idbKey,rawName,buf}、通常は File
+    const isIdb=!!fromIdb;const rawName=isIdb?item.rawName:item.name;
+    prog.textContent=`読み込み中… ${rawName} (${((isIdb?item.buf.byteLength:item.size)/1e6).toFixed(0)}MB)`;
+    const buf=isIdb?item.buf:await item.arrayBuffer();await new Promise(r=>setTimeout(r,5));
+    const header=window.LD.parseHeader(buf);const laps=window.LD.detectLaps(buf,header);
+    const race=laps.filter(l=>l.dur>30&&l.dur<300);const bestLap=race.reduce((a,l)=>(!a||l.dur<a.dur)?l:a,null);
+    const id=nextId++;const color=FILE_COLORS[files.length%FILE_COLORS.length];
+    const meta=header.meta||{fields:{},strings:[]};
+    const cm=(meta.fields.comment||'').trim();
+    const label=cm||(meta.fields.time?('S'+id+' '+meta.fields.time.slice(0,5)):('S'+id));
+    const shortLabel=(cm.split(/[\s,]/)[0])||('S'+id);
+    const idbKey=isIdb?item.idbKey:('f'+Date.now()+'_'+id+'_'+Math.floor(buf.byteLength%99999));
+    const f={id,name:shortName(rawName),label,shortLabel,color,buf,header,laps,cache:{},race,bestLap,meta,idbKey};files.push(f);
+    if(bestLap)selected.push({fileId:id,lap:bestLap.lap});
+    if(!isIdb)idbPut({key:idbKey,rawName,buf}); // 永続化(更新しても残る)
+  }
+  prog.textContent='';document.getElementById('drop').classList.add('hide');
+  if(!chartLayout.length){activeChannels=PRESETS['サス'].filter(n=>channelExists(n)).slice(0,4);layoutFromActive();}
+  renderFileTray();renderLaps();renderPresets();renderChannels('');renderBandOptions();renderScatterOptions();renderHistoOptions();renderWsTabs();buildCharts();updateSuggestBtn();
+}
+function removeFile(id){const f=fileById(id);if(f&&f.idbKey)idbDel(f.idbKey); // 永続データも消す(このデータ単位で削除)
+  files=files.filter(f=>f.id!==id);selected=selected.filter(s=>s.fileId!==id);
+  renderFileTray();renderLaps();drawAll();updateSuggestBtn();if(!files.length)document.getElementById('drop').classList.remove('hide');}
+/* 起動時: IndexedDBに残っている.ldを復元(更新後もデータが残る) */
+async function restoreFiles(){
+  const recs=await idbAll();if(!recs.length)return;
+  document.getElementById('prog').textContent='前回のデータを復元中…';
+  await addFiles(recs.map(r=>({idbKey:r.key,rawName:r.rawName,buf:r.buf})),true);
+}
+// ブラウザ/タブを閉じたら消す(=残す条件はブラウザ起動中のみ)
+window.addEventListener('pagehide',e=>{if(!e.persisted)idbClear();});
+
+/* i2 Pro ファイル取り込み: .i2wkb → プリセット / Maths(User.xml等) → 計算ch登録 */
+async function importI2(list){
+  let wkbCount=0,mathCount=0,wsCount=0,msgs=[];
+  for(const file of list){
+    const text=await file.text();
+    if(/<Workbook\b/.test(text)&&/\.i2wkb$/i.test(file.name)){
+      const wb=window.ANALYSIS.parseWorkbook(text);
+      // ★worksheet構造(Graph+Trace)を保存=i2画面再現用
+      importedWorkbooks[wb.name]={name:wb.name,worksheets:wb.worksheets||[],channels:wb.channels};
+      wsCount+=(wb.worksheets||[]).length;
+      customPresets['i2:'+wb.name]=wb.channels; // 従来のフラットプリセットも残す
+      wkbCount++;
+    }else if(/<Maths\b/.test(text)){
+      const added=window.ANALYSIS.loadMathsXml(text,file.name);
+      mathCount+=added.length;
+    }else{
+      msgs.push(file.name+': 未対応形式');
+    }
+  }
+  savePresets();saveWorkbooks();
+  renderPresets();renderWorkbooks();
+  if(files.length)renderChannels(document.getElementById('chanSearch').value);
+  let msg=[];
+  if(wkbCount)msg.push('Workbook '+wkbCount+'個('+wsCount+'ワークシート)を取込');
+  if(mathCount)msg.push('計算ch '+mathCount+'個を登録');
+  alert((msg.length?msg.join(' / '):'取り込めるものがありませんでした')+(msgs.length?'\n'+msgs.join('\n'):'')+'\n\n「📖ワークブック」タブでi2の画面(複数ch重ね)を再現できます。\n※Mathsを先に取り込むと計算chも表示されます。');
+}
+
+/* ===== イベント ===== */
+const overlay=document.getElementById('dragOverlay');let dragDepth=0;
+window.addEventListener('dragenter',e=>{e.preventDefault();dragDepth++;overlay.classList.add('show');});
+window.addEventListener('dragover',e=>e.preventDefault());
+window.addEventListener('dragleave',e=>{dragDepth--;if(dragDepth<=0)overlay.classList.remove('show');});
+window.addEventListener('drop',e=>{e.preventDefault();dragDepth=0;overlay.classList.remove('show');const fs=[...e.dataTransfer.files].filter(f=>/\.ld$/i.test(f.name));if(fs.length)addFiles(fs);});
+document.getElementById('fileInput').addEventListener('change',e=>{if(e.target.files.length)addFiles([...e.target.files]);e.target.value='';});
+document.getElementById('fileInput2').addEventListener('change',e=>{if(e.target.files.length)addFiles([...e.target.files]);e.target.value='';});
+document.getElementById('i2Input').addEventListener('change',async e=>{if(e.target.files.length)await importI2([...e.target.files]);e.target.value='';});
+document.getElementById('chanSearch').addEventListener('input',e=>renderChannels(e.target.value));
+document.getElementById('suggestBtn').addEventListener('click',runSuggest);
+document.getElementById('aiRun').addEventListener('click',runAI);
+document.getElementById('askRun').addEventListener('click',runAsk);
+document.getElementById('askInput').addEventListener('keydown',e=>{if(e.key==='Enter')runAsk();});
+function resizeCourseMap(){const cv=document.getElementById('courseMap');if(!cv)return;
+  const w=cv.parentElement.clientWidth-20;const h=Math.max(320,Math.round(w*0.72));const dpr=window.devicePixelRatio||1;
+  cv.width=w*dpr;cv.height=h*dpr;cv.style.width=w+'px';cv.style.height=h+'px';
+  cv.getContext('2d').setTransform(dpr,0,0,dpr,0,0);}
+document.querySelectorAll('.rtabs button').forEach(b=>b.onclick=()=>{rtab=b.dataset.pane;
+  document.querySelectorAll('.rtabs button').forEach(x=>x.classList.toggle('on',x===b));
+  document.querySelectorAll('.rpane').forEach(p=>{const on=p.id==='pane-'+rtab;p.classList.toggle('on',on);p.style.display=on?'block':'none';});
+  if(rtab==='course'){resizeCourseMap();}
+  if(rtab==='book'){renderWorkbooks();}
+  if(rtab==='scatter'){resizeScatter();renderScatterOptions();}
+  if(rtab==='report'){renderReport();}
+  if(rtab==='histo'){resizeHisto();renderHistoOptions();}
+  drawAll();});
+function resizeHisto(){const cv=document.getElementById('histoCv');if(!cv)return;const w=cv.parentElement.clientWidth-20;const h=Math.max(200,Math.round(w*0.7));const dpr=window.devicePixelRatio||1;cv.width=w*dpr;cv.height=h*dpr;cv.style.width=w+'px';cv.style.height=h+'px';cv.getContext('2d').setTransform(dpr,0,0,dpr,0,0);}
+document.getElementById('histoCh').addEventListener('change',()=>drawAll());
+function resizeScatter(){const cv=document.getElementById('scatterCv');if(!cv)return;const w=cv.parentElement.clientWidth-20;const h=Math.max(240,w);const dpr=window.devicePixelRatio||1;cv.width=w*dpr;cv.height=h*dpr;cv.style.width=w+'px';cv.style.height=h+'px';cv.getContext('2d').setTransform(dpr,0,0,dpr,0,0);}
+document.getElementById('scatterX').addEventListener('change',()=>drawAll());
+document.getElementById('scatterY').addEventListener('change',()=>drawAll());
+// 背景帯セレクトの選択肢生成(ギア/離散値ch)
+function renderBandOptions(){const sel=document.getElementById('bandSel');if(!sel||!files.length)return;
+  const cur=bandChannel;sel.innerHTML='<option value="">なし</option>';
+  const cands=['gear_ecu','gear','Gear','ABS_Active','ABS Active','B tc','Lap Number'];
+  const seen=new Set();
+  for(const nm of cands){if(files[0].header.channels.find(c=>c.name===nm)&&!seen.has(nm)){seen.add(nm);const o=document.createElement('option');o.value=nm;o.textContent=nm;sel.appendChild(o);}}
+  sel.value=cur;}
+document.getElementById('bandSel').addEventListener('change',e=>{bandChannel=e.target.value;drawAll();});
+window.addEventListener('resize',()=>{resizeCharts();drawAll();});
+
+/* ===== ズーム / パン / モード切替 ===== */
+function updateZoomInfo(){
+  const zi=document.getElementById('zoomInfo');const w=view.end-view.start;
+  const sel0=activeSel()[0];
+  if(viewMode==='distance'&&sel0){const ser=seriesFor(sel0.file,sel0.lap,'Drive Speed');const span=ser?ser.total*w:0;zi.textContent=`表示幅 ${span.toFixed(0)}m (${(w*100).toFixed(1)}%)`;}
+  else if(viewMode==='time'){const tf=timeFile||(sel0&&sel0.file)||files[0];const st=tf&&seriesTime(tf,'Drive Speed');const span=st?st.totalT*w:0;zi.textContent=`表示幅 ${span.toFixed(1)}s`;}
+  else zi.textContent='';
+}
+function clampView(){if(view.start<0)view.start=0;if(view.end>1)view.end=1;
+  // 最小幅: 0.1秒相当。距離モードはラップ長で、時間モードはセッション長で換算
+  const sel0=activeSel()[0];let minW=0.002;
+  if(viewMode==='distance'&&sel0){const dur=sel0.lap.dur||120;minW=0.1/dur;}
+  else if(viewMode==='time'){const tf=timeFile||(sel0&&sel0.file)||files[0];const st=tf&&seriesTime(tf,'Drive Speed');if(st)minW=0.1/st.totalT;}
+  if(view.end-view.start<minW){const c=(view.start+view.end)/2;view.start=c-minW/2;view.end=c+minW/2;if(view.start<0){view.start=0;view.end=minW;}if(view.end>1){view.end=1;view.start=1-minW;}}}
+const chartsEl=document.getElementById('charts');
+// カーソル操作(i2風スクラブ):
+//  左ボタン押しながらドラッグ=カーソルが指に追従(値がリアルタイム変化)。離した位置に固定。
+//  クリック(動かさず)=その位置に固定。 Alt/Shift+ドラッグ=パン(表示範囲移動)。 右クリック=固定解除。
+let scrubbing=false,panMode=false,panX=0,downX=0,moved=false;
+function fracFromX(clientX){const r=charts[0].canvas.getBoundingClientRect();return Math.max(0,Math.min(1,(clientX-r.left)/r.width));}
+chartsEl.addEventListener('mousedown',e=>{if(!charts||!charts[0])return;
+  panMode=e.altKey||e.shiftKey;scrubbing=!panMode;moved=false;panX=e.clientX;downX=e.clientX;
+  if(scrubbing){cursorFrac=lockedCursor=fracFromX(e.clientX);drawAll();updateZoomInfo();} // 押した瞬間そこへ
+  e.preventDefault();});
+chartsEl.addEventListener('mousemove',e=>{if(!charts||!charts[0])return;const r=charts[0].canvas.getBoundingClientRect();
+  const hoverFrac=Math.max(0,Math.min(1,(e.clientX-r.left)/r.width));
+  if(Math.abs(e.clientX-downX)>3)moved=true;
+  if(scrubbing){cursorFrac=lockedCursor=hoverFrac;drawAll();updateZoomInfo();return;} // 指に追従
+  if(panMode&&moved){const dx=(e.clientX-panX)/r.width;const w=view.end-view.start;let d=-dx*w;view.start+=d;view.end+=d;if(view.start<0){view.end-=view.start;view.start=0;}if(view.end>1){view.start-=(view.end-1);view.end=1;}panX=e.clientX;drawAll();updateZoomInfo();return;}
+  cursorFrac=hoverFrac;drawAll();updateZoomInfo();}); // ホバー
+window.addEventListener('mouseup',()=>{
+  if(scrubbing){lockedCursor=cursorFrac;} // 離した位置に固定
+  scrubbing=false;panMode=false;});
+chartsEl.addEventListener('mouseleave',()=>{cursorFrac=lockedCursor;drawAll();}); // 離れたら固定位置に戻す
+// 右クリックで固定解除
+chartsEl.addEventListener('contextmenu',e=>{e.preventDefault();lockedCursor=null;cursorFrac=null;drawAll();updateZoomInfo();});
+chartsEl.addEventListener('wheel',e=>{
+  // 修飾キー(Alt/Ctrl/Meta)無し = 通常の縦スクロールに任せる
+  if(!(e.altKey||e.ctrlKey||e.metaKey)){return;}
+  e.preventDefault();if(!charts||!charts[0])return;
+  const r=charts[0].canvas.getBoundingClientRect();const fx=Math.max(0,Math.min(1,(e.clientX-r.left)/r.width));
+  const anchor=view.start+(view.end-view.start)*fx; // ズーム中心(絶対比)
+  const factor=e.deltaY<0?0.82:1.22; // ホイール上=拡大
+  let w=(view.end-view.start)*factor;
+  view.start=anchor-w*fx;view.end=anchor+w*(1-fx);clampView();drawAll();updateZoomInfo();},{passive:false});
+document.getElementById('zoomReset').onclick=()=>{view={start:0,end:1};drawAll();updateZoomInfo();};
+function zoomBy(factor){const c=(view.start+view.end)/2;let w=(view.end-view.start)*factor;view.start=c-w/2;view.end=c+w/2;clampView();drawAll();updateZoomInfo();}
+document.getElementById('zoomIn').onclick=()=>zoomBy(0.6);
+document.getElementById('zoomOut').onclick=()=>zoomBy(1.7);
+function setMode(m){viewMode=m;view={start:0,end:1};
+  document.getElementById('modeDist').classList.toggle('on',m==='distance');
+  document.getElementById('modeTime').classList.toggle('on',m==='time');
+  if(m==='time'){const sel0=activeSel()[0];timeFile=sel0?sel0.file:files[0];}
+  drawAll();updateZoomInfo();}
+document.getElementById('modeDist').onclick=()=>setMode('distance');
+document.getElementById('modeTime').onclick=()=>setMode('time');
+document.getElementById('metaClose').onclick=()=>{document.getElementById('metaDlg').style.display='none';};
+document.getElementById('metaDlg').onclick=e=>{if(e.target.id==='metaDlg')document.getElementById('metaDlg').style.display='none';};
+/* 初期化: paneのdisplayを明示(course判定用) */
+document.querySelectorAll('.rpane').forEach(p=>{p.style.display=p.classList.contains('on')?'block':'none';});
+
+/* 右パネルの全キャンバスをパネル幅にリアルタイム追従 */
+function resizeRightPanels(){try{resizeCourseMap();}catch(e){} try{resizeScatter();}catch(e){} try{resizeHisto();}catch(e){} try{resizeGG();}catch(e){} drawAll();}
+/* G-Gをパネル幅追従サイズに */
+function resizeGG(){const cv=document.getElementById('gg');if(!cv)return;const w=cv.parentElement.clientWidth-20;const s=Math.max(180,w);const dpr=window.devicePixelRatio||1;cv.width=s*dpr;cv.height=s*dpr;cv.style.width=s+'px';cv.style.height=s+'px';cv.getContext('2d').setTransform(dpr,0,0,dpr,0,0);}
+/* 右パネルのサイズ変化を監視して自動リサイズ(真のリアルタイム) */
+(function(){const rp=document.getElementById(right);if(rp&&window.ResizeObserver){const ro=new ResizeObserver(()=>{resizeRightPanels();});ro.observe(rp);}})();
+
+restoreFiles(); // 更新後もIndexedDBから.ldを復元
+
+/* ===== サイドバー リサイズ & 表示トグル ===== */
+function setupResizer(handleId,targetId,side){
+  const handle=document.getElementById(handleId),target=document.getElementById(targetId);
+  let dragging=false;
+  handle.addEventListener('mousedown',e=>{dragging=true;handle.classList.add('active');document.body.style.userSelect='none';e.preventDefault();});
+  window.addEventListener('mousemove',e=>{if(!dragging)return;
+    const rect=target.getBoundingClientRect();
+    let w=side==='left'?(e.clientX-rect.left):(rect.right-e.clientX);
+    w=Math.max(120,Math.min(640,w));target.style.width=w+'px';
+    resizeCharts();drawAll();if(rtab==='course')resizeCourseMap();});
+  window.addEventListener('mouseup',()=>{if(dragging){dragging=false;handle.classList.remove('active');document.body.style.userSelect='';}});
+}
+setupResizer('resizerL','side','left');
+setupResizer('resizerR','right','right');
+document.getElementById('toggleLeft').onclick=()=>{const s=document.getElementById('side'),r=document.getElementById('resizerL');
+  const hide=!s.classList.contains('hidden');s.classList.toggle('hidden',hide);r.classList.toggle('hidden',hide);
+  document.getElementById('toggleLeft').classList.toggle('on',hide);resizeCharts();drawAll();};
+document.getElementById('toggleRight').onclick=()=>{const s=document.getElementById('right'),r=document.getElementById('resizerR');
+  const hide=!s.classList.contains('hidden');s.classList.toggle('hidden',hide);r.classList.toggle('hidden',hide);
+  document.getElementById('toggleRight').classList.toggle('on',hide);resizeCharts();drawAll();};
+
+/* ===== フローティング・コース窓(i2式) ===== */
+const courseWin=document.getElementById('courseWin');
+function resizeCourseFloat(){const cv=document.getElementById('courseFloat');const bar=document.getElementById('courseWinBar');
+  const w=courseWin.clientWidth,h=courseWin.clientHeight-bar.offsetHeight;const dpr=window.devicePixelRatio||1;
+  cv.width=w*dpr;cv.height=h*dpr;cv.getContext('2d').setTransform(dpr,0,0,dpr,0,0);}
+document.getElementById('toggleCourse').onclick=()=>{
+  const show=!courseWin.classList.contains('show');courseWin.classList.toggle('show',show);
+  document.getElementById('toggleCourse').classList.toggle('on',show);
+  if(show){resizeCourseFloat();drawAll();}};
+document.getElementById('courseWinClose').onclick=()=>{courseWin.classList.remove('show');document.getElementById('toggleCourse').classList.remove('on');};
+// ドラッグ移動(タイトルバー)
+(function(){let dx=0,dy=0,drag=false;const bar=document.getElementById('courseWinBar');
+  bar.addEventListener('mousedown',e=>{drag=true;dx=e.clientX-courseWin.offsetLeft;dy=e.clientY-courseWin.offsetTop;e.preventDefault();});
+  window.addEventListener('mousemove',e=>{if(!drag)return;courseWin.style.left=Math.max(0,e.clientX-dx)+'px';courseWin.style.top=Math.max(0,e.clientY-dy)+'px';});
+  window.addEventListener('mouseup',()=>drag=false);})();
+// リサイズ(右下ハンドル)
+(function(){let rz=false;const h=document.getElementById('courseWinResize');
+  h.addEventListener('mousedown',e=>{rz=true;e.preventDefault();e.stopPropagation();});
+  window.addEventListener('mousemove',e=>{if(!rz)return;const r=courseWin.getBoundingClientRect();
+    courseWin.style.width=Math.max(180,e.clientX-r.left)+'px';courseWin.style.height=Math.max(140,e.clientY-r.top)+'px';resizeCourseFloat();drawAll();});
+  window.addEventListener('mouseup',()=>rz=false);})();
+
+/* ===== フローティング・数値(Numeric)窓 ===== */
+const numWin=document.getElementById('numWin');
+function renderNumWin(sel,drawList){
+  if(!numWin.classList.contains('show'))return;
+  const body=document.getElementById('numWinBody');
+  const chans=layoutChannels();const list=(viewMode==='time'?drawList:sel);
+  if(!list.length||!chans.length){body.innerHTML='<div class="muted">ラップとチャンネルを選択</div>';return;}
+  let html='';
+  for(const ch of chans){
+    // グラフと同じ getSeries(距離/時間軸リサンプル後)から値を取る=グラフ凡例と完全一致
+    const parts=[];let chColor='#ccc';
+    list.forEach((s,li)=>{const ser=getSeries(s,ch);
+      if(!ser){parts.push('<span style="color:#555">無</span>');return;}
+      const idx=cursorFrac==null?(ser.y.length>>1):Math.min(ser.y.length-1,Math.round(cursorFrac*(ser.y.length-1)));
+      const v=ser.y[idx];if(li===0)chColor=s.color||'#ccc';
+      parts.push(isFinite(v)?`<span style="color:${s.color||'#fff'}">${v.toFixed(1)}</span>`:'<span style="color:#555">—</span>');});
+    html+=`<div class="nrow"><span class="nname" style="color:${chColor}">${ch}</span><span class="nval">${parts.join(' / ')}</span></div>`;
+  }
+  body.innerHTML=html;
+}
+document.getElementById('toggleNum').onclick=()=>{const show=!numWin.classList.contains('show');numWin.classList.toggle('show',show);
+  document.getElementById('toggleNum').classList.toggle('on',show);if(show)drawAll();};
+document.getElementById('numWinClose').onclick=()=>{numWin.classList.remove('show');document.getElementById('toggleNum').classList.remove('on');};
+(function(){let dx=0,dy=0,drag=false;const bar=document.getElementById('numWinBar');
+  bar.addEventListener('mousedown',e=>{drag=true;dx=e.clientX-numWin.offsetLeft;dy=e.clientY-numWin.offsetTop;e.preventDefault();});
+  window.addEventListener('mousemove',e=>{if(!drag)return;numWin.style.left=Math.max(0,e.clientX-dx)+'px';numWin.style.top=Math.max(0,e.clientY-dy)+'px';});
+  window.addEventListener('mouseup',()=>drag=false);})();
+(function(){let rz=false;const h=document.getElementById('numWinResize');
+  h.addEventListener('mousedown',e=>{rz=true;e.preventDefault();e.stopPropagation();});
+  window.addEventListener('mousemove',e=>{if(!rz)return;const r=numWin.getBoundingClientRect();numWin.style.width=Math.max(140,e.clientX-r.left)+'px';});
+  window.addEventListener('mouseup',()=>rz=false);})();
+</script>
+</body>
+</html>

@@ -1,0 +1,293 @@
+<?xml version="1.0"?>
+<Workbook Locale="Japanese_Japan.932" DefaultLocale="C" Version="200" Name="Error Alarm" Profile="Circuit" Active="Worksheets">
+ <Worksheets Version="100" Name="Worksheets" PosPC="0,0,1000,1000" Active="error">
+  <Worksheet Version="200" Name="error" LinkTo="Laps" LockByGPSTime="0">
+   <Controls Active="Time/Distance Graph">
+    <MoTeC.TimeDistance Version="100" Name="Time/Distance Graph" PosPC="0,0,858,1000" ShowCaption="0" AutoCaption="0" LinkZoom="1" ModeId="0" ShowDataLegend="1" ShowColorLegend="1" TelemetryZoom="0" TraceLineWidth="1" TracePointSize="3" TraceStyle="0" LinkCursor="1" LinkDatum="1" ShowKeyValues="1" ShowKeyStats="0" KeyMode="0" KeyPos="1" ShowGridLines="0" ShowXAxis="1" ShowXAxisScrollBar="0" ShowYAxis="0" ShowYAxisScrollBar="0" ShowMarkers="0" ShowVSP="0" ShowDeviveEvents="0" ShowBands="0" BandGroup="Outings:Laps:Track Sections:Default" BandMode="1" OverlapMode="0" VariancePos="0.25" VarianceAutoScale="1">
+     <Graphs ActivateChild="Group 1">
+      <Graph Name="Group 4" ScaleMode="2" ScaleMin="0" ScaleMax="1">
+       <Edges Mode="0" TopEdge="0" BottomEdge="91"/>
+       <Edges Mode="1" TopEdge="0" BottomEdge="1000"/>
+       <Lines>
+        <Line Index="0" Enabled="1" Value="0" Color="210,210,210"/>
+        <Line Index="1" Enabled="0" Value="0" Color="0,0,248"/>
+        <Line Index="2" Enabled="0" Value="0" Color="248,0,0"/>
+       </Lines>
+       <Traces ActiveTrace="Speed_ecu">
+        <Trace Id="Speed_ecu" DisplayUnit="km/h" DisplayDPS="1" Visible="1"/>
+       </Traces>
+      </Graph>
+      <Graph Name="Group 1" ScaleMode="1" ScaleMin="0" ScaleMax="7092">
+       <Edges Mode="0" TopEdge="91" BottomEdge="185"/>
+       <Edges Mode="1" TopEdge="0" BottomEdge="1000"/>
+       <Lines>
+        <Line Index="0" Enabled="1" Value="0" Color="210,210,210"/>
+        <Line Index="1" Enabled="0" Value="0" Color="0,0,248"/>
+        <Line Index="2" Enabled="0" Value="0" Color="248,0,0"/>
+       </Lines>
+       <Traces ActiveTrace="nmot">
+        <Trace Id="nmot" DisplayUnit="rpm" DisplayDPS="0" Visible="1"/>
+       </Traces>
+      </Graph>
+      <Graph Name="Group 5" ScaleMode="2" ScaleMin="0" ScaleMax="1">
+       <Edges Mode="0" TopEdge="185" BottomEdge="276"/>
+       <Edges Mode="1" TopEdge="0" BottomEdge="1000"/>
+       <Lines>
+        <Line Index="0" Enabled="1" Value="0" Color="210,210,210"/>
+        <Line Index="1" Enabled="0" Value="0" Color="0,0,248"/>
+        <Line Index="2" Enabled="0" Value="0" Color="248,0,0"/>
+       </Lines>
+       <Traces ActiveTrace="Alarm Acknowledge">
+        <Trace Id="Alarm Acknowledge" DisplayUnit="" DisplayDPS="0" Visible="1"/>
+       </Traces>
+      </Graph>
+      <Graph Name="Group 2" ScaleMode="1" ScaleMin="0" ScaleMax="15">
+       <Edges Mode="0" TopEdge="276" BottomEdge="688"/>
+       <Edges Mode="1" TopEdge="0" BottomEdge="1000"/>
+       <Lines>
+        <Line Index="0" Enabled="1" Value="0" Color="210,210,210"/>
+        <Line Index="1" Enabled="0" Value="0" Color="0,0,248"/>
+        <Line Index="2" Enabled="0" Value="0" Color="248,0,0"/>
+       </Lines>
+       <Traces ActiveTrace="E cam">
+        <Trace Id="E cam" DisplayUnit="" DisplayDPS="0" Visible="1"/>
+        <Trace Id="E crank" DisplayUnit="" DisplayDPS="0" Visible="1"/>
+        <Trace Id="E p22" DisplayUnit="" DisplayDPS="0" Visible="1"/>
+        <Trace Id="E poil" DisplayUnit="" DisplayDPS="0" Visible="1"/>
+        <Trace Id="E tmot" DisplayUnit="" DisplayDPS="0" Visible="1"/>
+        <Trace Id="E pamb" DisplayUnit="" DisplayDPS="0" Visible="1"/>
+        <Trace Id="E thr" DisplayUnit="" DisplayDPS="0" Visible="1"/>
+        <Trace Id="E thr2" DisplayUnit="" DisplayDPS="0" Visible="1"/>
+        <Trace Id="E vwheel fl" DisplayUnit="" DisplayDPS="0" Visible="1"/>
+        <Trace Id="E vwheel fr" DisplayUnit="" DisplayDPS="0" Visible="1"/>
+        <Trace Id="E vwheel rl" DisplayUnit="" DisplayDPS="0" Visible="1"/>
+        <Trace Id="E vwheel rr" DisplayUnit="" DisplayDPS="0" Visible="1"/>
+        <Trace Id="E aps" DisplayUnit="" DisplayDPS="0" Visible="1"/>
+       </Traces>
+      </Graph>
+      <Graph Name="Group 3" ScaleMode="2" ScaleMin="0" ScaleMax="1">
+       <Edges Mode="0" TopEdge="688" BottomEdge="833"/>
+       <Edges Mode="1" TopEdge="0" BottomEdge="1000"/>
+       <Lines>
+        <Line Index="0" Enabled="1" Value="0" Color="210,210,210"/>
+        <Line Index="1" Enabled="0" Value="0" Color="0,0,248"/>
+        <Line Index="2" Enabled="0" Value="0" Color="248,0,0"/>
+       </Lines>
+       <Traces ActiveTrace="M5 ABS EBD Lamp">
+        <Trace Id="Alarm ABS Warning" DisplayUnit="" DisplayDPS="0" Visible="1"/>
+        <Trace Id="M5 ABS EBD Lamp" DisplayUnit="" DisplayDPS="0" Visible="1"/>
+       </Traces>
+      </Graph>
+      <Graph Name="Group 6" ScaleMode="2" ScaleMin="0" ScaleMax="1">
+       <Edges Mode="0" TopEdge="833" BottomEdge="1000"/>
+       <Edges Mode="1" TopEdge="0" BottomEdge="1000"/>
+       <Lines>
+        <Line Index="0" Enabled="1" Value="0" Color="210,210,210"/>
+        <Line Index="1" Enabled="0" Value="0" Color="0,0,248"/>
+        <Line Index="2" Enabled="0" Value="0" Color="248,0,0"/>
+       </Lines>
+       <Traces ActiveTrace="M5 ABS Active">
+        <Trace Id="M5 ABS Active" DisplayUnit="" DisplayDPS="0" Visible="1"/>
+       </Traces>
+      </Graph>
+     </Graphs>
+     <Cursor Version="1" Style="1" Snap="1"/>
+    </MoTeC.TimeDistance>
+    <MoTeC.List Version="100" Name="Channel List (2)" Caption="Channel List (2)" PosPC="858,485,1000,1000" ShowCaption="1" AutoCaption="0" UseDefaultFont="1" Datum="0" Delta="0" ShowHeading="0" AutoSizeColumns="1" NameColumnWidth="180" ValueColumnWidth="96" DeltaColumnWidth="96" DatumColumnWidth="96">
+     <GaugeData Id="AGS Comp Error" DisplayUnit="" DisplayDPS="1" Visible="1"/>
+     <GaugeData Id="AGS Error state" DisplayUnit="" DisplayDPS="1" Visible="1"/>
+     <ColorBandGroup/>
+    </MoTeC.List>
+    <MoTeC.List Version="100" Name="Channel List" Caption="Eroor list" PosPC="858,0,1000,485" ShowCaption="1" AutoCaption="0" UseDefaultFont="1" Datum="0" Delta="0" ShowHeading="0" AutoSizeColumns="1" NameColumnWidth="180" ValueColumnWidth="96" DeltaColumnWidth="96" DatumColumnWidth="96">
+     <GaugeData Id="E cam" DisplayUnit="" DisplayDPS="0" Visible="1"/>
+     <GaugeData Id="E crank" DisplayUnit="" DisplayDPS="0" Visible="1"/>
+     <GaugeData Id="E p22" DisplayUnit="" DisplayDPS="0" Visible="1"/>
+     <GaugeData Id="E poil" DisplayUnit="" DisplayDPS="0" Visible="1"/>
+     <GaugeData Id="E tmot" DisplayUnit="" DisplayDPS="0" Visible="1"/>
+     <GaugeData Id="E pamb" DisplayUnit="" DisplayDPS="0" Visible="1"/>
+     <GaugeData Id="E thr" DisplayUnit="" DisplayDPS="0" Visible="1"/>
+     <GaugeData Id="E thr2" DisplayUnit="" DisplayDPS="0" Visible="1"/>
+     <GaugeData Id="E vwheel fl" DisplayUnit="" DisplayDPS="0" Visible="1"/>
+     <GaugeData Id="E vwheel fr" DisplayUnit="" DisplayDPS="0" Visible="1"/>
+     <GaugeData Id="E vwheel rl" DisplayUnit="" DisplayDPS="0" Visible="1"/>
+     <GaugeData Id="E vwheel rr" DisplayUnit="" DisplayDPS="0" Visible="1"/>
+     <GaugeData Id="E aps" DisplayUnit="" DisplayDPS="0" Visible="1"/>
+     <ColorBandGroup/>
+    </MoTeC.List>
+   </Controls>
+  </Worksheet>
+  <Worksheet Version="200" Name="Alarm" LinkTo="Laps" LockByGPSTime="0">
+   <Controls Active="Time/Distance Graph (1)">
+    <MoTeC.TimeDistance Version="100" Name="Time/Distance Graph (1)" PosPC="0,0,799,1000" ShowCaption="0" AutoCaption="0" LinkZoom="1" ModeId="0" ShowDataLegend="1" ShowColorLegend="1" TelemetryZoom="0" TraceLineWidth="1" TracePointSize="3" TraceStyle="0" LinkCursor="1" LinkDatum="1" ShowKeyValues="1" ShowKeyStats="0" KeyMode="0" KeyPos="1" ShowGridLines="0" ShowXAxis="1" ShowXAxisScrollBar="0" ShowYAxis="0" ShowYAxisScrollBar="0" ShowMarkers="0" ShowVSP="0" ShowDeviveEvents="0" ShowBands="0" BandGroup="Outings:Laps:Track Sections:Default" BandMode="1" OverlapMode="0" VariancePos="0.25" VarianceAutoScale="1">
+     <Graphs ActivateChild="Group 5">
+      <Graph Name="Group 1" ScaleMode="2" ScaleMin="0" ScaleMax="1">
+       <Edges Mode="0" TopEdge="0" BottomEdge="44"/>
+       <Edges Mode="1" TopEdge="0" BottomEdge="1000"/>
+       <Lines>
+        <Line Index="0" Enabled="1" Value="0" Color="210,210,210"/>
+        <Line Index="1" Enabled="0" Value="0" Color="0,0,248"/>
+        <Line Index="2" Enabled="0" Value="0" Color="248,0,0"/>
+       </Lines>
+       <Traces ActiveTrace="Speed_ecu">
+        <Trace Id="Speed_ecu" DisplayUnit="km/h" DisplayDPS="1" Visible="1"/>
+       </Traces>
+      </Graph>
+      <Graph Name="Group 2" ScaleMode="2" ScaleMin="0" ScaleMax="1">
+       <Edges Mode="0" TopEdge="44" BottomEdge="103"/>
+       <Edges Mode="1" TopEdge="0" BottomEdge="1000"/>
+       <Lines>
+        <Line Index="0" Enabled="1" Value="0" Color="210,210,210"/>
+        <Line Index="1" Enabled="0" Value="0" Color="0,0,248"/>
+        <Line Index="2" Enabled="0" Value="0" Color="248,0,0"/>
+       </Lines>
+       <Traces ActiveTrace="nmot">
+        <Trace Id="nmot" DisplayUnit="rpm" DisplayDPS="0" Visible="1"/>
+       </Traces>
+      </Graph>
+      <Graph Name="Group 4" ScaleMode="2" ScaleMin="0" ScaleMax="1">
+       <Edges Mode="0" TopEdge="103" BottomEdge="132"/>
+       <Edges Mode="1" TopEdge="0" BottomEdge="1000"/>
+       <Lines>
+        <Line Index="0" Enabled="1" Value="0" Color="210,210,210"/>
+        <Line Index="1" Enabled="0" Value="0" Color="0,0,248"/>
+        <Line Index="2" Enabled="0" Value="0" Color="248,0,0"/>
+       </Lines>
+       <Traces ActiveTrace="Alarm Acknowledge">
+        <Trace Id="Alarm Acknowledge" DisplayUnit="" DisplayDPS="0" Visible="1"/>
+       </Traces>
+      </Graph>
+      <Graph Name="Group 7" ScaleMode="2" ScaleMin="0" ScaleMax="1">
+       <Edges Mode="0" TopEdge="132" BottomEdge="193"/>
+       <Edges Mode="1" TopEdge="0" BottomEdge="1000"/>
+       <Lines>
+        <Line Index="0" Enabled="1" Value="0" Color="210,210,210"/>
+        <Line Index="1" Enabled="0" Value="0" Color="0,0,248"/>
+        <Line Index="2" Enabled="0" Value="0" Color="248,0,0"/>
+       </Lines>
+       <Traces ActiveTrace="ALARM_BATTERY_LOW">
+        <Trace Id="ALARM_BATTERY_LOW" DisplayUnit="" DisplayDPS="0" Visible="1"/>
+        <Trace Id="Alarm Fuel Rem Lo" DisplayUnit="" DisplayDPS="0" Visible="1"/>
+       </Traces>
+      </Graph>
+      <Graph Name="Group 3" ScaleMode="1" ScaleMin="0" ScaleMax="1.5">
+       <Edges Mode="0" TopEdge="193" BottomEdge="432"/>
+       <Edges Mode="1" TopEdge="0" BottomEdge="1000"/>
+       <Lines>
+        <Line Index="0" Enabled="1" Value="0" Color="210,210,210"/>
+        <Line Index="1" Enabled="0" Value="0" Color="0,0,248"/>
+        <Line Index="2" Enabled="0" Value="0" Color="248,0,0"/>
+       </Lines>
+       <Traces ActiveTrace="Alarm V Cam">
+        <Trace Id="ALARM_FBW" DisplayUnit="" DisplayDPS="0" Visible="1"/>
+        <Trace Id="ALARM_VTC" DisplayUnit="" DisplayDPS="0" Visible="1"/>
+        <Trace Id="ALARM_ERROR_SENSOR" DisplayUnit="" DisplayDPS="0" Visible="1"/>
+        <Trace Id="Alarm ALT" DisplayUnit="" DisplayDPS="0" Visible="1"/>
+        <Trace Id="Alarm FuelPump" DisplayUnit="" DisplayDPS="0" Visible="1"/>
+        <Trace Id="Alarm Bat Volts Lo" DisplayUnit="" DisplayDPS="0" Visible="1"/>
+        <Trace Id="Alarm V Cam" DisplayUnit="" DisplayDPS="0" Visible="1"/>
+        <Trace Id="Alarm ENG Sens" DisplayUnit="" DisplayDPS="0" Visible="1"/>
+        <Trace Id="Alarm ABS Warning" DisplayUnit="" DisplayDPS="0" Visible="1"/>
+       </Traces>
+      </Graph>
+      <Graph Name="Group 6" ScaleMode="2" ScaleMin="0" ScaleMax="1">
+       <Edges Mode="0" TopEdge="432" BottomEdge="575"/>
+       <Edges Mode="1" TopEdge="0" BottomEdge="1000"/>
+       <Lines>
+        <Line Index="0" Enabled="1" Value="0" Color="210,210,210"/>
+        <Line Index="1" Enabled="0" Value="0" Color="0,0,248"/>
+        <Line Index="2" Enabled="0" Value="0" Color="248,0,0"/>
+       </Lines>
+       <Traces ActiveTrace="Alarm Fuel Pres Lo">
+        <Trace Id="ALARM_FUEL_PRESS_LOW" DisplayUnit="" DisplayDPS="0" Visible="1"/>
+        <Trace Id="Alarm Fuel Pres Lo" DisplayUnit="" DisplayDPS="0" Visible="1"/>
+        <Trace Id="ALARM_OIL_PRESS_LOW" DisplayUnit="" DisplayDPS="0" Visible="1"/>
+        <Trace Id="Alarm Eng Oil Pres Lo" DisplayUnit="" DisplayDPS="0" Visible="1"/>
+        <Trace Id="Alarm Paddle Pres" DisplayUnit="" DisplayDPS="0" Visible="1"/>
+        <Trace Id="ALARM_PADDLE_PRESS_LOW" DisplayUnit="" DisplayDPS="0" Visible="1"/>
+       </Traces>
+      </Graph>
+      <Graph Name="Group 5" ScaleMode="2" ScaleMin="0" ScaleMax="1">
+       <Edges Mode="0" TopEdge="575" BottomEdge="806"/>
+       <Edges Mode="1" TopEdge="0" BottomEdge="1000"/>
+       <Lines>
+        <Line Index="0" Enabled="1" Value="0" Color="210,210,210"/>
+        <Line Index="1" Enabled="0" Value="0" Color="0,0,248"/>
+        <Line Index="2" Enabled="0" Value="0" Color="248,0,0"/>
+       </Lines>
+       <Traces ActiveTrace="ALARM_EXH_TEMP_LOW">
+        <Trace Id="Alarm EXH Temp Hi" DisplayUnit="" DisplayDPS="0" Visible="1"/>
+        <Trace Id="Alarm EXH Temp Lo" DisplayUnit="" DisplayDPS="0" Visible="1"/>
+        <Trace Id="ALARM_EXH_TEMP_HIGH" DisplayUnit="" DisplayDPS="0" Visible="1"/>
+        <Trace Id="ALARM_EXH_TEMP_LOW" DisplayUnit="" DisplayDPS="0" Visible="1"/>
+        <Trace Id="Alarm Eng Temp Hi" DisplayUnit="" DisplayDPS="0" Visible="1"/>
+        <Trace Id="Alarm Gbox Oil Temp Hi" DisplayUnit="" DisplayDPS="0" Visible="1"/>
+        <Trace Id="Alarm Eng Oil Temp Hi" DisplayUnit="" DisplayDPS="0" Visible="1"/>
+        <Trace Id="ALARM_ENGINE_OIL_HOT" DisplayUnit="" DisplayDPS="0" Visible="1"/>
+        <Trace Id="ALARM_ENG_TEMP_HIGH" DisplayUnit="" DisplayDPS="0" Visible="1"/>
+        <Trace Id="ALARM_GBX_OIL_HOT" DisplayUnit="" DisplayDPS="0" Visible="1"/>
+       </Traces>
+      </Graph>
+      <Graph Name="Group 8" ScaleMode="2" ScaleMin="0" ScaleMax="1">
+       <Edges Mode="0" TopEdge="806" BottomEdge="857"/>
+       <Edges Mode="1" TopEdge="0" BottomEdge="1000"/>
+       <Lines>
+        <Line Index="0" Enabled="1" Value="0" Color="210,210,210"/>
+        <Line Index="1" Enabled="0" Value="0" Color="0,0,248"/>
+        <Line Index="2" Enabled="0" Value="0" Color="248,0,0"/>
+       </Lines>
+       <Traces ActiveTrace="ABS_Error_Lamp">
+        <Trace Id="ABS_Lamp" DisplayUnit="" DisplayDPS="0" Visible="1"/>
+        <Trace Id="ABS_Error_Lamp" DisplayUnit="" DisplayDPS="0" Visible="1"/>
+       </Traces>
+      </Graph>
+      <Graph Name="Group 9" ScaleMode="2" ScaleMin="0" ScaleMax="1">
+       <Edges Mode="0" TopEdge="857" BottomEdge="1000"/>
+       <Edges Mode="1" TopEdge="0" BottomEdge="1000"/>
+       <Lines>
+        <Line Index="0" Enabled="1" Value="0" Color="210,210,210"/>
+        <Line Index="1" Enabled="0" Value="0" Color="0,0,248"/>
+        <Line Index="2" Enabled="0" Value="0" Color="248,0,0"/>
+       </Lines>
+       <Traces ActiveTrace="Wheel Speed RL">
+        <Trace Id="Wheel Speed RL" DisplayUnit="km/h" DisplayDPS="1" Visible="1"/>
+       </Traces>
+      </Graph>
+     </Graphs>
+     <Cursor Version="1" Style="1" Snap="1"/>
+    </MoTeC.TimeDistance>
+    <MoTeC.List Version="100" Name="Channel List (1)" Caption="Alarm list" PosPC="799,0,1000,1000" ShowCaption="1" AutoCaption="0" UseDefaultFont="1" Datum="0" Delta="0" ShowHeading="0" AutoSizeColumns="1" NameColumnWidth="180" ValueColumnWidth="96" DeltaColumnWidth="96" DatumColumnWidth="96">
+     <GaugeData Id="ALARM_BATTERY_LOW" DisplayUnit="" DisplayDPS="0" Visible="1"/>
+     <GaugeData Id="ALARM_ENGINE_OIL_HOT" DisplayUnit="" DisplayDPS="0" Visible="1"/>
+     <GaugeData Id="ALARM_ENG_TEMP_HIGH" DisplayUnit="" DisplayDPS="0" Visible="1"/>
+     <GaugeData Id="ALARM_EXH_TEMP_HIGH" DisplayUnit="" DisplayDPS="0" Visible="1"/>
+     <GaugeData Id="ALARM_EXH_TEMP_LOW" DisplayUnit="" DisplayDPS="0" Visible="1"/>
+     <GaugeData Id="ALARM_FBW" DisplayUnit="" DisplayDPS="0" Visible="1"/>
+     <GaugeData Id="ALARM_FUEL_PRESS_LOW" DisplayUnit="" DisplayDPS="0" Visible="1"/>
+     <GaugeData Id="ALARM_GBX_OIL_HOT" DisplayUnit="" DisplayDPS="0" Visible="1"/>
+     <GaugeData Id="ALARM_OIL_PRESS_LOW" DisplayUnit="" DisplayDPS="0" Visible="1"/>
+     <GaugeData Id="ALARM_PADDLE_PRESS_LOW" DisplayUnit="" DisplayDPS="0" Visible="1"/>
+     <GaugeData Id="ALARM_VTC" DisplayUnit="" DisplayDPS="0" Visible="1"/>
+     <GaugeData Id="ALARM_ERROR_SENSOR" DisplayUnit="" DisplayDPS="0" Visible="1"/>
+     <GaugeData Id="Alarm ALT" DisplayUnit="" DisplayDPS="0" Visible="1"/>
+     <GaugeData Id="Alarm FuelPump" DisplayUnit="" DisplayDPS="0" Visible="1"/>
+     <GaugeData Id="Alarm Acknowledge" DisplayUnit="" DisplayDPS="0" Visible="1"/>
+     <GaugeData Id="Alarm Fuel Rem Lo" DisplayUnit="" DisplayDPS="0" Visible="1"/>
+     <GaugeData Id="Alarm Eng Temp Hi" DisplayUnit="" DisplayDPS="0" Visible="1"/>
+     <GaugeData Id="Alarm Eng Oil Temp Hi" DisplayUnit="" DisplayDPS="0" Visible="1"/>
+     <GaugeData Id="Alarm Eng Oil Pres Lo" DisplayUnit="" DisplayDPS="0" Visible="1"/>
+     <GaugeData Id="Alarm Fuel Pres Lo" DisplayUnit="" DisplayDPS="0" Visible="1"/>
+     <GaugeData Id="Alarm Gbox Oil Temp Hi" DisplayUnit="" DisplayDPS="0" Visible="1"/>
+     <GaugeData Id="Alarm Bat Volts Lo" DisplayUnit="" DisplayDPS="0" Visible="1"/>
+     <GaugeData Id="Alarm FBW" DisplayUnit="" DisplayDPS="0" Visible="1"/>
+     <GaugeData Id="Alarm V Cam" DisplayUnit="" DisplayDPS="0" Visible="1"/>
+     <GaugeData Id="Alarm ENG Sens" DisplayUnit="" DisplayDPS="0" Visible="1"/>
+     <GaugeData Id="Alarm EXH Temp Hi" DisplayUnit="" DisplayDPS="0" Visible="1"/>
+     <GaugeData Id="Alarm Paddle Pres" DisplayUnit="" DisplayDPS="0" Visible="1"/>
+     <GaugeData Id="Alarm EXH Temp Lo" DisplayUnit="" DisplayDPS="0" Visible="1"/>
+     <GaugeData Id="Alarm ABS Warning" DisplayUnit="" DisplayDPS="0" Visible="1"/>
+     <ColorBandGroup/>
+    </MoTeC.List>
+   </Controls>
+  </Worksheet>
+ </Worksheets>
+</Workbook>

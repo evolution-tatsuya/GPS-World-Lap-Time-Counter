@@ -1362,3 +1362,76 @@ Phase 3移行時の原則:
 - **残(次フェーズ):** 運営ライブモニター(SSE)、サブスク課金・決済(Stripe/お金絡む=要相談)。
 
 **追補最終更新**: 2026-08-04
+
+---
+
+## 🆕 機能拡張要件 — ライブダッシュボード（2026-10-05 着手 / feature/live-dashboard）
+
+### 概要
+- **ユーザーストーリー**:
+  - 観客（ギャラリー）として、イベントコードだけで（ログインせず）車載映像・順位・ラップタイム・コースマップを1画面で見たい。なぜなら現地で手軽に観戦を楽しみたいから。
+  - 配信中のドライバーとして、配信を止めずに同じ画面で自分と他車のラップ/順位を見たい。なぜなら走行中にページ移動する操作ができないから。
+- **ビジネス価値**: SUPER GT公式タイミングモニター相当の「情報を並置した観戦体験」を自前アプリで実現し、イベント価値とデモ訴求力を高める。
+- **背景（既存の課題）**: 現状はライブ映像・順位・モニターが別ページに分かれており、ページ遷移のたびにLiveKit接続が切れ・選択状態や順位表示がリセットされる。運転中は操作できず実用に耐えない。
+
+### 機能要件
+- **ダッシュボード（1画面・ページ遷移なし）**: 4パネルを並置し、各パネルをON/OFF切替で出し入れ。
+  - (A) 車載映像マルチビュー（メイン大画面＋サムネ切替。既存 LiveKitMultiView 流用）
+  - (B) 順位表（ラップタイム順ランキング。既存 Ranking 流用）
+  - (C) 個別ラップタイム（選択車のラップ毎タイム履歴。**新規**）
+  - (D) コースマップ（leaflet。既存 LiveMap 流用）
+- **状態の永続化**: ライブ映像のRoom接続・選択中の車・各パネルのON/OFF・順位ポーリングを画面上位（Zustand新設 `liveStore`）に保持。**パネルの表示/非表示や内部の切替で、映像接続・選択車・タイムがリセットされない。**
+- **2つの入口**:
+  - ギャラリー: イベントコード入力 → `/live/:code`（ログイン不要）
+  - ドライバー: 計測画面から配信を継続したままダッシュボードへ（publisher をアンマウントさせない配置）
+- **選択車の連動**: 映像サムネ／地図マーカー／順位表の行いずれをクリックしても、個別ラップタイムパネルが連動（正準キー＝ゼッケン `zekken`、欠損時は participantName フォールバック）。
+- **制約/バリデーション**:
+  - 公開視聴トークンは `cameraEnabled` かつ開催時間内（`isWithinEventWindow`）のみ発行。
+  - 観客に車の走行位置は出さない（コースマップは形状のみ）。※下記スコープ参照。
+
+### 非機能要件
+- **セキュリティ**: 観客視聴はイベントコードベースの公開トークン（`canPublish:false / canSubscribe:true`、identity はゲスト毎にユニーク）。運営用の既存トークン（requireOrganizer）は温存。順位/ラップ参照APIは既に認証不要のものを流用。
+- **パフォーマンス/負荷**: ドライバーの publish Room（`canSubscribe:false` 帯域節約。**変更しない**）と viewer Room を別接続で併存。映像パネルOFF時は viewer Room を張らず端末負荷を抑える。
+
+### 型定義（TDL）
+frontend/src/types/index.ts に追加:
+```typescript
+// パネル識別子
+type PanelKey = 'multiview' | 'ranking' | 'laptime' | 'coursemap';
+
+// ダッシュボードのモード（入口）
+type DashboardMode = 'gallery' | 'driver';
+
+// ライブ映像の1フィード（LiveKit remote track + メタ）
+interface LiveFeed {
+  participantId: string;   // LiveKit participant identity
+  zekken?: string;         // ゼッケン（選択の正準キー）
+  driverName?: string;
+  vehicle?: string;
+  // RemoteVideoTrack 等は store 内で保持（型は livekit-client の Track）
+}
+```
+
+### API変更
+- **新規**: `POST /api/livekit/token/view-public`（認証なし）
+  - body: `{ eventCode: string }`
+  - 動作: `eventCode` 大文字化 → event 解決 → `organizer.cameraEnabled` 必須 → `isWithinEventWindow` ゲート → `canSubscribe:true / canPublish:false`、ゲスト identity でトークン返却。未設定時 503、対象外時 403/404。
+- 流用（変更なし）: `GET /api/laps`, `GET /api/laps/ranking`（認証不要）、`GET /api/events/:idOrCode`（公開、コース形状取得）。
+
+### DB変更
+- **なし**（既存 Lap/Event/User と既存APIで完結）。
+
+### 設計判断（なぜこの設計か・永続化）
+- **状態持ち上げは Zustand 新設ストア**（Context不採用）: 既存が authStore(Zustand)1本で統一、App.tsx がプロバイダ階層を持たない薄い構成のため、ツリー非依存の Zustand が最小変更でリセット解消を満たす。
+- **publish token の `canSubscribe:false` は変更しない**: 全配信車が全車購読すると端末負荷・帯域が破綻するため。ドライバーは視聴用に別 Room を張る方式。
+- **個別ラップはサーバー改修せずクライアントフィルタ**: イベント単位のラップ件数は数百規模でクライアントフィルタに性能問題なし。既存の5秒ポーリングを再利用でき追加API不要。
+- **観客コースマップは形状のみ（位置は後回し可能な独立追加）**: 観客に位置を出すには公開 positions API が必要。コースマップパネルは最初から位置マーカー描画対応で作り、観客モードのみ形状/位置を切替。後からの観客向け繋ぎ込みは作り直し不要（数十分）。
+
+### スコープ（2日で実像テストに届かせる割り切り）
+- **本線（Phase 1〜4）**: 4パネル・状態永続化・ギャラリー/ドライバー2入口・実機2台テスト。観客コースマップは**形状のみ**。
+- **Phase 5（時間が余れば/イベント後でも可）**: 公開 positions API を1本追加し、観客コースマップにも走行位置マーカー表示。本線設計を壊さず後付け可能。
+
+### デッドコード削除
+- `backend/src/routes/signaling.ts`（旧P2P WebRTCシグナリング。LiveKit SFU移行で役割終了、フロント参照ゼロを確認）＋ `backend/src/index.ts` のマウント行を削除。
+
+**追補最終更新**: 2026-10-05

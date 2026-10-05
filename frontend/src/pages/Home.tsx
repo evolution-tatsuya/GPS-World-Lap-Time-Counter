@@ -47,6 +47,15 @@ export default function Home() {
         >
           {t('home.participant')}
         </Button>
+        {/* 観戦する（無料・イベントコード・ログイン不要） */}
+        <Button
+          variant="contained"
+          color="info"
+          size="large"
+          onClick={() => navigate('/gallery')}
+        >
+          {t('home.spectator', '観戦する')}
+        </Button>
         {/* 個人で計測（課金者向け。ログイン後 /personal へ直行） */}
         <Button
           variant="contained"
