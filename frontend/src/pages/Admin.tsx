@@ -37,7 +37,7 @@ import { getEvents } from '../api/events';
 import { exportEventLapsCsv } from '../api/laps';
 import {
   getAdminUsers, setUserPromo, setUserCamera, setUserSubscription, createOrganizer,
-  impersonateUser, deleteOrganizer, type AdminUser,
+  impersonateUser, deleteOrganizer, resetUserPassword, updateUserProfile, type AdminUser,
   getAdminCourses, setCourseApproval, type AdminCourse, type ApprovalStatus,
 } from '../api/admin';
 import LanguageSwitcher from '../components/LanguageSwitcher';
@@ -116,6 +116,48 @@ export default function Admin() {
     } catch (err) {
       setError(err instanceof Error ? err.message : '削除に失敗しました');
     }
+  };
+
+  // プロフィール編集（メール・名前）ダイアログ
+  const [editUser, setEditUser] = useState<AdminUser | null>(null);
+  const [editForm, setEditForm] = useState({ name: '', email: '' });
+  const [editBusy, setEditBusy] = useState(false);
+  const [editErr, setEditErr] = useState('');
+  const openEditUser = (u: AdminUser) => {
+    setEditUser(u);
+    setEditForm({ name: u.name, email: u.email ?? '' });
+    setEditErr('');
+  };
+  const handleSaveProfile = async () => {
+    if (!editUser) return;
+    setEditBusy(true); setEditErr('');
+    try {
+      const updated = await updateUserProfile(editUser.id, { name: editForm.name, email: editForm.email });
+      setUsers((prev) => prev.map((x) => (x.id === editUser.id ? { ...x, name: updated.name, email: updated.email } : x)));
+      setEditUser(null);
+    } catch (err) {
+      setEditErr(err instanceof Error ? err.message : '更新に失敗しました');
+    } finally { setEditBusy(false); }
+  };
+
+  // パスワード再発行ダイアログ
+  const [pwUser, setPwUser] = useState<AdminUser | null>(null);
+  const [pwValue, setPwValue] = useState('');
+  const [pwBusy, setPwBusy] = useState(false);
+  const [pwErr, setPwErr] = useState('');
+  const [pwDone, setPwDone] = useState('');
+  const openResetPw = (u: AdminUser) => { setPwUser(u); setPwValue(''); setPwErr(''); };
+  const handleResetPw = async () => {
+    if (!pwUser) return;
+    if (pwValue.length < 8) { setPwErr('パスワードは8文字以上にしてください'); return; }
+    setPwBusy(true); setPwErr('');
+    try {
+      await resetUserPassword(pwUser.id, pwValue);
+      setPwDone(`「${pwUser.name}」のパスワードを再発行しました。本人にお伝えください。`);
+      setPwUser(null);
+    } catch (err) {
+      setPwErr(err instanceof Error ? err.message : '再発行に失敗しました');
+    } finally { setPwBusy(false); }
   };
 
   useEffect(() => {
@@ -398,6 +440,7 @@ export default function Admin() {
             </Button>
           </Box>
           {createSuccess && <Alert severity="success" sx={{ mb: 2 }} onClose={() => setCreateSuccess('')}>{createSuccess}</Alert>}
+          {pwDone && <Alert severity="success" sx={{ mb: 2 }} onClose={() => setPwDone('')}>{pwDone}</Alert>}
           <TableContainer component={Paper}>
             <Table size="small">
               <TableHead>
@@ -462,6 +505,12 @@ export default function Admin() {
                           <Button size="small" variant="outlined" onClick={() => handleImpersonate(u)}>
                             開く
                           </Button>
+                          <Button size="small" variant="outlined" onClick={() => openEditUser(u)}>
+                            編集
+                          </Button>
+                          <Button size="small" variant="outlined" onClick={() => openResetPw(u)}>
+                            パス
+                          </Button>
                           <Button size="small" variant="outlined" color="error" onClick={() => handleDeleteUser(u)}>
                             削除
                           </Button>
@@ -513,6 +562,44 @@ export default function Admin() {
           <Button onClick={() => setCreateOpen(false)} disabled={creating}>キャンセル</Button>
           <Button onClick={handleCreateOrganizer} variant="contained" disabled={creating}>
             {creating ? <CircularProgress size={20} /> : '作成'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* 運営プロフィール編集ダイアログ */}
+      <Dialog open={!!editUser} onClose={() => !editBusy && setEditUser(null)} fullWidth maxWidth="sm">
+        <DialogTitle>運営情報を編集</DialogTitle>
+        <DialogContent>
+          <Stack spacing={2} sx={{ mt: 1 }}>
+            {editErr && <Alert severity="error">{editErr}</Alert>}
+            <TextField label="名前" value={editForm.name} onChange={(e) => setEditForm((f) => ({ ...f, name: e.target.value }))} fullWidth />
+            <TextField label="メールアドレス（ログインID）" type="email" value={editForm.email} onChange={(e) => setEditForm((f) => ({ ...f, email: e.target.value }))} fullWidth />
+          </Stack>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setEditUser(null)} disabled={editBusy}>キャンセル</Button>
+          <Button onClick={handleSaveProfile} variant="contained" disabled={editBusy}>
+            {editBusy ? <CircularProgress size={20} /> : '保存'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* パスワード再発行ダイアログ */}
+      <Dialog open={!!pwUser} onClose={() => !pwBusy && setPwUser(null)} fullWidth maxWidth="xs">
+        <DialogTitle>パスワード再発行</DialogTitle>
+        <DialogContent>
+          <Stack spacing={2} sx={{ mt: 1 }}>
+            {pwErr && <Alert severity="error">{pwErr}</Alert>}
+            <Typography variant="body2" color="text.secondary">
+              「{pwUser?.name}」の新しいパスワードを設定します（本人に伝えてください）。
+            </Typography>
+            <TextField label="新しいパスワード（8文字以上）" type="password" value={pwValue} onChange={(e) => setPwValue(e.target.value)} fullWidth autoComplete="new-password" />
+          </Stack>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setPwUser(null)} disabled={pwBusy}>キャンセル</Button>
+          <Button onClick={handleResetPw} variant="contained" disabled={pwBusy}>
+            {pwBusy ? <CircularProgress size={20} /> : '再発行'}
           </Button>
         </DialogActions>
       </Dialog>

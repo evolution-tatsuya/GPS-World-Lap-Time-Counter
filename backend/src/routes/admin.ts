@@ -168,6 +168,77 @@ router.delete('/users/:id', requireAdmin, async (req: Request, res: Response) =>
   }
 });
 
+// ========== 運営のパスワード再発行（統括による） ==========
+
+/**
+ * PUT /api/admin/users/:id/password  body: { newPassword }
+ * 統括が運営のパスワードをリセットする（運営が忘れた時用）。現行パス確認は不要。
+ * 統括は新パスワードを運営本人に伝える運用。
+ */
+router.put('/users/:id/password', requireAdmin, async (req: Request, res: Response) => {
+  try {
+    const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+    const { newPassword } = req.body as { newPassword?: string };
+    if (!newPassword || newPassword.length < 8) {
+      res.status(400).json({ error: 'パスワードは8文字以上にしてください' });
+      return;
+    }
+    const target = await prisma.user.findUnique({ where: { id }, select: { id: true, role: true } });
+    if (!target) { res.status(404).json({ error: 'User not found' }); return; }
+    if (target.role === 'ADMIN') {
+      res.status(400).json({ error: '統括アカウントのパスワードはここから変更できません' });
+      return;
+    }
+    const passwordHash = await bcrypt.hash(newPassword, 12);
+    await prisma.user.update({ where: { id }, data: { passwordHash } });
+    res.json({ ok: true });
+  } catch (error) {
+    console.error('Admin reset password error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// ========== 運営のメール・名前の編集（統括による） ==========
+
+/**
+ * PUT /api/admin/users/:id/profile  body: { email?, name? }
+ * 統括が運営のメールアドレス・表示名を編集する。
+ */
+router.put('/users/:id/profile', requireAdmin, async (req: Request, res: Response) => {
+  try {
+    const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+    const { email, name } = req.body as { email?: string; name?: string };
+
+    const target = await prisma.user.findUnique({ where: { id }, select: { id: true, email: true } });
+    if (!target) { res.status(404).json({ error: 'User not found' }); return; }
+
+    const data: { email?: string; name?: string } = {};
+    if (name !== undefined && name.trim()) data.name = name.trim();
+    if (email !== undefined && email.trim()) {
+      const normalized = email.trim().toLowerCase();
+      if (normalized !== target.email) {
+        const dup = await prisma.user.findUnique({ where: { email: normalized } });
+        if (dup) { res.status(409).json({ error: 'このメールアドレスは既に使われています' }); return; }
+        data.email = normalized;
+      }
+    }
+    if (Object.keys(data).length === 0) {
+      res.status(400).json({ error: '変更する項目がありません' });
+      return;
+    }
+
+    const updated = await prisma.user.update({
+      where: { id },
+      data,
+      select: { id: true, email: true, name: true, role: true },
+    });
+    res.json(updated);
+  } catch (error) {
+    console.error('Admin edit profile error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 // ========== ユーザー一覧 ==========
 
 /**
