@@ -26,6 +26,8 @@ import LiveMonitor from './pages/LiveMonitor';
 import GalleryLogin from './pages/GalleryLogin';
 import GalleryDashboard from './pages/GalleryDashboard';
 import DriverDashboard from './pages/DriverDashboard';
+import AccountSettings from './pages/AccountSettings';
+import ImpersonationBanner from './components/ImpersonationBanner';
 
 // React Query Client
 const queryClient = new QueryClient({
@@ -85,6 +87,7 @@ function App() {
           </Box>
         ) : (
         <Router>
+          <ImpersonationBanner />
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/event-login" element={<EventLogin />} />
@@ -96,6 +99,7 @@ function App() {
             <Route path="/admin" element={<Admin />} />
             <Route path="/personal" element={<PersonalMeasurement />} />
             <Route path="/subscribe" element={<Subscribe />} />
+            <Route path="/account" element={<AccountSettings />} />
 
             {/* ライブダッシュボード */}
             <Route path="/gallery" element={<GalleryLogin />} />

@@ -2,10 +2,161 @@
 // すべて requireAdmin。ユーザー管理・プロモ枠付与など、システム全体の管理操作。
 
 import { Router, Request, Response } from 'express';
+import bcrypt from 'bcrypt';
 import { prisma } from '../index';
-import { requireAdmin } from '../middleware/auth';
+import { requireAdmin, requireSession } from '../middleware/auth';
 
 const router = Router();
+
+// ========== 運営アカウント作成（統括による代理発行） ==========
+
+/**
+ * POST /api/admin/users
+ * 統括が運営(ORGANIZER)アカウントを作成する。
+ * body: { email, name, password, cameraEnabled?, isPromo? }
+ * 統括自身のセッションは維持したまま、新しい運営を発行できる。
+ */
+router.post('/users', requireAdmin, async (req: Request, res: Response) => {
+  try {
+    const { email, name, password, cameraEnabled, isPromo } = req.body as {
+      email?: string; name?: string; password?: string; cameraEnabled?: boolean; isPromo?: boolean;
+    };
+
+    if (!email || !name || !password) {
+      res.status(400).json({ error: 'email, name, password は必須です' });
+      return;
+    }
+    if (password.length < 8) {
+      res.status(400).json({ error: 'パスワードは8文字以上にしてください' });
+      return;
+    }
+
+    const normalizedEmail = email.trim().toLowerCase();
+    const existing = await prisma.user.findUnique({ where: { email: normalizedEmail } });
+    if (existing) {
+      res.status(409).json({ error: 'このメールアドレスは既に登録されています' });
+      return;
+    }
+
+    const passwordHash = await bcrypt.hash(password, 12);
+    const user = await prisma.user.create({
+      data: {
+        email: normalizedEmail,
+        passwordHash,
+        name: name.trim(),
+        role: 'ORGANIZER',
+        cameraEnabled: cameraEnabled === true,
+        isPromo: isPromo === true,
+      },
+      select: {
+        id: true, email: true, name: true, role: true,
+        isPromo: true, cameraEnabled: true,
+        subscriptionPlan: true, subscriptionStatus: true, subscriptionUntil: true,
+        createdAt: true,
+        _count: { select: { events: true, courses: true } },
+      },
+    });
+
+    res.status(201).json(user);
+  } catch (error) {
+    console.error('Admin create organizer error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// ========== 代理ログイン（統括が運営として操作） ==========
+
+/**
+ * POST /api/admin/users/:id/impersonate
+ * 統括が指定運営(ORGANIZER)として操作を開始する。パスワード不要。
+ * 元の統括IDを impersonatorId に退避し、戻れるようにする。
+ */
+router.post('/users/:id/impersonate', requireAdmin, async (req: Request, res: Response) => {
+  try {
+    const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+    const target = await prisma.user.findUnique({
+      where: { id },
+      select: { id: true, name: true, email: true, role: true },
+    });
+    if (!target) { res.status(404).json({ error: 'User not found' }); return; }
+    if (target.role !== 'ORGANIZER') {
+      res.status(400).json({ error: '代理ログインできるのは運営アカウントのみです' });
+      return;
+    }
+
+    // 既に代理中なら、まず元の統括を退避元として保持（多重代理はしない）
+    const originalAdminId = req.session.impersonatorId || req.session.userId;
+    req.session.impersonatorId = originalAdminId;
+    req.session.userId = target.id;
+    req.session.role = 'ORGANIZER';
+
+    res.json({ ok: true, actingAs: target });
+  } catch (error) {
+    console.error('Impersonate error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+/**
+ * POST /api/admin/stop-impersonate
+ * 代理ログインを終了し、元の統括(ADMIN)に戻る。代理中の本人が呼ぶ。
+ */
+router.post('/stop-impersonate', requireSession, async (req: Request, res: Response) => {
+  try {
+    const adminId = req.session.impersonatorId;
+    if (!adminId) { res.status(400).json({ error: '代理ログイン中ではありません' }); return; }
+    const admin = await prisma.user.findUnique({
+      where: { id: adminId },
+      select: { id: true, role: true },
+    });
+    if (!admin || admin.role !== 'ADMIN') {
+      res.status(403).json({ error: '元の統括アカウントに戻れません' });
+      return;
+    }
+    req.session.userId = admin.id;
+    req.session.role = 'ADMIN';
+    req.session.impersonatorId = undefined;
+    res.json({ ok: true });
+  } catch (error) {
+    console.error('Stop impersonate error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// ========== 運営アカウント削除 ==========
+
+/**
+ * DELETE /api/admin/users/:id
+ * 統括が運営(ORGANIZER)アカウントを削除する。
+ * イベントを保有している場合は、先にイベント削除を促してブロックする（データ保護）。
+ */
+router.delete('/users/:id', requireAdmin, async (req: Request, res: Response) => {
+  try {
+    const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+    if (id === req.session.userId) {
+      res.status(400).json({ error: '自分自身は削除できません' });
+      return;
+    }
+    const target = await prisma.user.findUnique({
+      where: { id },
+      select: { id: true, role: true, _count: { select: { events: true, courses: true } } },
+    });
+    if (!target) { res.status(404).json({ error: 'User not found' }); return; }
+    if (target.role === 'ADMIN') {
+      res.status(400).json({ error: '統括アカウントは削除できません' });
+      return;
+    }
+    if (target._count.events > 0) {
+      res.status(409).json({ error: `このアカウントは${target._count.events}件のイベントを保有しています。先にイベントを削除してください。` });
+      return;
+    }
+    await prisma.user.delete({ where: { id } });
+    res.json({ ok: true });
+  } catch (error) {
+    console.error('Delete user error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
 
 // ========== ユーザー一覧 ==========
 

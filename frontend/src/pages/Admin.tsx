@@ -22,14 +22,22 @@ import {
   Chip,
   Alert,
   CircularProgress,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  TextField,
+  Stack,
+  FormControlLabel,
 } from '@mui/material';
 import { Switch } from '@mui/material';
-import { Download, AdminPanelSettings, Logout } from '@mui/icons-material';
+import { Download, AdminPanelSettings, Logout, PersonAdd } from '@mui/icons-material';
 import { useAuthStore } from '../stores/authStore';
 import { getEvents } from '../api/events';
 import { exportEventLapsCsv } from '../api/laps';
 import {
-  getAdminUsers, setUserPromo, setUserCamera, setUserSubscription, type AdminUser,
+  getAdminUsers, setUserPromo, setUserCamera, setUserSubscription, createOrganizer,
+  impersonateUser, deleteOrganizer, type AdminUser,
   getAdminCourses, setCourseApproval, type AdminCourse, type ApprovalStatus,
 } from '../api/admin';
 import LanguageSwitcher from '../components/LanguageSwitcher';
@@ -38,7 +46,7 @@ import type { Event } from '../types';
 export default function Admin() {
   const navigate = useNavigate();
   const { t } = useTranslation();
-  const { user, isAdmin, logout } = useAuthStore();
+  const { user, isAdmin, logout, setImpersonating, restoreSession } = useAuthStore();
 
   const [tab, setTab] = useState(0);
   const [events, setEvents] = useState<Event[]>([]);
@@ -49,6 +57,66 @@ export default function Admin() {
   const [error, setError] = useState('');
   const [exportingId, setExportingId] = useState<string | null>(null);
   const [promoUpdatingId, setPromoUpdatingId] = useState<string | null>(null);
+
+  // 運営アカウント作成ダイアログ
+  const [createOpen, setCreateOpen] = useState(false);
+  const [creating, setCreating] = useState(false);
+  const [createError, setCreateError] = useState('');
+  const [createSuccess, setCreateSuccess] = useState('');
+  const [newOrg, setNewOrg] = useState({ email: '', name: '', password: '', cameraEnabled: true });
+
+  const handleCreateOrganizer = async () => {
+    if (!newOrg.email.trim() || !newOrg.name.trim() || !newOrg.password) {
+      setCreateError('メール・名前・パスワードを入力してください');
+      return;
+    }
+    if (newOrg.password.length < 8) {
+      setCreateError('パスワードは8文字以上にしてください');
+      return;
+    }
+    setCreating(true);
+    setCreateError('');
+    try {
+      const created = await createOrganizer({
+        email: newOrg.email.trim(),
+        name: newOrg.name.trim(),
+        password: newOrg.password,
+        cameraEnabled: newOrg.cameraEnabled,
+      });
+      setUsers((prev) => [created, ...prev]);
+      setCreateSuccess(`運営アカウント「${created.name}」を作成しました（${created.email}）`);
+      setCreateOpen(false);
+      setNewOrg({ email: '', name: '', password: '', cameraEnabled: true });
+    } catch (err) {
+      setCreateError(err instanceof Error ? err.message : '作成に失敗しました');
+    } finally {
+      setCreating(false);
+    }
+  };
+
+  // 代理ログイン（このユーザーとして開く）。サーバーのセッションを切替後、
+  // restoreSession で最新のユーザー情報を取り直してからダッシュボードへ。
+  const handleImpersonate = async (u: AdminUser) => {
+    try {
+      await impersonateUser(u.id);
+      await restoreSession();
+      setImpersonating(true);
+      navigate('/dashboard');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '代理ログインに失敗しました');
+    }
+  };
+
+  // 運営アカウント削除
+  const handleDeleteUser = async (u: AdminUser) => {
+    if (!window.confirm(`運営アカウント「${u.name}」を削除しますか？この操作は取り消せません。`)) return;
+    try {
+      await deleteOrganizer(u.id);
+      setUsers((prev) => prev.filter((x) => x.id !== u.id));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '削除に失敗しました');
+    }
+  };
 
   useEffect(() => {
     // ADMIN以外はダッシュボードへ
@@ -323,7 +391,13 @@ export default function Admin() {
       {/* ユーザー管理（プロモ枠ON/OFF） */}
       {!loading && tab === 2 && (
         <>
-          <Alert severity="info" sx={{ mb: 2 }}>{t('admin.subHint')}</Alert>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2, flexWrap: 'wrap' }}>
+            <Alert severity="info" sx={{ flex: 1, minWidth: 240 }}>{t('admin.subHint')}</Alert>
+            <Button variant="contained" startIcon={<PersonAdd />} onClick={() => { setCreateError(''); setCreateOpen(true); }}>
+              運営を追加
+            </Button>
+          </Box>
+          {createSuccess && <Alert severity="success" sx={{ mb: 2 }} onClose={() => setCreateSuccess('')}>{createSuccess}</Alert>}
           <TableContainer component={Paper}>
             <Table size="small">
               <TableHead>
@@ -335,12 +409,13 @@ export default function Admin() {
                   <TableCell align="center">{t('admin.subStatus')}</TableCell>
                   <TableCell align="center">{t('admin.userPromo')}</TableCell>
                   <TableCell align="center">車載カメラ</TableCell>
+                  <TableCell align="center">操作</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
                 {users.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={7}>{t('admin.noUsers')}</TableCell>
+                    <TableCell colSpan={8}>{t('admin.noUsers')}</TableCell>
                   </TableRow>
                 )}
                 {users.map((u) => (
@@ -381,6 +456,18 @@ export default function Admin() {
                         color="primary"
                       />
                     </TableCell>
+                    <TableCell align="center">
+                      {u.role === 'ORGANIZER' && (
+                        <Box sx={{ display: 'flex', gap: 0.5, justifyContent: 'center', flexWrap: 'wrap' }}>
+                          <Button size="small" variant="outlined" onClick={() => handleImpersonate(u)}>
+                            開く
+                          </Button>
+                          <Button size="small" variant="outlined" color="error" onClick={() => handleDeleteUser(u)}>
+                            削除
+                          </Button>
+                        </Box>
+                      )}
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -388,6 +475,46 @@ export default function Admin() {
           </TableContainer>
         </>
       )}
+
+      {/* 運営アカウント作成ダイアログ */}
+      <Dialog open={createOpen} onClose={() => !creating && setCreateOpen(false)} fullWidth maxWidth="sm">
+        <DialogTitle>運営アカウントを追加</DialogTitle>
+        <DialogContent>
+          <Stack spacing={2} sx={{ mt: 1 }}>
+            {createError && <Alert severity="error">{createError}</Alert>}
+            <TextField
+              label="名前（運営者・チーム名など）"
+              value={newOrg.name}
+              onChange={(e) => setNewOrg((o) => ({ ...o, name: e.target.value }))}
+              fullWidth
+            />
+            <TextField
+              label="メールアドレス（ログインID）"
+              type="email"
+              value={newOrg.email}
+              onChange={(e) => setNewOrg((o) => ({ ...o, email: e.target.value }))}
+              fullWidth
+            />
+            <TextField
+              label="初期パスワード（8文字以上）"
+              value={newOrg.password}
+              onChange={(e) => setNewOrg((o) => ({ ...o, password: e.target.value }))}
+              fullWidth
+              helperText="運営者に伝えてください。本人がログイン後に変更できます。"
+            />
+            <FormControlLabel
+              control={<Switch checked={newOrg.cameraEnabled} onChange={(e) => setNewOrg((o) => ({ ...o, cameraEnabled: e.target.checked }))} />}
+              label="車載カメラ（ライブ映像）機能を有効にする"
+            />
+          </Stack>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setCreateOpen(false)} disabled={creating}>キャンセル</Button>
+          <Button onClick={handleCreateOrganizer} variant="contained" disabled={creating}>
+            {creating ? <CircularProgress size={20} /> : '作成'}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Container>
   );
 }
