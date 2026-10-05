@@ -7,7 +7,10 @@ import { prisma } from '../index';
  * 既存のコードと重複しないことを保証
  */
 export async function generateEventCode(): Promise<string> {
-  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+  // 現場で口頭・手書きでも誤読しないよう、紛らわしい英字を除外する。
+  // 数字は 0-9 すべて使用可。除外: O(↔0), I・L(↔1)。
+  // ※既存コードに除外文字が含まれていても無効化はしない（生成時のみ新ルール適用）。
+  const chars = 'ABCDEFGHJKMNPQRSTUVWXYZ0123456789';
   let code = '';
   let attempts = 0;
   const maxAttempts = 10;
