@@ -497,6 +497,7 @@ export default function Admin() {
             />
             <TextField
               label="初期パスワード（8文字以上）"
+              type="password"
               value={newOrg.password}
               onChange={(e) => setNewOrg((o) => ({ ...o, password: e.target.value }))}
               fullWidth

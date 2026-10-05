@@ -150,9 +150,19 @@ router.delete('/users/:id', requireAdmin, async (req: Request, res: Response) =>
       res.status(409).json({ error: `このアカウントは${target._count.events}件のイベントを保有しています。先にイベントを削除してください。` });
       return;
     }
+    // コースも外部キー(Restrict)で保護されているため、保有時は削除をブロックする（DB例外=500回避）
+    if (target._count.courses > 0) {
+      res.status(409).json({ error: `このアカウントは${target._count.courses}件のコースを登録しています。先にコースを削除・移管してください。` });
+      return;
+    }
     await prisma.user.delete({ where: { id } });
     res.json({ ok: true });
   } catch (error) {
+    // 外部キー制約(ラップ記録など)が残っている場合は500ではなく分かりやすい409で返す
+    if (error && typeof error === 'object' && (error as { code?: string }).code === 'P2003') {
+      res.status(409).json({ error: 'このアカウントには関連データ（記録など）が残っているため削除できません。' });
+      return;
+    }
     console.error('Delete user error:', error);
     res.status(500).json({ error: 'Internal server error' });
   }

@@ -23,6 +23,11 @@ router.put('/me', requireSession, async (req: Request, res: Response) => {
   try {
     const userId = req.session.userId;
     if (!userId) { res.status(403).json({ error: 'ログインが必要です' }); return; }
+    // 代理ログイン中は、統括が運営の認証情報を変更できないようブロックする
+    if (req.session.impersonatorId) {
+      res.status(403).json({ error: '代理ログイン中はアカウント情報を変更できません' });
+      return;
+    }
 
     const { email, name, currentPassword, newPassword } = req.body as {
       email?: string; name?: string; currentPassword?: string; newPassword?: string;
