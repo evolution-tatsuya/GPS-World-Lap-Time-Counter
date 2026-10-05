@@ -159,7 +159,9 @@ export interface EventUpdateInput {
   name?: string;
   sportCategory?: SportCategory;
   eventDate?: string | Date;
-  maxParticipants?: number;
+  startAt?: string | Date | null;
+  endAt?: string | Date | null;
+  maxParticipants?: number | null;
   isPublic?: boolean;
 }
 

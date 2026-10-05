@@ -261,6 +261,17 @@ router.put('/:id', requireOrganizer, async (req: Request, res: Response) => {
     if (updates.eventDate !== undefined) updateData.eventDate = new Date(updates.eventDate);
     if (updates.maxParticipants !== undefined) updateData.maxParticipants = updates.maxParticipants;
     if (updates.isPublic !== undefined) updateData.isPublic = updates.isPublic;
+    // 開催時間（開始/終了）。nullで未設定に戻すことも許可する。
+    if (updates.startAt !== undefined) updateData.startAt = updates.startAt ? new Date(updates.startAt) : null;
+    if (updates.endAt !== undefined) updateData.endAt = updates.endAt ? new Date(updates.endAt) : null;
+
+    // 開始・終了の整合性チェック（更新後の値で判定）
+    const nextStart = updateData.startAt !== undefined ? updateData.startAt : existing.startAt;
+    const nextEnd = updateData.endAt !== undefined ? updateData.endAt : existing.endAt;
+    if (nextStart && nextEnd && new Date(nextStart).getTime() >= new Date(nextEnd).getTime()) {
+      res.status(400).json({ error: 'startAt must be before endAt' });
+      return;
+    }
 
     // 更新実行
     const event = await prisma.event.update({
