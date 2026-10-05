@@ -34,3 +34,10 @@ export async function sendPosition(pos: {
 export async function getEventPositions(eventId: string): Promise<PositionsResponse> {
   return apiClient.get<PositionsResponse>(`/positions/${encodeURIComponent(eventId)}`);
 }
+
+/**
+ * 観客がイベントコードで参加者位置を取得する（認証不要・開催時間内のみ）
+ */
+export async function getPublicPositions(eventCode: string): Promise<PositionsResponse> {
+  return apiClient.get<PositionsResponse>(`/positions/public/${encodeURIComponent(eventCode)}`);
+}

@@ -168,4 +168,49 @@ router.get('/:eventId', requireOrganizer, async (req: Request, res: Response) =>
   }
 });
 
+/**
+ * GET /api/positions/public/:eventCode
+ * 観客(ギャラリー)が、イベントコードで参加者の現在位置を取得する（認証不要・開催時間内のみ）。
+ * 位置は映像と同じく観戦目的の公開情報。開催時間外は一切返さない。
+ */
+router.get('/public/:eventCode', async (req: Request, res: Response) => {
+  try {
+    const raw = Array.isArray(req.params.eventCode) ? req.params.eventCode[0] : req.params.eventCode;
+    const eventCode = String(raw).trim().toUpperCase();
+    if (!eventCode) { res.status(400).json({ error: 'eventCode is required' }); return; }
+
+    const event = await prisma.event.findUnique({
+      where: { eventCode },
+      select: { id: true, startAt: true, endAt: true, eventDate: true },
+    });
+    if (!event) { res.status(404).json({ error: 'Event not found' }); return; }
+
+    if (!isWithinEventWindow(event)) {
+      res.json({ active: false, positions: [] });
+      return;
+    }
+
+    const eventMap = positionStore.get(event.id);
+    const now = Date.now();
+    const positions = eventMap
+      ? Array.from(eventMap.values())
+          .filter((p) => now - p.updatedAt <= OFFLINE_MS)
+          .map((p) => ({
+            participantName: p.participantName,
+            vehicle: p.vehicle,
+            zekken: p.zekken,
+            lat: p.lat,
+            lng: p.lng,
+            accuracy: p.accuracy,
+            secondsAgo: Math.round((now - p.updatedAt) / 1000),
+          }))
+      : [];
+
+    res.json({ active: true, positions });
+  } catch (error) {
+    console.error('Get public positions error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 export default router;
