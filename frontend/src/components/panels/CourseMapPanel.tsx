@@ -9,7 +9,7 @@
 // マーカークリックで選択車(selectCar)を更新し、他パネルと連動する。
 
 import { useEffect, useRef, useState } from 'react';
-import { Box, Typography } from '@mui/material';
+import { Box, Typography, CircularProgress } from '@mui/material';
 import { MapContainer, TileLayer, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -149,24 +149,37 @@ export default function CourseMapPanel({ eventId, showPositions }: { eventId: st
 
   // コース中心座標を解決する。APIは course/circuit のどちらか、かつ
   // ネスト形式(controlLineA)・フラット形式(controlLineALat)のどちらかで返すため、
-  // 両方をフォールバックで見る。取れなければ東京駅。
+  // 両方をフォールバックで見る。座標が取れなければ null（＝まだ地図を作らない）。
   const course = (event?.course || event?.circuit) as
     | { controlLineA?: { lat: number; lng: number }; controlLineALat?: number | string; controlLineALng?: number | string }
     | undefined;
-  const resolveCenter = (): [number, number] => {
+  const resolveCenter = (): [number, number] | null => {
     if (course?.controlLineA && typeof course.controlLineA.lat === 'number') {
       return [course.controlLineA.lat, course.controlLineA.lng];
     }
     const flatLat = course?.controlLineALat;
     const flatLng = course?.controlLineALng;
-    if (flatLat != null && flatLng != null) {
+    if (flatLat != null && flatLng != null && !Number.isNaN(Number(flatLat)) && !Number.isNaN(Number(flatLng))) {
       return [Number(flatLat), Number(flatLng)];
     }
-    return [35.681236, 139.767125];
+    return null;
   };
   const center = resolveCenter();
 
   const shownPositions = showPositions && active ? positions : [];
+
+  // 重要: MapContainer の center は初回マウント時しか反映されないため、
+  // 座標が確定する前に地図を作ると東京駅等に固定されてしまう。
+  // event取得→座標確定まではローディングを出し、確定後に地図をマウントする。
+  if (!center) {
+    return (
+      <Box sx={{ height: '100%', minHeight: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        {event === null
+          ? <CircularProgress size={24} />
+          : <Typography variant="body2" color="text.secondary">このコースには地図座標が設定されていません</Typography>}
+      </Box>
+    );
+  }
 
   return (
     <Box sx={{ height: '100%', minHeight: 0, display: 'flex', flexDirection: 'column' }}>
