@@ -211,8 +211,17 @@ router.put('/:id', requireOrganizer, async (req: Request, res: Response) => {
 
     // 更新データ準備
     const updateData: any = {};
+    if (updates.name !== undefined) updateData.name = updates.name;
+    if (updates.country !== undefined) updateData.country = updates.country;
+    if (updates.state !== undefined) updateData.state = updates.state;
+    if (updates.courseType !== undefined) updateData.courseType = updates.courseType;
+    if (updates.sportCategories !== undefined) updateData.sportCategories = updates.sportCategories;
+    if (updates.courseLength !== undefined) updateData.courseLength = updates.courseLength;
+    if (updates.elevationGain !== undefined) updateData.elevationGain = updates.elevationGain;
     if (updates.description !== undefined) updateData.description = updates.description;
-    if (updates.referenceLapTime !== undefined) updateData.referenceTime = updates.referenceLapTime;
+    // 基準タイムは referenceTime / referenceLapTime(後方互換) のどちらでも受ける
+    if (updates.referenceTime !== undefined) updateData.referenceTime = updates.referenceTime;
+    else if (updates.referenceLapTime !== undefined) updateData.referenceTime = updates.referenceLapTime;
     if (updates.isPublic !== undefined) updateData.isPublic = updates.isPublic;
 
     if (updates.controlLineA) {
