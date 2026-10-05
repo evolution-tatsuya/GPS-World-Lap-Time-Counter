@@ -9,6 +9,10 @@ interface AuthState {
   user: User | null;
   setUser: (user: User | null) => void;
 
+  // 統括が代理ログイン中か（trueなら「統括に戻る」バナーを出す）
+  impersonating: boolean;
+  setImpersonating: (v: boolean) => void;
+
   // イベント参加者認証
   event: EventWithCircuit | null;
   driverName: string | null;
@@ -33,6 +37,7 @@ interface AuthState {
 // /api/auth/session のレスポンス型
 interface SessionResponse {
   type: 'organizer' | 'participant';
+  impersonating?: boolean;
   user?: User;
   event?: EventWithCircuit;
   driverName?: string;
@@ -45,8 +50,10 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   driverName: null,
   vehicle: null,
   restoring: true,
+  impersonating: false,
 
   setUser: (user) => set({ user }),
+  setImpersonating: (v) => set({ impersonating: v }),
 
   setEventSession: (event, driverName, vehicle) =>
     set({ event, driverName, vehicle: vehicle || null }),
@@ -57,7 +64,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     try {
       const data = await apiClient.get<SessionResponse>('/auth/session');
       if (data.type === 'organizer' && data.user) {
-        set({ user: data.user });
+        set({ user: data.user, impersonating: !!data.impersonating });
       } else if (data.type === 'participant' && data.event) {
         set({
           event: data.event,
@@ -72,7 +79,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     }
   },
 
-  logout: () => set({ user: null, event: null, driverName: null, vehicle: null }),
+  logout: () => set({ user: null, event: null, driverName: null, vehicle: null, impersonating: false }),
 
   isAuthenticated: () => {
     const state = get();

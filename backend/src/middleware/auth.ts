@@ -12,6 +12,7 @@ declare module 'express-session' {
     driverName?: string;
     vehicle?: string;
     zekken?: string; // ゼッケン番号（参加時必須。マーカー/リスト/映像の表示に使う）
+    impersonatorId?: string; // 代理ログイン中、元の統括(ADMIN)のユーザーID。戻る時に使う
   }
 }
 

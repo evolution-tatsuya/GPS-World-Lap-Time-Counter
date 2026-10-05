@@ -7,8 +7,76 @@ import { LoginRequest, EventLoginRequest } from '../types';
 import { formatCourseLines } from '../utils/formatCourse';
 import { isJoinWindowOpen } from '../utils/eventWindow';
 import { canUsePaidFeatures } from '../utils/subscription';
+import { requireSession } from '../middleware/auth';
 
 const router = Router();
+
+// ========== 自分のアカウント更新（運営者・本人のみ） ==========
+
+/**
+ * PUT /api/auth/me
+ * ログイン中のユーザーが自分のメールアドレス/パスワードを変更する。
+ * パスワード変更時は現在のパスワード(currentPassword)の確認を必須にする。
+ * body: { email?, name?, currentPassword?, newPassword? }
+ */
+router.put('/me', requireSession, async (req: Request, res: Response) => {
+  try {
+    const userId = req.session.userId;
+    if (!userId) { res.status(403).json({ error: 'ログインが必要です' }); return; }
+    // 代理ログイン中は、統括が運営の認証情報を変更できないようブロックする
+    if (req.session.impersonatorId) {
+      res.status(403).json({ error: '代理ログイン中はアカウント情報を変更できません' });
+      return;
+    }
+
+    const { email, name, currentPassword, newPassword } = req.body as {
+      email?: string; name?: string; currentPassword?: string; newPassword?: string;
+    };
+
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    if (!user) { res.status(404).json({ error: 'User not found' }); return; }
+
+    const data: { email?: string; name?: string; passwordHash?: string } = {};
+
+    // 名前
+    if (name !== undefined && name.trim()) data.name = name.trim();
+
+    // メール変更（重複チェック）
+    if (email !== undefined && email.trim()) {
+      const normalized = email.trim().toLowerCase();
+      if (normalized !== user.email) {
+        const dup = await prisma.user.findUnique({ where: { email: normalized } });
+        if (dup) { res.status(409).json({ error: 'このメールアドレスは既に使われています' }); return; }
+        data.email = normalized;
+      }
+    }
+
+    // パスワード変更（現在のパスワード確認が必須）
+    if (newPassword) {
+      if (newPassword.length < 8) { res.status(400).json({ error: '新しいパスワードは8文字以上にしてください' }); return; }
+      if (!user.passwordHash || !currentPassword) {
+        res.status(400).json({ error: '現在のパスワードを入力してください' }); return;
+      }
+      const ok = await bcrypt.compare(currentPassword, user.passwordHash);
+      if (!ok) { res.status(400).json({ error: '現在のパスワードが正しくありません' }); return; }
+      data.passwordHash = await bcrypt.hash(newPassword, 12);
+    }
+
+    if (Object.keys(data).length === 0) {
+      res.status(400).json({ error: '変更する項目がありません' }); return;
+    }
+
+    const updated = await prisma.user.update({
+      where: { id: userId },
+      data,
+      select: { id: true, email: true, name: true, role: true },
+    });
+    res.json({ user: updated });
+  } catch (error) {
+    console.error('Update me error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
 
 // ========== イベントコードログイン（参加者） ==========
 
@@ -231,6 +299,8 @@ router.get('/session', async (req: Request, res: Response) => {
 
       res.json({
         type: 'organizer',
+        // 統括が代理ログイン中かどうか（trueなら「統括に戻る」導線を出す）
+        impersonating: !!req.session.impersonatorId,
         user: {
           id: user.id,
           email: user.email,

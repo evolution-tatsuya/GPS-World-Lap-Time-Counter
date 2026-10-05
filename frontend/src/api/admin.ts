@@ -24,6 +24,32 @@ export async function getAdminUsers(): Promise<AdminUser[]> {
   return apiClient.get<AdminUser[]>('/admin/users');
 }
 
+// 運営アカウントを統括が作成（ADMINのみ）
+export async function createOrganizer(data: {
+  email: string;
+  name: string;
+  password: string;
+  cameraEnabled?: boolean;
+  isPromo?: boolean;
+}): Promise<AdminUser> {
+  return apiClient.post<AdminUser>('/admin/users', data);
+}
+
+// 統括が指定運営として代理ログイン（パス不要・ADMINのみ）
+export async function impersonateUser(id: string): Promise<{ ok: boolean; actingAs: { id: string; name: string; email: string | null } }> {
+  return apiClient.post(`/admin/users/${id}/impersonate`, {});
+}
+
+// 代理ログインを終了して統括に戻る
+export async function stopImpersonate(): Promise<{ ok: boolean }> {
+  return apiClient.post('/admin/stop-impersonate', {});
+}
+
+// 運営アカウントを削除（ADMINのみ。イベント保有時は409）
+export async function deleteOrganizer(id: string): Promise<void> {
+  return apiClient.delete(`/admin/users/${id}`);
+}
+
 // プロモ枠（課金免除）の付与/解除
 export async function setUserPromo(id: string, isPromo: boolean): Promise<AdminUser> {
   return apiClient.put<AdminUser>(`/admin/users/${id}/promo`, { isPromo });

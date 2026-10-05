@@ -155,6 +155,12 @@ export default function Dashboard() {
           >
             {t('personal.title')}
           </Button>
+          <Button
+            variant="outlined"
+            onClick={() => navigate('/account')}
+          >
+            アカウント設定
+          </Button>
           {isAdmin() && (
             <Button
               variant="contained"
