@@ -85,8 +85,10 @@ export default function CircuitDetail() {
         referenceTime: form.referenceSec.trim() === '' ? undefined : Math.round(Number(form.referenceSec) * 1000),
         isPublic: form.isPublic,
       };
-      const updated = await updateCircuit(id, payload);
-      setCircuit(updated);
+      await updateCircuit(id, payload);
+      // レスポンス形の差異に影響されないよう、保存後に再取得して表示を最新化
+      const fresh = await getCircuit(id);
+      setCircuit(fresh);
       setEditOpen(false);
     } catch (err) {
       setEditError(err instanceof Error ? err.message : '保存に失敗しました');
