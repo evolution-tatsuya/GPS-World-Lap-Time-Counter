@@ -66,9 +66,8 @@ export default function LiveDashboard({ eventId, eventCode, mode, eventName, bac
       case 'laptime':
         return <PanelFrame title={PANEL_LABELS.laptime} onClose={() => setPanel('laptime', false)}><LapTimePanel eventId={eventId} /></PanelFrame>;
       case 'coursemap':
-        // 位置ポーリング(getEventPositions)は運営専用APIのため、ダッシュボード(gallery/driver)では
-        // 常に形状のみ表示。走行位置の公開はPhase5(公開positions API)で対応予定。
-        return <PanelFrame title={PANEL_LABELS.coursemap} flush onClose={() => setPanel('coursemap', false)}><CourseMapPanel eventId={eventId} showPositions={false} /></PanelFrame>;
+        // gallery/driver は eventCode で公開位置APIを使い、走行中の車の位置マーカーを表示する。
+        return <PanelFrame title={PANEL_LABELS.coursemap} flush onClose={() => setPanel('coursemap', false)}><CourseMapPanel eventId={eventId} eventCode={eventCode} showPositions={false} /></PanelFrame>;
     }
   };
 

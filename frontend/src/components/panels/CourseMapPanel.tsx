@@ -14,7 +14,7 @@ import { MapContainer, TileLayer, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { getEvent } from '../../api/events';
-import { getEventPositions, type LiveParticipant } from '../../api/positions';
+import { getEventPositions, getPublicPositions, type LiveParticipant } from '../../api/positions';
 import type { EventWithCourse } from '../../types';
 import { useLiveStore, carMatches } from '../../stores/liveStore';
 
@@ -116,7 +116,7 @@ function SmoothMarkers({
   return null;
 }
 
-export default function CourseMapPanel({ eventId, showPositions }: { eventId: string; showPositions: boolean }) {
+export default function CourseMapPanel({ eventId, showPositions, eventCode }: { eventId: string; showPositions: boolean; eventCode?: string }) {
   const [event, setEvent] = useState<EventWithCourse | null>(null);
   const [positions, setPositions] = useState<LiveParticipant[]>([]);
   const [active, setActive] = useState(true);
@@ -130,13 +130,17 @@ export default function CourseMapPanel({ eventId, showPositions }: { eventId: st
     return () => { cancelled = true; };
   }, [eventId]);
 
-  // 位置ポーリング（運営/ドライバーのみ。観客は形状のみ）
+  // 位置ポーリング。運営(showPositions)は運営用API、観客/ドライバーはeventCodeで公開API。
+  // どちらも取得できない構成（運営でなく eventCode も無い）のときは位置を出さない。
+  const canShowPositions = showPositions || !!eventCode;
   useEffect(() => {
-    if (!showPositions) { setPositions([]); return; }
+    if (!canShowPositions) { setPositions([]); return; }
     let cancelled = false;
     const poll = async () => {
       try {
-        const data = await getEventPositions(eventId);
+        const data = showPositions
+          ? await getEventPositions(eventId)
+          : await getPublicPositions(eventCode as string);
         if (cancelled) return;
         setActive(data.active);
         setPositions(data.positions);
@@ -145,7 +149,7 @@ export default function CourseMapPanel({ eventId, showPositions }: { eventId: st
     poll();
     const timer = setInterval(poll, POLL_MS);
     return () => { cancelled = true; clearInterval(timer); };
-  }, [eventId, showPositions]);
+  }, [eventId, eventCode, showPositions, canShowPositions]);
 
   // コース中心座標を解決する。APIは course/circuit のどちらか、かつ
   // ネスト形式(controlLineA)・フラット形式(controlLineALat)のどちらかで返すため、
@@ -166,7 +170,7 @@ export default function CourseMapPanel({ eventId, showPositions }: { eventId: st
   };
   const center = resolveCenter();
 
-  const shownPositions = showPositions && active ? positions : [];
+  const shownPositions = canShowPositions && active ? positions : [];
 
   // 重要: MapContainer の center は初回マウント時しか反映されないため、
   // 座標が確定する前に地図を作ると東京駅等に固定されてしまう。
@@ -181,22 +185,39 @@ export default function CourseMapPanel({ eventId, showPositions }: { eventId: st
     );
   }
 
+  // コース中心からの移動範囲を制限（ズームは自由だが、ドラッグでコースを見失わないように）。
+  // 約2.5km四方（±0.025度）。境界では完全に弾く(viscosity=1)。
+  const BOUND = 0.025;
+  const maxBounds: [[number, number], [number, number]] = [
+    [center[0] - BOUND, center[1] - BOUND],
+    [center[0] + BOUND, center[1] + BOUND],
+  ];
+
   return (
     <Box sx={{ height: '100%', minHeight: 0, display: 'flex', flexDirection: 'column' }}>
       <Box sx={{ flex: 1, minHeight: 200 }}>
-        <MapContainer center={center} zoom={15} style={{ height: '100%', width: '100%' }} scrollWheelZoom>
+        <MapContainer
+          center={center}
+          zoom={15}
+          minZoom={13}
+          maxZoom={19}
+          maxBounds={maxBounds}
+          maxBoundsViscosity={1.0}
+          style={{ height: '100%', width: '100%' }}
+          scrollWheelZoom
+        >
           <TileLayer
             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           />
-          {showPositions && (
+          {canShowPositions && (
             <SmoothMarkers positions={shownPositions} selectedKey={selectedCarKey} onSelect={selectCar} />
           )}
         </MapContainer>
       </Box>
-      {!showPositions && (
+      {canShowPositions && shownPositions.length === 0 && (
         <Typography variant="caption" color="text.secondary" sx={{ px: 1, py: 0.5 }}>
-          観戦ビューではコース位置のみ表示しています
+          走行中の車はいません（位置共有ONの車が地図に表示されます）
         </Typography>
       )}
     </Box>
