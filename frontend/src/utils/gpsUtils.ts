@@ -68,7 +68,10 @@ export function crossCheck(
 /**
  * タイムフォーマット（ミリ秒 → "M:SS.mmm"）
  */
-export function formatLapTime(ms: number): string {
+export function formatLapTime(msInput: number): string {
+  // 交差点の補間などで小数msが渡ることがあるため、必ず整数に丸めてから整形する
+  // （丸めないと `ms % 1000` が "376.209..." のような壊れた表示文字列になる）。
+  const ms = Math.round(msInput);
   const totalSeconds = Math.floor(ms / 1000);
   const minutes = Math.floor(totalSeconds / 60);
   const seconds = totalSeconds % 60;

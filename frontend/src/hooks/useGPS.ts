@@ -82,8 +82,11 @@ export function useGPS(options: UseGPSOptions): UseGPSReturn {
   useEffect(() => { bestLapMsRef.current = bestLapMs; }, [bestLapMs]);
 
   // ラップ/区間を1件確定して通知する共通処理
-  const emitLap = useCallback((lapMs: number, crossT: number, isOutlap: boolean) => {
+  const emitLap = useCallback((lapMsRaw: number, crossT: number, isOutlap: boolean) => {
     const opt = optionsRef.current;
+    // 交差点の補間(hit.u)由来で lapMs は小数になりうる。ミリ秒は整数に丸める
+    // （丸めないと formatLapTime の `ms % 1000` が "376.209..." のような壊れた文字列になる）。
+    const lapMs = Math.round(lapMsRaw);
     const lapData: LapData = {
       lapNumber: lapCountRef.current,
       lapTimeMs: isOutlap ? 0 : lapMs,
