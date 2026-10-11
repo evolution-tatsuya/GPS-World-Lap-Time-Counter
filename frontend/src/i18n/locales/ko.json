@@ -165,6 +165,7 @@
     "exporting": "내보내는 중...",
     "exportCsv": "결과 CSV 다운로드",
     "viewLiveMap": "참가자 현재 위치 보기",
+    "viewSpectatorPage": "관전 화면 (관객용)",
     "editDeletePending": "편집・삭제 기능은 준비 중입니다",
     "editEvent": "이벤트 편집",
     "deleteEvent": "이벤트 삭제",

@@ -32,6 +32,7 @@ import {
   Download,
   EmojiEvents,
   MyLocation,
+  Visibility,
 } from '@mui/icons-material';
 import { getEvent, updateEvent, deleteEvent } from '../api/events';
 import { exportEventLapsCsv } from '../api/laps';
@@ -409,6 +410,16 @@ export default function EventDetail() {
                 onClick={() => navigate(`/events/${id}/monitor`)}
               >
                 {t('monitor.openMonitor')}
+              </Button>
+              {/* 観戦者(お客様)が見るのと同じ公開ページを別タブで開く */}
+              <Button
+                variant="outlined"
+                startIcon={<Visibility />}
+                onClick={() =>
+                  window.open(`/live/${event.eventCode}`, '_blank', 'noopener,noreferrer')
+                }
+              >
+                {t('eventDetail.viewSpectatorPage', '観戦画面（お客様向け）')}
               </Button>
             </Box>
           </Paper>

@@ -165,6 +165,7 @@
     "exporting": "Exporting...",
     "exportCsv": "Download Results (CSV)",
     "viewLiveMap": "View Participant Locations",
+    "viewSpectatorPage": "Spectator View (for guests)",
     "editDeletePending": "Edit / delete features coming soon",
     "editEvent": "Edit Event",
     "deleteEvent": "Delete Event",

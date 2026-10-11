@@ -165,6 +165,7 @@
     "exporting": "导出中...",
     "exportCsv": "下载成绩 CSV",
     "viewLiveMap": "查看参赛者当前位置",
+    "viewSpectatorPage": "观战页面（观众用）",
     "editDeletePending": "编辑・删除功能开发中",
     "editEvent": "编辑赛事",
     "deleteEvent": "删除赛事",
