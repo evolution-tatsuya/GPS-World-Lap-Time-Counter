@@ -7,6 +7,8 @@ FROM node:22-slim AS frontend-build
 WORKDIR /app/frontend
 COPY frontend/package*.json ./
 RUN npm ci
+# ビルドキャッシュ無効化用。--build-arg CACHE_BUST=<値> を変えると以降が必ず再実行される
+ARG CACHE_BUST=0
 COPY frontend/ ./
 # VITE_API_URL は同一オリジン配信なので /api（デフォルト）でOK
 RUN npm run build
