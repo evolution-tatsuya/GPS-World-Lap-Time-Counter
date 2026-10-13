@@ -166,6 +166,7 @@
     "exportCsv": "下载成绩 CSV",
     "viewLiveMap": "查看参赛者当前位置",
     "viewSpectatorPage": "观战页面（观众用）",
+    "showQRCodes": "显示二维码（观战用・车手用）",
     "editDeletePending": "编辑・删除功能开发中",
     "editEvent": "编辑赛事",
     "deleteEvent": "删除赛事",

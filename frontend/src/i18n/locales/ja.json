@@ -166,6 +166,7 @@
     "exportCsv": "結果をCSVダウンロード",
     "viewLiveMap": "参加者の現在地を見る",
     "viewSpectatorPage": "観戦画面（お客様向け）",
+    "showQRCodes": "QRコードを表示（観戦用・ドライバー用）",
     "editDeletePending": "編集・削除機能は準備中です",
     "editEvent": "イベントを編集",
     "deleteEvent": "イベントを削除",

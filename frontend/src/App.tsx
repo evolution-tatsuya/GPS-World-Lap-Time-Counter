@@ -23,6 +23,7 @@ import CircuitCreate from './pages/CircuitCreate';
 import Admin from './pages/Admin';
 import PersonalMeasurement from './pages/PersonalMeasurement';
 import LiveMonitor from './pages/LiveMonitor';
+import EventQRCodes from './pages/EventQRCodes';
 import GalleryLogin from './pages/GalleryLogin';
 import GalleryDashboard from './pages/GalleryDashboard';
 import DriverDashboard from './pages/DriverDashboard';
@@ -110,6 +111,7 @@ function App() {
             <Route path="/events/:id" element={<EventDetail />} />
             <Route path="/events/:id/live-map" element={<LiveMap />} />
             <Route path="/events/:id/monitor" element={<LiveMonitor />} />
+            <Route path="/events/:id/qr" element={<EventQRCodes />} />
             <Route path="/circuits/:id" element={<CircuitDetail />} />
 
             {/* 作成ページ */}
