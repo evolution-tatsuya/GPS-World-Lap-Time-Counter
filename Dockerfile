@@ -7,11 +7,10 @@ FROM node:22-slim AS frontend-build
 WORKDIR /app/frontend
 COPY frontend/package*.json ./
 RUN npm ci
-# ビルドキャッシュ無効化用。この値を変えると COPY frontend 以降が必ず再実行される
-ARG CACHE_BUST=rebuild-20261011
 COPY frontend/ ./
 # VITE_API_URL は同一オリジン配信なので /api（デフォルト）でOK
-RUN npm run build
+# 先頭の echo の値を変えると RUN のコマンド文字列が変わり、ビルドキャッシュが確実に無効化される
+RUN echo "cache-bust=build-20261011-0930" && npm run build
 
 # ========== Stage 2: バックエンドをビルド（tsc） ==========
 FROM node:22-slim AS backend-build
