@@ -86,32 +86,34 @@ export async function provisionFromOrder(input: ProvisionInput): Promise<Provisi
     };
   }
 
-  // email で User を upsert（無ければ ORGANIZER / passwordHash=null で作成）
-  const user = await prisma.user.upsert({
-    where: { email },
-    create: {
-      email,
-      name: email, // 暫定名（本人が後でアカウント設定で変更）
-      role: roleForPlan(plan),
-      passwordHash: null,
-    },
-    update: {}, // 既存ユーザーはそのまま（ロール等は変えない）
-    select: { id: true },
-  });
-
-  // 契約を1行作成
-  const grant = await prisma.subscriptionGrant.create({
-    data: {
-      userId: user.id,
-      provisionOrderId: orderId,
-      plan,
-      status: 'ACTIVE',
-      until: until ?? null,
-      billingType: input.billingType ?? null,
-      ecProductId: input.productId ?? null,
-      features,
-    },
-    select: { status: true },
+  // User upsert と Grant create はトランザクションで束ねる。
+  // (CLAUDE.md: 重複チェック+INSERT等の一連操作はトランザクション必須。
+  //  create失敗時に passwordHash=null の孤立Userだけが残るのを防ぐ)
+  const grant = await prisma.$transaction(async (tx) => {
+    const user = await tx.user.upsert({
+      where: { email },
+      create: {
+        email,
+        name: email, // 暫定名（本人が後でアカウント設定で変更）
+        role: roleForPlan(plan),
+        passwordHash: null,
+      },
+      update: {}, // 既存ユーザーはそのまま（ロール等は変えない）
+      select: { id: true },
+    });
+    return tx.subscriptionGrant.create({
+      data: {
+        userId: user.id,
+        provisionOrderId: orderId,
+        plan,
+        status: 'ACTIVE',
+        until: until ?? null,
+        billingType: input.billingType ?? null,
+        ecProductId: input.productId ?? null,
+        features,
+      },
+      select: { status: true },
+    });
   });
 
   return {
@@ -220,12 +222,21 @@ export async function reactivateByOrder(input: ReactivateInput) {
     return { success: true, alreadyReactivated: true, status: already.status };
   }
   // 旧契約を取得して付け替え
-  const prev = await prisma.subscriptionGrant.findFirst({
+  const prevGrants = await prisma.subscriptionGrant.findMany({
     where: plan !== undefined
       ? { provisionOrderId: prevId, plan }
       : { provisionOrderId: prevId },
   });
-  if (!prev) return { success: false, error: 'previous grant not found', status: null };
+  if (prevGrants.length === 0) return { success: false, error: 'previous grant not found', status: null };
+  // plan未指定で旧注文に複数系統がある場合、先頭のみ付け替えると残りが放置される。
+  // silent放置を避けるため警告を出す（EC側はplan付き送信を推奨）。
+  if (plan === undefined && prevGrants.length > 1) {
+    console.warn(
+      `[integration] reactivate: prevOrderId=${prevId} has ${prevGrants.length} grants but no plan specified; ` +
+      `only the first (plan=${prevGrants[0].plan}) is carried over. EC should send plan to disambiguate.`
+    );
+  }
+  const prev = prevGrants[0];
 
   const data: {
     provisionOrderId: string;
