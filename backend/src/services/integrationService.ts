@@ -49,6 +49,7 @@ export type ProvisionInput = {
   billingType?: string;
   productId?: string;
   features?: string[];
+  until?: string | null; // 契約期限（EC側がnextBillingDateを送る。契約直後から期限を正しく入れる）
 };
 
 export type ProvisionResult = {
@@ -65,12 +66,13 @@ export async function provisionFromOrder(input: ProvisionInput): Promise<Provisi
   const orderId = input.orderId.trim();
   const email = normalizeEmail(input.email);
   const plan = normalizePlan(input.plan) ?? 'PERSONAL'; // 省略時は個人仕様とみなす
-  const until = toUntil(undefined); // provisionでは until は原則nullから運用（EC側がplan-changeで設定）
+  const until = toUntil(input.until); // EC側がnextBillingDateを送る。未指定(undefined)は無期限扱い
   const features = Array.isArray(input.features) ? input.features : [];
 
-  // 冪等: 同じ注文番号は二重発行しない
+  // 冪等: (注文番号 × 系統) が一致する再送は二重発行しない。
+  // 系統が違えば（同一注文の個人+運営カート購入）別契約として受け入れる。
   const existing = await prisma.subscriptionGrant.findUnique({
-    where: { provisionOrderId: orderId },
+    where: { provisionOrderId_plan: { provisionOrderId: orderId, plan } },
     include: { user: { select: { email: true } } },
   });
   if (existing) {
@@ -131,64 +133,64 @@ export type PlanChangeInput = {
   until?: string | null;
 };
 
-// POST /plan-change — 既存契約のプラン/期限/機能を上書き（渡された項目のみ）
+// POST /plan-change — 既存契約の期限/機能/billingTypeを上書き（渡された項目のみ）
+// 対象の特定: planが指定されればその系統の契約を、無ければ同一注文の全契約を更新。
+// 注) planは「どの系統の契約か」の特定に使う。系統そのものの変更（個人⇄運営）は別契約扱いで非対応。
 export async function changePlan(input: PlanChangeInput) {
   const orderId = input.orderId.trim();
-  const grant = await prisma.subscriptionGrant.findUnique({ where: { provisionOrderId: orderId } });
-  if (!grant) {
+  const plan = normalizePlan(input.plan);
+  const where = plan !== undefined
+    ? { provisionOrderId: orderId, plan }
+    : { provisionOrderId: orderId };
+
+  const grants = await prisma.subscriptionGrant.findMany({ where });
+  if (grants.length === 0) {
     return { success: false, error: 'grant not found', status: null };
   }
   const data: {
-    plan?: SubscriptionPlan;
     billingType?: string;
     ecProductId?: string;
     features?: string[];
     until?: Date | null;
   } = {};
-  const plan = normalizePlan(input.plan);
-  if (plan !== undefined) data.plan = plan;
   if (input.billingType !== undefined) data.billingType = input.billingType;
   if (input.productId !== undefined) data.ecProductId = input.productId;
   if (Array.isArray(input.features)) data.features = input.features;
   const until = toUntil(input.until);
   if (until !== undefined) data.until = until;
 
-  const updated = await prisma.subscriptionGrant.update({
-    where: { provisionOrderId: orderId },
-    data,
-    select: { status: true, plan: true },
-  });
-  return { success: true, status: updated.status, plan: updated.plan };
+  await prisma.subscriptionGrant.updateMany({ where, data });
+  return { success: true, status: grants[0].status, plan: plan ?? null };
 }
 
 // POST /suspend — 解約/停止（データ保持・冪等）
+// 同一注文で発行した全契約(個人+運営のカート購入なら2件)をまとめて停止する。
 export async function suspendByOrder(orderId: string, reason?: string) {
   const id = orderId.trim();
-  const grant = await prisma.subscriptionGrant.findUnique({ where: { provisionOrderId: id } });
-  if (!grant) return { success: false, error: 'grant not found', status: null };
-  const alreadySuspended = grant.status === 'INACTIVE';
-  const updated = await prisma.subscriptionGrant.update({
+  const grants = await prisma.subscriptionGrant.findMany({ where: { provisionOrderId: id } });
+  if (grants.length === 0) return { success: false, error: 'grant not found', status: null };
+  const alreadySuspended = grants.every((g) => g.status === 'INACTIVE');
+  await prisma.subscriptionGrant.updateMany({
     where: { provisionOrderId: id },
     data: { status: 'INACTIVE' as SubscriptionStatus },
-    select: { status: true },
   });
   // reason は現状スキーマに保持列を持たない（将来 note 列追加時に記録）。
   void reason;
-  return { success: true, alreadySuspended, status: updated.status };
+  return { success: true, alreadySuspended, status: 'INACTIVE' };
 }
 
 // POST /unsuspend — 停止→復帰（冪等）
+// 同一注文の全契約をまとめて復帰する。
 export async function unsuspendByOrder(orderId: string) {
   const id = orderId.trim();
-  const grant = await prisma.subscriptionGrant.findUnique({ where: { provisionOrderId: id } });
-  if (!grant) return { success: false, error: 'grant not found', status: null };
-  const alreadyActive = grant.status === 'ACTIVE';
-  const updated = await prisma.subscriptionGrant.update({
+  const grants = await prisma.subscriptionGrant.findMany({ where: { provisionOrderId: id } });
+  if (grants.length === 0) return { success: false, error: 'grant not found', status: null };
+  const alreadyActive = grants.every((g) => g.status === 'ACTIVE');
+  await prisma.subscriptionGrant.updateMany({
     where: { provisionOrderId: id },
     data: { status: 'ACTIVE' as SubscriptionStatus },
-    select: { status: true },
   });
-  return { success: true, alreadyActive, status: updated.status };
+  return { success: true, alreadyActive, status: 'ACTIVE' };
 }
 
 export type ReactivateInput = {
@@ -202,17 +204,27 @@ export type ReactivateInput = {
 };
 
 // POST /reactivate — 解約後の再購入で旧契約(データ)を引き継ぐ（冪等）
+// 系統(plan)が指定されればその系統の契約を、無ければ旧注文の契約(複数なら先頭)を付け替える。
 export async function reactivateByOrder(input: ReactivateInput) {
   const prevId = input.prevOrderId.trim();
   const newId = input.newOrderId.trim();
+  const plan = normalizePlan(input.plan);
 
-  // 冪等: newOrderId で既に処理済みなら返す
-  const already = await prisma.subscriptionGrant.findUnique({ where: { provisionOrderId: newId } });
+  // 冪等: newOrderId(+系統) で既に処理済みなら返す
+  const already = await prisma.subscriptionGrant.findFirst({
+    where: plan !== undefined
+      ? { provisionOrderId: newId, plan }
+      : { provisionOrderId: newId },
+  });
   if (already) {
     return { success: true, alreadyReactivated: true, status: already.status };
   }
   // 旧契約を取得して付け替え
-  const prev = await prisma.subscriptionGrant.findUnique({ where: { provisionOrderId: prevId } });
+  const prev = await prisma.subscriptionGrant.findFirst({
+    where: plan !== undefined
+      ? { provisionOrderId: prevId, plan }
+      : { provisionOrderId: prevId },
+  });
   if (!prev) return { success: false, error: 'previous grant not found', status: null };
 
   const data: {
@@ -227,7 +239,6 @@ export async function reactivateByOrder(input: ReactivateInput) {
     provisionOrderId: newId,
     status: 'ACTIVE',
   };
-  const plan = normalizePlan(input.plan);
   if (plan !== undefined) data.plan = plan;
   if (input.billingType !== undefined) data.billingType = input.billingType;
   if (input.productId !== undefined) data.ecProductId = input.productId;

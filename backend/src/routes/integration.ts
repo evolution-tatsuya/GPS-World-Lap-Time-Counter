@@ -35,7 +35,7 @@ function badBilling(billingType: unknown): boolean {
 // POST /api/integration/provision — 注文からアカウント/契約発行（冪等）
 router.post('/provision', async (req: Request, res: Response) => {
   try {
-    const { orderId, email, plan, billingType, productId, features } = req.body ?? {};
+    const { orderId, email, plan, billingType, productId, features, until } = req.body ?? {};
     if (!orderId || typeof orderId !== 'string') {
       res.status(400).json({ error: 'orderId は必須です' });
       return;
@@ -48,7 +48,7 @@ router.post('/provision', async (req: Request, res: Response) => {
       res.status(400).json({ error: 'billingType が不正です' });
       return;
     }
-    const result = await provisionFromOrder({ orderId, email, plan, billingType, productId, features });
+    const result = await provisionFromOrder({ orderId, email, plan, billingType, productId, features, until });
     res.status(result.alreadyProvisioned ? 200 : 201).json(result);
   } catch (err) {
     console.error('[integration] provision error:', err);

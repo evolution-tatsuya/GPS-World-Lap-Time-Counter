@@ -20,8 +20,8 @@ CREATE TABLE "subscription_grants" (
     CONSTRAINT "subscription_grants_pkey" PRIMARY KEY ("id")
 );
 
--- CreateIndex
-CREATE UNIQUE INDEX "subscription_grants_provision_order_id_key" ON "subscription_grants"("provision_order_id");
+-- CreateIndex（冪等キーは注文番号×系統の複合。同一注文で個人+運営の2契約を許容）
+CREATE UNIQUE INDEX "subscription_grants_provision_order_id_plan_key" ON "subscription_grants"("provision_order_id", "plan");
 
 -- CreateIndex
 CREATE INDEX "subscription_grants_user_id_idx" ON "subscription_grants"("user_id");
