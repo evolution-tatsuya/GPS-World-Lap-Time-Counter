@@ -4,7 +4,7 @@ import { Router, Request, Response } from 'express';
 import { prisma } from '../index';
 import { requireSession, requireOrganizer } from '../middleware/auth';
 import { LapCreateInput, RankingEntry } from '../types';
-import { canUsePaidFeatures } from '../utils/subscription';
+import { hasActiveGrant } from '../utils/subscription';
 
 const router = Router();
 
@@ -88,17 +88,17 @@ router.post('/personal', requireSession, async (req: Request, res: Response) => 
       return;
     }
 
-    // 課金ゲート: プロモ枠 or 有効なサブスクのみ個人計測を利用可。
-    // （決済連携前はADMINが手動でサブスクを有効化する運用。将来Stripe Webhookで自動化）
+    // 課金ゲート: プロモ枠 or 個人仕様(PERSONAL)系統の有効なサブスクのみ個人計測を利用可。
+    // hasActiveGrant は EC連携の SubscriptionGrant に加え、後方互換で旧 User.subscription*(手動運用) も参照する。
     const user = await prisma.user.findUnique({
       where: { id: req.session.userId },
-      select: { name: true, isPromo: true, subscriptionStatus: true, subscriptionUntil: true },
+      select: { name: true },
     });
     if (!user) {
       res.status(403).json({ error: 'User not found' });
       return;
     }
-    if (!canUsePaidFeatures(user)) {
+    if (!(await hasActiveGrant(req.session.userId, 'PERSONAL'))) {
       res.status(402).json({ error: 'Subscription required for personal measurement' });
       return;
     }

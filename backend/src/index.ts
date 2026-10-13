@@ -21,6 +21,7 @@ import lapRoutes from './routes/laps';
 import positionRoutes from './routes/positions';
 import livekitRoutes from './routes/livekit';
 import adminRoutes from './routes/admin';
+import integrationRoutes from './routes/integration';
 
 // 環境変数読み込み
 dotenv.config();
@@ -103,6 +104,8 @@ app.use('/api/laps', lapRoutes);
 app.use('/api/positions', positionRoutes);
 app.use('/api/livekit', livekitRoutes);
 app.use('/api/admin', adminRoutes);
+// EC連携受け口（x-integration-keyヘッダ認証・express-sessionとは別系統）
+app.use('/api/integration', integrationRoutes);
 
 // ========== フロントエンド（同一オリジン配信） ==========
 // 本番ビルドされた React（frontend/dist）を同じサーバーから配信する。
