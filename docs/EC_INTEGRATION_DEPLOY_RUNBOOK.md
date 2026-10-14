@@ -7,6 +7,19 @@
 
 ---
 
+## 🤝 両側合意済みの実施順序（2026-10-13 EC/GPS合意）
+
+両側ともユーザー承認待ち。承認が揃ったら以下の順で両側協調して進める:
+
+1. **各自のDB反映** — GPS: 本番migrate deploy（`subscription_grants`作成） / EC: products に2列追加(db push)＋既存在庫商品へ `provision_target='inventory'` 一括設定（混在防止）
+2. **鍵を同タイミングで設定** — 両側が `GPS-EC-Integration-Key` の同一値を各自の本番envへ（GPS=`GPS_INTEGRATION_API_KEY` / EC=`GPS_API_KEY`+`GPS_API_BASE_URL`）
+3. **各自デプロイ**
+4. **疎通テスト協調** — テスト専用注文/emailのみ。カート経路で2系統・解約復帰まで
+
+補足: Stripeカード自動課金は1セッション=1プランのため「同一orderIdで個人＋運営2系統」は**銀行振込/カート経路**で再現（カード経路は別注文）。GPS側の `(orderId×plan)` 複合冪等はどちらでも正しく動く。
+
+---
+
 ## 事前チェック（実行前に必ず確認）
 
 - [ ] PR #12 がmainにマージ済み
