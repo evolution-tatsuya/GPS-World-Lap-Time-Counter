@@ -64,3 +64,56 @@ export async function hasActiveGrant(userId: string, plan: SubscriptionPlan): Pr
   });
   return grant !== null;
 }
+
+/**
+ * 指定ユーザーが、指定の機能キー(feature)を使える権利を持つか。
+ * プラン(PERSONAL/ORGANIZER)に依存せず「どのGrantであれ、有効かつその機能キーを含むものがあるか」で判定する。
+ * → プランの線引きは EC商品の planFeatureKeys で決まり、GPSはキーの有無だけ見る（プラン増減でこの関数は不変）。
+ *
+ * - isPromo は常に true（全機能免除）。ADMIN は呼び出し側で明示バイパスすること（この関数は role を見ない）。
+ * - 判定: status=ACTIVE かつ (until null または未来) かつ features に key を含む Grant が1件でもあれば true。
+ *
+ * 使用例: if (req.session.role !== 'ADMIN' && !(await hasFeature(userId, 'event_hosting'))) → 402
+ */
+export async function hasFeature(userId: string, feature: string): Promise<boolean> {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { isPromo: true },
+  });
+  if (!user) return false;
+  if (user.isPromo) return true;
+
+  const now = new Date();
+  const grant = await prisma.subscriptionGrant.findFirst({
+    where: {
+      userId,
+      status: 'ACTIVE',
+      features: { has: feature },
+      OR: [{ until: null }, { until: { gte: now } }],
+    },
+    select: { id: true },
+  });
+  return grant !== null;
+}
+
+/**
+ * 機能ゲートが本番で有効か（feature flag）。
+ * env FEATURE_GATES_ENABLED='true' の時だけゲートが作動する。
+ * 既定（未設定/その他）は OFF＝従来通り誰もブロックしない。
+ * → EC側の planFeatureKeys 設定・プラン確定が整ってから ON にする運用。
+ */
+export function featureGatesEnabled(): boolean {
+  return process.env.FEATURE_GATES_ENABLED === 'true';
+}
+
+/**
+ * 運営系API等のゲート判定（route側から呼ぶ）。
+ * - flag OFF なら常に許可（従来通り）。
+ * - flag ON のとき: ADMINは常に許可、それ以外は hasFeature(userId, feature) で判定。
+ * @returns true=許可 / false=402でブロックすべき
+ */
+export async function gateAllows(role: string | undefined, userId: string, feature: string): Promise<boolean> {
+  if (!featureGatesEnabled()) return true; // flag OFF = 従来通り全員許可
+  if (role === 'ADMIN') return true;        // 統括は常にバイパス
+  return hasFeature(userId, feature);
+}

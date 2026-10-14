@@ -14,6 +14,7 @@ import { Router, Request, Response } from 'express';
 import { AccessToken } from 'livekit-server-sdk';
 import { prisma } from '../index';
 import { requireSession, requireOrganizer } from '../middleware/auth';
+import { gateAllows } from '../utils/subscription';
 import { isWithinEventWindow } from '../utils/eventWindow';
 
 const router = Router();
@@ -88,6 +89,11 @@ router.post('/token/publish', requireSession, async (req: Request, res: Response
  */
 router.post('/token/view/:eventId', requireOrganizer, async (req: Request, res: Response) => {
   try {
+    // 車載ライブ配信ゲート（feature flag ON時のみ作動・ADMINバイパス）
+    if (!(await gateAllows(req.session.role, req.session.userId!, 'live_streaming'))) {
+      res.status(402).json({ error: 'Subscription required for live streaming' });
+      return;
+    }
     const cfg = lkConfig();
     if (!cfg) { res.status(503).json({ error: 'LiveKit is not configured' }); return; }
 

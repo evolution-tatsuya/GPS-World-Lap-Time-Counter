@@ -3,6 +3,7 @@
 import { Router, Request, Response } from 'express';
 import { prisma } from '../index';
 import { requireOrganizer } from '../middleware/auth';
+import { gateAllows } from '../utils/subscription';
 import { EventCreateInput } from '../types';
 import { generateEventCode } from '../utils/eventCodeGenerator';
 import { formatCourseLines } from '../utils/formatCourse';
@@ -133,6 +134,11 @@ router.get('/:idOrCode', async (req: Request, res: Response) => {
  */
 router.post('/', requireOrganizer, async (req: Request, res: Response) => {
   try {
+    // 運営機能ゲート（feature flag ON時のみ作動・ADMINバイパス）
+    if (!(await gateAllows(req.session.role, req.session.userId!, 'event_hosting'))) {
+      res.status(402).json({ error: 'Subscription required for event hosting' });
+      return;
+    }
     const {
       name,
       courseId,
@@ -236,6 +242,11 @@ router.post('/', requireOrganizer, async (req: Request, res: Response) => {
  */
 router.put('/:id', requireOrganizer, async (req: Request, res: Response) => {
   try {
+    // 運営機能ゲート（feature flag ON時のみ作動・ADMINバイパス）
+    if (!(await gateAllows(req.session.role, req.session.userId!, 'event_hosting'))) {
+      res.status(402).json({ error: 'Subscription required for event hosting' });
+      return;
+    }
     const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
     const updates = req.body;
 
@@ -297,6 +308,11 @@ router.put('/:id', requireOrganizer, async (req: Request, res: Response) => {
  */
 router.delete('/:id', requireOrganizer, async (req: Request, res: Response) => {
   try {
+    // 運営機能ゲート（feature flag ON時のみ作動・ADMINバイパス）
+    if (!(await gateAllows(req.session.role, req.session.userId!, 'event_hosting'))) {
+      res.status(402).json({ error: 'Subscription required for event hosting' });
+      return;
+    }
     const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
 
     // 既存イベント取得
