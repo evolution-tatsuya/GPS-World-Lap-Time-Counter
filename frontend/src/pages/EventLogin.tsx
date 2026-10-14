@@ -1,7 +1,7 @@
 // イベントコードログインページ
 
 import { useState, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import {
   Container,
@@ -25,8 +25,13 @@ export default function EventLogin() {
   // controlled + onChange の toUpperCase 差し替えは、iOSの予測変換と併さって
   // カーソルが飛び「打ちながら削除できない/累積する」不具合の原因になるため。
   // 大文字表示は CSS(textTransform)、値の大文字化は送信時に行う。
+  // QR経由（/event-login?code=XXXXXX）で来た場合はイベントコードを自動入力する。
+  // uncontrolled方式(ref)を壊さないよう defaultValue に渡す（再レンダリングでカーソルが飛ばない）。
+  const [searchParams] = useSearchParams();
+  const prefilledCode = (searchParams.get('code') ?? '').trim().toUpperCase().slice(0, 6);
+
   const codeRef = useRef<HTMLInputElement>(null);
-  const [codeEmpty, setCodeEmpty] = useState(true);
+  const [codeEmpty, setCodeEmpty] = useState(prefilledCode === '');
   const [driverName, setDriverName] = useState('');
   const [zekken, setZekken] = useState('');
   const [vehicle, setVehicle] = useState('');
@@ -76,7 +81,7 @@ export default function EventLogin() {
           fullWidth
           label={t('eventLogin.eventCode')}
           inputRef={codeRef}
-          defaultValue=""
+          defaultValue={prefilledCode}
           onChange={(e) => setCodeEmpty(e.target.value.trim() === '')}
           placeholder="ABC123"
           required

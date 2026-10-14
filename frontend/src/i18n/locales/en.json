@@ -165,6 +165,8 @@
     "exporting": "Exporting...",
     "exportCsv": "Download Results (CSV)",
     "viewLiveMap": "View Participant Locations",
+    "viewSpectatorPage": "Spectator View (for guests)",
+    "showQRCodes": "Show QR Codes (Spectator / Driver)",
     "editDeletePending": "Edit / delete features coming soon",
     "editEvent": "Edit Event",
     "deleteEvent": "Delete Event",

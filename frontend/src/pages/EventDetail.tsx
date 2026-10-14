@@ -32,6 +32,8 @@ import {
   Download,
   EmojiEvents,
   MyLocation,
+  Visibility,
+  QrCode2,
 } from '@mui/icons-material';
 import { getEvent, updateEvent, deleteEvent } from '../api/events';
 import { exportEventLapsCsv } from '../api/laps';
@@ -409,6 +411,26 @@ export default function EventDetail() {
                 onClick={() => navigate(`/events/${id}/monitor`)}
               >
                 {t('monitor.openMonitor')}
+              </Button>
+              {/* 観戦者(お客様)が見るのと同じ公開ページを別タブで開く */}
+              <Button
+                variant="outlined"
+                startIcon={<Visibility />}
+                onClick={() =>
+                  window.open(`/live/${event.eventCode}`, '_blank', 'noopener,noreferrer')
+                }
+              >
+                {t('eventDetail.viewSpectatorPage', '観戦画面（お客様向け）')}
+              </Button>
+              {/* イベント専用QR（観戦用・ドライバー用）を別タブで表示・印刷 */}
+              <Button
+                variant="outlined"
+                startIcon={<QrCode2 />}
+                onClick={() =>
+                  window.open(`/events/${id}/qr`, '_blank', 'noopener,noreferrer')
+                }
+              >
+                {t('eventDetail.showQRCodes', 'QRコードを表示（観戦用・ドライバー用）')}
               </Button>
             </Box>
           </Paper>

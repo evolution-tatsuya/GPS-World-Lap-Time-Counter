@@ -9,7 +9,8 @@ COPY frontend/package*.json ./
 RUN npm ci
 COPY frontend/ ./
 # VITE_API_URL は同一オリジン配信なので /api（デフォルト）でOK
-RUN npm run build
+# 先頭の echo の値を変えると RUN のコマンド文字列が変わり、ビルドキャッシュが確実に無効化される
+RUN echo "cache-bust=build-20261011-0930" && npm run build
 
 # ========== Stage 2: バックエンドをビルド（tsc） ==========
 FROM node:22-slim AS backend-build
