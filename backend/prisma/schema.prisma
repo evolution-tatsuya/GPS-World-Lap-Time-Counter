@@ -35,8 +35,37 @@ model User {
   courses Course[]
   events  Event[]
   laps    Lap[]
+  // EC連携のサブスク契約（1ユーザーが個人仕様・イベント運営を同時契約できるため複数持てる）
+  subscriptionGrants SubscriptionGrant[]
 
   @@map("users")
+}
+
+// EC(ショッピングページ)からのサブスク契約を1行=1契約で保持する。
+// GPSは「個人仕様(PERSONAL)」と「イベント運営(ORGANIZER)」を同時契約できるため、
+// User単一のsubscriptionPlan/Statusでは表現できず、このテーブルに複数ぶら下げる。
+// EC連携受け口(/api/integration/*)が upsert する。冪等キーは provisionOrderId。
+// ⚠️ 在庫管理の連携とは完全に別系統（シークレット・env名・サービス関数すべて別）。
+model SubscriptionGrant {
+  id               String             @id @default(uuid())
+  userId           String             @map("user_id")
+  user             User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  provisionOrderId String             @map("provision_order_id") // EC注文番号(冪等キーの一部)
+  plan             SubscriptionPlan                              // PERSONAL(個人仕様) / ORGANIZER(イベント運営)
+  status           SubscriptionStatus @default(ACTIVE)           // ACTIVE / INACTIVE(停止・データ保持) / EXPIRED
+  until            DateTime?          @map("until")              // 有効期限（nullは無期限）
+  billingType      String?            @map("billing_type")       // monthly / yearly / onetime
+  ecProductId      String?            @map("ec_product_id")      // EC側の商品ID（参考保持）
+  features         String[]           @default([]) @map("features") // 機能キー（personal_measurement 等）
+  createdAt        DateTime           @default(now()) @map("created_at")
+  updatedAt        DateTime           @updatedAt @map("updated_at")
+
+  // 冪等キーは (注文番号 × 系統)。カート経路で同一注文に個人+運営の2契約が入るため、
+  // 系統が違えば別契約として受け入れ、同一注文×同一系統の再送だけを冪等に弾く。
+  @@unique([provisionOrderId, plan], name: "provisionOrderId_plan")
+  @@index([userId])
+  @@index([plan, status])
+  @@map("subscription_grants")
 }
 
 enum UserRole {
