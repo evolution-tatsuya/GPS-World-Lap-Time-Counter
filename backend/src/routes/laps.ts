@@ -4,7 +4,7 @@ import { Router, Request, Response } from 'express';
 import { prisma } from '../index';
 import { requireSession, requireOrganizer } from '../middleware/auth';
 import { LapCreateInput, RankingEntry } from '../types';
-import { hasActiveGrant } from '../utils/subscription';
+import { hasActiveGrant, gateAllows } from '../utils/subscription';
 
 const router = Router();
 
@@ -323,6 +323,11 @@ router.get('/ranking', async (req: Request, res: Response) => {
  */
 router.get('/export', requireOrganizer, async (req: Request, res: Response) => {
   try {
+    // 運営機能ゲート（feature flag ON時のみ作動・ADMINバイパス）
+    if (!(await gateAllows(req.session.role, req.session.userId!, 'result_export'))) {
+      res.status(402).json({ error: 'Subscription required for result export' });
+      return;
+    }
     const eventId = typeof req.query.eventId === 'string' ? req.query.eventId : undefined;
 
     if (!eventId) {
@@ -528,6 +533,11 @@ router.get('/history', async (req: Request, res: Response) => {
  */
 router.delete('/:id', requireOrganizer, async (req: Request, res: Response) => {
   try {
+    // 運営機能ゲート（feature flag ON時のみ作動・ADMINバイパス）
+    if (!(await gateAllows(req.session.role, req.session.userId!, 'result_export'))) {
+      res.status(402).json({ error: 'Subscription required for result management' });
+      return;
+    }
     const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
 
     // ラップ記録取得

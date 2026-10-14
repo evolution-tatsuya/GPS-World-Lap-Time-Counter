@@ -3,6 +3,7 @@
 import { Router, Request, Response } from 'express';
 import { prisma } from '../index';
 import { requireOrganizer } from '../middleware/auth';
+import { gateAllows } from '../utils/subscription';
 import { CircuitCreateInput } from '../types';
 import { formatCourseLines } from '../utils/formatCourse';
 
@@ -96,6 +97,11 @@ router.get('/:id', async (req: Request, res: Response) => {
  */
 router.post('/', requireOrganizer, async (req: Request, res: Response) => {
   try {
+    // コース作成ゲート（feature flag ON時のみ作動・ADMINバイパス）
+    if (!(await gateAllows(req.session.role, req.session.userId!, 'course_create'))) {
+      res.status(402).json({ error: 'Subscription required for course creation' });
+      return;
+    }
     const {
       country,
       state,
@@ -190,6 +196,11 @@ router.post('/', requireOrganizer, async (req: Request, res: Response) => {
  */
 router.put('/:id', requireOrganizer, async (req: Request, res: Response) => {
   try {
+    // コース作成ゲート（feature flag ON時のみ作動・ADMINバイパス）
+    if (!(await gateAllows(req.session.role, req.session.userId!, 'course_create'))) {
+      res.status(402).json({ error: 'Subscription required for course creation' });
+      return;
+    }
     const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
     const updates = req.body;
 
@@ -266,6 +277,11 @@ router.put('/:id', requireOrganizer, async (req: Request, res: Response) => {
  */
 router.delete('/:id', requireOrganizer, async (req: Request, res: Response) => {
   try {
+    // コース作成ゲート（feature flag ON時のみ作動・ADMINバイパス）
+    if (!(await gateAllows(req.session.role, req.session.userId!, 'course_create'))) {
+      res.status(402).json({ error: 'Subscription required for course creation' });
+      return;
+    }
     const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
 
     // 既存サーキット取得

@@ -11,6 +11,7 @@
 import { Router, Request, Response } from 'express';
 import { prisma } from '../index';
 import { requireSession, requireOrganizer } from '../middleware/auth';
+import { gateAllows } from '../utils/subscription';
 import { isWithinEventWindow } from '../utils/eventWindow';
 
 const router = Router();
@@ -113,6 +114,11 @@ router.post('/', requireSession, async (req: Request, res: Response) => {
  */
 router.get('/:eventId', requireOrganizer, async (req: Request, res: Response) => {
   try {
+    // GPSライブマップ(位置監視)ゲート（feature flag ON時のみ作動・ADMINバイパス）
+    if (!(await gateAllows(req.session.role, req.session.userId!, 'live_map'))) {
+      res.status(402).json({ error: 'Subscription required for live map' });
+      return;
+    }
     const eventId = Array.isArray(req.params.eventId)
       ? req.params.eventId[0]
       : req.params.eventId;
