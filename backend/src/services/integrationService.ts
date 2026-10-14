@@ -8,7 +8,7 @@
 // ⚠️ 在庫管理の tenantService とは完全に別物（別テーブル・別キー・別enum）。
 // ============================================================
 
-import { prisma } from '../index';
+import { prisma } from '../lib/prisma';
 import type { SubscriptionPlan, SubscriptionStatus } from '@prisma/client';
 
 // EC→GPS で送られるプラン文字列を GPS enum へ正規化

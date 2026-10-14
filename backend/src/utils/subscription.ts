@@ -25,7 +25,7 @@ export function canUsePaidFeatures(user: SubscribableUser): boolean {
 // GPSは「個人仕様(PERSONAL)」「イベント運営(ORGANIZER)」を同時契約できるため、
 // 系統ごとに「有効な契約があるか」を判定する。EC連携が SubscriptionGrant を upsert する。
 
-import { prisma } from '../index';
+import { prisma } from '../lib/prisma';
 import type { SubscriptionPlan } from '@prisma/client';
 
 /**

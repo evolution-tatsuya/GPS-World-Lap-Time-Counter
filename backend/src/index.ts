@@ -8,9 +8,6 @@ import cors from 'cors';
 import path from 'path';
 import fs from 'fs';
 import dotenv from 'dotenv';
-import { PrismaClient } from '@prisma/client';
-import { PrismaPg } from '@prisma/adapter-pg';
-import { Pool } from 'pg';
 import { errorHandler, notFoundHandler } from './middleware/errorHandler';
 
 // ルートのインポート
@@ -26,10 +23,11 @@ import integrationRoutes from './routes/integration';
 // 環境変数読み込み
 dotenv.config();
 
-// Prisma Client インスタンス（Prisma 7ではDriver Adapterが必須）
-const pool = new Pool({ connectionString: process.env.DATABASE_URL });
-const adapter = new PrismaPg(pool);
-export const prisma = new PrismaClient({ adapter });
+// Prisma Client は lib/prisma に切り出し、ここから re-export する。
+// （既存の `import { prisma } from '../index'` を壊さずに、
+//   サービス層・テストがサーバー起動なしで prisma を使えるようにするため）
+import { prisma, pool } from './lib/prisma';
+export { prisma };
 
 // Express アプリケーション
 const app: Application = express();
